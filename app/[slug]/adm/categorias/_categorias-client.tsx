@@ -115,8 +115,8 @@ export function CategoriasClient({
       }
 
       closeModal()
-    } catch {
-      setErro('Erro ao salvar. Tente novamente.')
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.')
     } finally {
       setLoading(false)
     }

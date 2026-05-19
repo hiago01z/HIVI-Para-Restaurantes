@@ -1,22 +1,33 @@
 -- ============================================================
--- STORAGE POLICIES: bucket restaurant-images
+-- STORAGE: bucket + policies para restaurant-images
 -- Execute no dashboard Supabase > SQL Editor
--- (o bucket deve ser criado antes com Public: true)
+-- Seguro para rodar múltiplas vezes (recria as policies)
 -- ============================================================
 
--- Permite que usuários autenticados façam upload de qualquer arquivo no bucket
+-- Cria o bucket se não existir (public = true para leitura pública)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('restaurant-images', 'restaurant-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Remove policies antigas (seguro se não existirem)
+DROP POLICY IF EXISTS "authenticated_can_upload" ON storage.objects;
+DROP POLICY IF EXISTS "authenticated_can_update" ON storage.objects;
+DROP POLICY IF EXISTS "authenticated_can_delete" ON storage.objects;
+DROP POLICY IF EXISTS "public_can_read" ON storage.objects;
+
+-- Permite upload por usuários autenticados
 CREATE POLICY "authenticated_can_upload"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'restaurant-images');
 
--- Permite que usuários autenticados atualizem (upsert) seus próprios arquivos
+-- Permite atualização (upsert) por usuários autenticados
 CREATE POLICY "authenticated_can_update"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (bucket_id = 'restaurant-images');
 
--- Permite que usuários autenticados excluam arquivos no bucket
+-- Permite exclusão por usuários autenticados
 CREATE POLICY "authenticated_can_delete"
 ON storage.objects FOR DELETE
 TO authenticated
