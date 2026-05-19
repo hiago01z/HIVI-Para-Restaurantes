@@ -1,6 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { CartProvider } from '@/contexts/cart-context'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('restaurants')
+    .select('name')
+    .eq('slug', slug)
+    .single()
+  return {
+    title: data?.name ?? 'Cardápio',
+  }
+}
 
 export default async function SlugLayout({
   children,
