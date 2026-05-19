@@ -159,7 +159,7 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 - Botões: **Editar** | **Excluir**
 
 **Modal Criar/Editar:**
-- Upload de imagem (Supabase Storage)
+- Upload de imagem via **ImageCropPicker**: arrastar para reposicionar, zoom com roda do mouse ou botões −/+ (50%–300%), recorte automático para 800×800 px JPEG ao salvar
 - Nome, descrição, preço, categoria, disponível, is_featured
 
 ---
@@ -167,16 +167,17 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 ### Categorias (`/[slug]/adm/categorias`)
 
 **Listagem:**
-- Número de ordem ("Ordem 1", "Ordem 2"...), imagem, nome
-- Botão "Mudar imagem" (upload)
+- Número de ordem ("Ordem 1", "Ordem 2"...), miniatura da imagem (quadrada), nome
 - Botões: **Editar** | **Excluir**
 
 **Reordenação:**
 - Drag-and-drop ou botões ↑↓
 - A ordem aqui define diretamente a ordem das categorias na home do cardápio público
 
-**Criar categoria:**
-- Nome + upload de imagem
+**Criar/Editar categoria:**
+- Nome
+- Upload de imagem via **ImageCropPicker**: arrastar para reposicionar, zoom com roda do mouse ou botões −/+ (50%–300%), recorte automático para 800×800 px JPEG ao salvar
+- Imagem existente é pré-carregada como blob para permitir reposicionamento sem precisar trocar o arquivo
 
 ---
 

@@ -128,13 +128,16 @@
 - [x] Favicon + ícone do navegador
 - [x] Dashboard ADM com métricas
 - [x] Notificação sonora de novo pedido
+- [x] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
+- [x] Loading/skeleton states em todas as páginas do ADM
+- [x] Gerenciamento de funcionários (convidar via e-mail, remover, alterar role)
+- [x] **Upload de imagens com `ImageCropPicker`** — drag, zoom (roda do mouse + botões), recorte canvas 800×800 JPEG; integrado em Categorias e Pratos
+- [x] **Infra de Storage** — migration `004_storage_policies.sql` com RLS para bucket `restaurant-images`
+- [x] **Sistema de restaurante template** — webhook Stripe copia categorias, pratos e tema ao criar novo restaurante
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
 - [ ] Testar pedido de mesa com QR Code (câmera real)
 - [ ] Testar pedido de entrega + WhatsApp automático
-- [ ] Testar upload de imagens (logo, banner, categorias, pratos)
+- [ ] Testar upload de imagens (logo, banner, categorias, pratos) em produção
 - [ ] Responsividade mobile em todas as telas (375px — testes reais)
-- [ ] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
-- [ ] Loading/skeleton states
 - [ ] Página de cardápio vazio (sem pratos cadastrados)
-- [ ] Gerenciamento completo de funcionários (convidar via e-mail, remover, alterar role)
 - [ ] Configurar domínio customizado na Vercel (hivi.com.br)

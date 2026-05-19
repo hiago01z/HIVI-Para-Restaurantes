@@ -48,6 +48,10 @@
 | 2026-05-19 | Fase 8: gerenciamento de equipe (/adm/funcionarios) — listar, convidar por e-mail (Supabase invite), remover, cargos (dono/gerente/funcionário) |
 | 2026-05-19 | Fix: icon.tsx com force-dynamic para evitar erro de prerender local com @vercel/og |
 | 2026-05-19 | Infra: domínio hivi-web.com conectado na Vercel, Resend configurado, Supabase e Stripe atualizados |
+| 2026-05-19 | Infra: migration 004_storage_policies.sql — bucket `restaurant-images` + 4 RLS policies (INSERT/UPDATE/DELETE para autenticados; SELECT público) |
+| 2026-05-19 | Fix: imagens de categorias exibidas corretamente no cardápio público (object-fit: cover + next/image fill) |
+| 2026-05-19 | Feature: componente `ImageCropPicker` — upload com drag-to-reposition, zoom via roda do mouse e botões −/+ (50%–300%), recorte canvas 800×800 JPEG ao salvar; integrado em Categorias e Pratos do ADM |
+| 2026-05-19 | Feature: sistema de restaurante template no webhook Stripe — copia categorias (imagem + ordem), pratos (com mapeamento de categoria) e tema ao criar novo restaurante (env `TEMPLATE_RESTAURANT_ID`) |
 
 ---
 
