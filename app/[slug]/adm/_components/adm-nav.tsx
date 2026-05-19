@@ -52,8 +52,8 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
               className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
           ) : (
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs flex-shrink-0"
-              style={{ background: primaryColor }}
+              className="w-7 h-7 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0"
+              style={{ background: primaryColor, color: 'var(--adm-text-on-primary, #fff)' }}
             >
               {restaurantName.charAt(0).toUpperCase()}
             </div>

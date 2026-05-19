@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { PreviewListener } from './_components/preview-listener'
 import { PausedPage } from './_components/paused-page'
+import { getContrastColor } from '@/lib/color-utils'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -93,6 +94,10 @@ export default async function SlugLayout({
   }
   const font = fontMap[rawFont] ?? rawFont
 
+  // Cor de texto sobre a cor primária (garante contraste WCAG AA)
+  const textOnPrimary = getContrastColor(primary)
+  const textOnBg      = getContrastColor(bg)
+
   const cssVars = [
     `--menu-primary: ${primary}`,
     `--menu-secondary: ${secondary}`,
@@ -103,6 +108,8 @@ export default async function SlugLayout({
     `--menu-text-muted: ${textColor}99`,
     `--menu-icon: ${iconColor}`,
     `--menu-card: color-mix(in srgb, ${bg} 70%, ${textColor} 8%)`,
+    `--menu-text-on-primary: ${textOnPrimary}`,
+    `--menu-text-on-bg: ${textOnBg}`,
   ].join('; ')
 
   return (

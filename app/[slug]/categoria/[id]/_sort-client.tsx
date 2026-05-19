@@ -13,7 +13,7 @@ export function CategorySortClient({ currentSort, slug, id }: Props) {
 
   return (
     <div className="flex gap-2">
-      <span className="text-white/40 text-sm self-center mr-1">Ordenar:</span>
+      <span className="text-sm self-center mr-1" style={{ color: 'var(--menu-text-muted)' }}>Ordenar:</span>
       {[
         { value: 'maior', label: 'Maior preço' },
         { value: 'menor', label: 'Menor preço' },
@@ -23,8 +23,8 @@ export function CategorySortClient({ currentSort, slug, id }: Props) {
           onClick={() => router.push(`/${slug}/categoria/${id}?ordem=${opt.value}`)}
           className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
           style={{
-            background: currentSort === opt.value ? 'var(--menu-primary)' : 'rgba(255,255,255,0.08)',
-            color: currentSort === opt.value ? 'white' : 'rgba(255,255,255,0.6)',
+            background: currentSort === opt.value ? 'var(--menu-primary)' : 'var(--menu-card)',
+            color: currentSort === opt.value ? 'white' : 'var(--menu-text-muted)',
           }}
         >
           {opt.label}

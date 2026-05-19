@@ -166,8 +166,8 @@ export function QrConfirmClient({ session, restaurantName }: Props) {
       <button
         onClick={handleConfirm}
         disabled={loading}
-        className="w-full py-4 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
-        style={{ background: 'var(--adm-primary)' }}
+        className="w-full py-4 disabled:opacity-50 font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+        style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
       >
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
         {loading ? 'Confirmando...' : 'Confirmar pedido'}

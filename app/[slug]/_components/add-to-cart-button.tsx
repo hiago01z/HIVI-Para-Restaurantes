@@ -28,8 +28,8 @@ export function AddToCartButton({ product, className, label = 'Pedir agora' }: P
   return (
     <button
       onClick={handleAdd}
-      className={`flex items-center justify-center gap-1.5 font-bold text-white transition-all rounded-xl ${className ?? ''}`}
-      style={{ background: added ? '#22c55e' : 'var(--menu-primary)' }}
+      className={`flex items-center justify-center gap-1.5 font-bold transition-all rounded-xl ${className ?? ''}`}
+      style={{ background: added ? '#22c55e' : 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
     >
       {added ? (
         <>

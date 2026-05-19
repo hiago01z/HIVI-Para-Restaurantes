@@ -111,28 +111,28 @@ export function PedidoClient({ slug, restaurantId }: Props) {
     : ''
 
   return (
-    <div className="min-h-screen pb-24" style={{ color: 'white' }}>
+    <div className="min-h-screen pb-24" style={{ color: 'var(--menu-text)' }}>
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-4 sticky top-0 z-10" style={{ background: 'var(--menu-bg)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <Link href={`/${slug}`} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
-          <ArrowLeft className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 px-4 py-4 sticky top-0 z-10" style={{ background: 'var(--menu-bg)', borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
+        <Link href={`/${slug}`} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'var(--menu-card)' }}>
+          <ArrowLeft className="w-5 h-5" style={{ color: 'var(--menu-text)' }} />
         </Link>
-        <h1 className="text-lg font-black text-white flex-1">Seu pedido</h1>
+        <h1 className="text-lg font-black flex-1" style={{ color: 'var(--menu-text)' }}>Seu pedido</h1>
         {totalItems > 0 && (
-          <span className="text-white/40 text-sm">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
+          <span className="text-sm" style={{ color: 'var(--menu-text-muted)' }}>{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
         )}
       </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
           <div className="text-5xl mb-4">🛒</div>
-          <p className="text-white/60 text-lg font-medium">Carrinho vazio</p>
-          <p className="text-white/30 text-sm mt-2">Adicione itens do cardápio para fazer seu pedido.</p>
+          <p className="text-lg font-medium" style={{ color: 'var(--menu-text-muted)' }}>Carrinho vazio</p>
+          <p className="text-sm mt-2" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Adicione itens do cardápio para fazer seu pedido.</p>
           <Link
             href={`/${slug}`}
-            className="mt-6 px-6 py-3 rounded-2xl font-bold text-white text-sm"
-            style={{ background: 'var(--menu-primary)' }}
+            className="mt-6 px-6 py-3 rounded-2xl font-bold text-sm"
+            style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
           >
             Ver cardápio
           </Link>
@@ -145,17 +145,17 @@ export function PedidoClient({ slug, restaurantId }: Props) {
               <div
                 key={item.id}
                 className="flex items-center gap-3 rounded-2xl p-3"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
+                style={{ background: 'var(--menu-card)' }}
               >
                 {item.image_url ? (
                   <Image src={item.image_url} alt={item.name} width={56} height={56} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'rgba(128,128,128,0.10)' }}>
                     🍽️
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-sm leading-tight truncate">{item.name}</p>
+                  <p className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--menu-text)' }}>{item.name}</p>
                   <p className="text-sm font-black mt-1" style={{ color: 'var(--menu-primary)' }}>
                     {formatPrice(item.price * item.quantity)}
                   </p>
@@ -164,24 +164,24 @@ export function PedidoClient({ slug, restaurantId }: Props) {
                   <button
                     onClick={() => decrement(item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(255,255,255,0.10)' }}
+                    style={{ background: 'rgba(128,128,128,0.15)' }}
                   >
-                    <Minus className="w-3.5 h-3.5 text-white" />
+                    <Minus className="w-3.5 h-3.5" style={{ color: 'var(--menu-text)' }} />
                   </button>
-                  <span className="text-white font-bold text-sm w-5 text-center">{item.quantity}</span>
+                  <span className="font-bold text-sm w-5 text-center" style={{ color: 'var(--menu-text)' }}>{item.quantity}</span>
                   <button
                     onClick={() => increment(item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--menu-primary)' }}
+                    style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
                   >
-                    <Plus className="w-3.5 h-3.5 text-white" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => removeItem(item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center ml-1"
-                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                    style={{ background: 'rgba(128,128,128,0.10)' }}
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-white/50" />
+                    <Trash2 className="w-3.5 h-3.5" style={{ color: 'var(--menu-text-muted)' }} />
                   </button>
                 </div>
               </div>
@@ -189,9 +189,9 @@ export function PedidoClient({ slug, restaurantId }: Props) {
           </div>
 
           {/* Total */}
-          <div className="mx-4 mt-4 rounded-2xl px-4 py-4 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.06)' }}>
-            <span className="text-white/60 font-medium">Total</span>
-            <span className="text-2xl font-black text-white">{formatPrice(totalPrice)}</span>
+          <div className="mx-4 mt-4 rounded-2xl px-4 py-4 flex items-center justify-between" style={{ background: 'var(--menu-card)' }}>
+            <span className="font-medium" style={{ color: 'var(--menu-text-muted)' }}>Total</span>
+            <span className="text-2xl font-black" style={{ color: 'var(--menu-text)' }}>{formatPrice(totalPrice)}</span>
           </div>
 
           {/* Ações */}
@@ -199,16 +199,16 @@ export function PedidoClient({ slug, restaurantId }: Props) {
             <button
               onClick={handleGerarQR}
               disabled={qrLoading}
-              className="w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 text-base"
-              style={{ background: 'var(--menu-primary)' }}
+              className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
             >
               {qrLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
               {qrLoading ? 'Gerando...' : 'Gerar QR Code para a mesa'}
             </button>
             <button
               onClick={() => setModal('delivery')}
-              className="w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 text-base"
-              style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)' }}
+              className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+              style={{ background: 'var(--menu-card)', color: 'var(--menu-text)', border: '1px solid rgba(128,128,128,0.20)' }}
             >
               <Truck className="w-5 h-5" />
               Pedir para entrega
@@ -220,33 +220,33 @@ export function PedidoClient({ slug, restaurantId }: Props) {
       {/* Modal QR Code */}
       {modal === 'qr' && qrSessionId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10" style={{ background: 'var(--menu-bg)', border: '1px solid rgba(255,255,255,0.10)' }}>
+          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10" style={{ background: 'var(--menu-bg)', borderTop: '1px solid rgba(128,128,128,0.15)' }}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-white">QR Code do pedido</h2>
-              <button onClick={() => setModal(null)}>
-                <X className="w-5 h-5 text-white/60" />
+              <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>QR Code do pedido</h2>
+              <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-white/50 text-sm mb-6 text-center">Mostre este QR code ao garçom para confirmar seu pedido</p>
+            <p className="text-sm mb-6 text-center" style={{ color: 'var(--menu-text-muted)' }}>Mostre este QR code ao garçom para confirmar seu pedido</p>
             <div className="flex justify-center mb-6">
               <div className="bg-white p-4 rounded-2xl">
                 <QRCodeSVG value={qrUrl} size={200} />
               </div>
             </div>
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <p className="text-white/40 text-xs mb-2">Itens do pedido</p>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
+              <p className="text-xs mb-2" style={{ color: 'var(--menu-text-muted)' }}>Itens do pedido</p>
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm text-white/70 py-1">
+                <div key={item.id} className="flex justify-between text-sm py-1" style={{ color: 'var(--menu-text-muted)' }}>
                   <span>{item.quantity}x {item.name}</span>
                   <span>{formatPrice(item.price * item.quantity)}</span>
                 </div>
               ))}
-              <div className="border-t border-white/10 mt-2 pt-2 flex justify-between font-black text-white">
+              <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
                 <span>Total</span>
                 <span>{formatPrice(totalPrice)}</span>
               </div>
             </div>
-            <p className="text-white/30 text-xs text-center mt-4">Válido por 15 minutos</p>
+            <p className="text-xs text-center mt-4" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Válido por 15 minutos</p>
           </div>
         </div>
       )}
@@ -254,11 +254,11 @@ export function PedidoClient({ slug, restaurantId }: Props) {
       {/* Modal Entrega */}
       {modal === 'delivery' && (
         <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 mt-10" style={{ background: 'var(--menu-bg)', border: '1px solid rgba(255,255,255,0.10)' }}>
+          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 mt-10" style={{ background: 'var(--menu-bg)', borderTop: '1px solid rgba(128,128,128,0.15)' }}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-white">Dados para entrega</h2>
-              <button onClick={() => setModal(null)}>
-                <X className="w-5 h-5 text-white/60" />
+              <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>Dados para entrega</h2>
+              <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -291,7 +291,7 @@ export function PedidoClient({ slug, restaurantId }: Props) {
 
               {/* Forma de pagamento */}
               <div>
-                <label className="block text-white/60 text-sm mb-2">Forma de pagamento *</label>
+                <label className="block text-sm mb-2" style={{ color: 'var(--menu-text-muted)' }}>Forma de pagamento *</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { value: 'dinheiro', label: 'Dinheiro' },
@@ -304,8 +304,9 @@ export function PedidoClient({ slug, restaurantId }: Props) {
                       onClick={() => setForm({ ...form, payment: opt.value })}
                       className="py-2.5 rounded-xl text-sm font-bold transition-colors"
                       style={{
-                        background: form.payment === opt.value ? 'var(--menu-primary)' : 'rgba(255,255,255,0.08)',
-                        color: 'white',
+                        background: form.payment === opt.value ? 'var(--menu-primary)' : 'var(--menu-card)',
+                        color: form.payment === opt.value ? 'var(--menu-text-on-primary)' : 'var(--menu-text)',
+                        border: '1px solid rgba(128,128,128,0.15)',
                       }}
                     >
                       {opt.label}
@@ -331,8 +332,8 @@ export function PedidoClient({ slug, restaurantId }: Props) {
               )}
 
               {/* Resumo */}
-              <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <div className="flex justify-between font-black text-white text-lg">
+              <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
+                <div className="flex justify-between font-black text-lg" style={{ color: 'var(--menu-text)' }}>
                   <span>Total</span>
                   <span>{formatPrice(totalPrice)}</span>
                 </div>
@@ -341,8 +342,8 @@ export function PedidoClient({ slug, restaurantId }: Props) {
               <button
                 type="submit"
                 disabled={deliveryLoading}
-                className="w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 text-base"
-                style={{ background: 'var(--menu-primary)' }}
+                className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+                style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
               >
                 {deliveryLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Truck className="w-5 h-5" />}
                 {deliveryLoading ? 'Enviando pedido...' : 'Confirmar entrega'}
@@ -370,16 +371,17 @@ function DeliveryField({
 }) {
   return (
     <div>
-      <label className="block text-white/60 text-sm mb-1.5">{label}</label>
+      <label className="block text-sm mb-1.5" style={{ color: 'var(--menu-text-muted)' }}>{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 focus:outline-none focus:ring-2"
+        className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
         style={{
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.10)',
+          background: 'var(--menu-card)',
+          border: '1px solid rgba(128,128,128,0.20)',
+          color: 'var(--menu-text)',
           // @ts-expect-error css variable
           '--tw-ring-color': 'var(--menu-primary)',
         }}

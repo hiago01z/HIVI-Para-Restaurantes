@@ -1,0 +1,26 @@
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 32 32"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Espinha central: dente do meio + cabo -->
+  <line
+    x1="16" y1="5"
+    x2="16" y2="27"
+    stroke="#F97316" stroke-width="2.5" stroke-linecap="round"
+  />
+
+  <!-- Dente esquerdo -->
+  <path
+    d="M10 5 L10 13 Q10 17 16 17"
+    stroke="#F97316" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  />
+
+  <!-- Dente direito -->
+  <path
+    d="M22 5 L22 13 Q22 17 16 17"
+    stroke="#F97316" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  />
+</svg>

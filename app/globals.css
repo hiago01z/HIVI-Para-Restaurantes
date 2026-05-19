@@ -61,6 +61,18 @@
   }
 }
 
+/* ── Cardápio público: placeholder visível em fundos escuros ── */
+#menu-root input::placeholder,
+#menu-root textarea::placeholder {
+  color: var(--menu-text-muted);
+  opacity: 0.6;
+}
+#menu-root input,
+#menu-root textarea,
+#menu-root select {
+  color-scheme: normal; /* evita tema escuro do sistema sobrescrever */
+}
+
 /* ── Tipografia: fonte display (Playfair Display) ── */
 @layer utilities {
   .font-display {
@@ -85,8 +97,9 @@
     }
   }
   .adm-btn-primary {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50;
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50;
     background: var(--adm-primary);
+    color: var(--adm-text-on-primary, #ffffff);
     &:hover:not(:disabled) {
       filter: brightness(0.9);
     }

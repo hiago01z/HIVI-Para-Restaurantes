@@ -4,12 +4,19 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { ContaActions } from './_conta-actions'
 import { AdmPasswordForm } from './_adm-password-form'
+import { SuccessBanner } from './_success-banner'
 
-export default async function ContaPage() {
+export default async function ContaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; cancelled?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/entrar')
+
+  const { success } = await searchParams
 
   const { data: restaurantes } = await supabase
     .from('restaurants')
@@ -42,6 +49,9 @@ export default async function ContaPage() {
       </header>
 
       <main className="px-5 py-8 max-w-lg mx-auto">
+
+        {/* Banner de sucesso após pagamento */}
+        {success === '1' && <SuccessBanner />}
 
         {/* Minhas lojas */}
         <div className="flex items-center justify-between mb-5">

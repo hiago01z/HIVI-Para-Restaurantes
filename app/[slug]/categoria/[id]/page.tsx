@@ -50,7 +50,7 @@ export default async function CategoriaPage({
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ color: 'white' }}>
+    <div className="min-h-screen pb-24" style={{ color: 'var(--menu-text)' }}>
 
       {/* Header com imagem da categoria */}
       <div className="relative h-52 w-full">
@@ -97,14 +97,14 @@ export default async function CategoriaPage({
         {pratos.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-3">🍽️</div>
-            <p className="text-white/40">Nenhum item disponível no momento</p>
+            <p style={{ color: 'var(--menu-text-muted)' }}>Nenhum item disponível no momento</p>
           </div>
         ) : (
           pratos.map((product) => (
             <div
               key={product.id}
               className="flex gap-3 rounded-2xl p-3"
-              style={{ background: 'rgba(255,255,255,0.06)' }}
+              style={{ background: 'var(--menu-card)' }}
             >
               {product.image_url ? (
                 <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
@@ -116,9 +116,9 @@ export default async function CategoriaPage({
                 </div>
               )}
               <div className="flex-1 min-w-0 flex flex-col">
-                <p className="font-bold text-white text-sm leading-tight">{product.name}</p>
+                <p className="font-bold text-sm leading-tight" style={{ color: 'var(--menu-text)' }}>{product.name}</p>
                 {product.description && (
-                  <p className="text-white/50 text-xs mt-1 leading-relaxed line-clamp-3">{product.description}</p>
+                  <p className="text-xs mt-1 leading-relaxed line-clamp-3" style={{ color: 'var(--menu-text-muted)' }}>{product.description}</p>
                 )}
                 <div className="mt-auto pt-2 flex items-center justify-between gap-2">
                   <span className="font-black text-sm" style={{ color: 'var(--menu-primary)' }}>

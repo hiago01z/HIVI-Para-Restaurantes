@@ -109,8 +109,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
         </div>
         <button
           onClick={() => { setShowInvite(!showInvite); setInviteError(''); setInviteSuccess('') }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-colors"
-          style={{ background: 'var(--adm-primary)' }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
+          style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
         >
           <UserPlus className="w-4 h-4" />
           Convidar
@@ -175,8 +175,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
             <button
               onClick={handleInvite}
               disabled={inviteLoading || !inviteEmail}
-              className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ background: 'var(--adm-primary)' }}
+              className="flex-1 py-3 rounded-xl text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
             >
               {inviteLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {inviteLoading ? 'Enviando...' : 'Enviar convite'}
@@ -222,8 +222,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
                   />
                 ) : (
                   <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-base flex-shrink-0"
-                    style={{ background: 'var(--adm-primary)' }}
+                    className="w-11 h-11 rounded-full flex items-center justify-center font-black text-base flex-shrink-0"
+                    style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
                   >
                     {(member.name ?? member.email).charAt(0).toUpperCase()}
                   </div>

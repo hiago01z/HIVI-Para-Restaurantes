@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { AdmNav } from './_components/adm-nav'
+import { getContrastColor } from '@/lib/color-utils'
 
 export default async function AdmLayout({
   children,
@@ -28,14 +29,16 @@ export default async function AdmLayout({
     .eq('restaurant_id', restaurant.id)
     .single()
 
-  const primary = theme?.primary_color ?? '#FF6B00'
+  const primary         = theme?.primary_color ?? '#FF6B00'
+  const textOnPrimary   = getContrastColor(primary)
 
   // Variáveis CSS do ADM — reseta completamente o tema do cardápio público
   // e injeta apenas a cor primária do restaurante como accent
   const admCssVars = [
     `--adm-primary: ${primary}`,
-    `--adm-primary-light: ${primary}18`,  // 10% opacity
-    `--adm-primary-muted: ${primary}30`,  // 20% opacity
+    `--adm-primary-light: ${primary}18`,
+    `--adm-primary-muted: ${primary}30`,
+    `--adm-text-on-primary: ${textOnPrimary}`,
     // Reset das vars do cardápio para garantir contraste no ADM
     '--menu-bg: #f9fafb',
     '--menu-text: #111827',

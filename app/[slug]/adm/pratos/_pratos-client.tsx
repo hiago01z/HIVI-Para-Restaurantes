@@ -197,8 +197,8 @@ export function PratosClient({
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Pratos / Bebidas</h1>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-bold rounded-xl transition-all"
-          style={{ background: 'var(--adm-primary)' }}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl transition-all"
+          style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
         >
           <Plus className="w-4 h-4" /> Novo item
         </button>
@@ -387,8 +387,8 @@ export function PratosClient({
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className="w-full py-3.5 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
-                style={{ background: 'var(--adm-primary)' }}
+                className="w-full py-3.5 disabled:opacity-50 font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+                style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {loading ? 'Salvando...' : modal === 'create' ? 'Criar item' : 'Salvar alterações'}

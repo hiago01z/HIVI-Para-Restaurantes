@@ -117,8 +117,8 @@ export function DashboardClient({ slug, restaurantName, todayOrders, totalProduc
             <span className="font-semibold text-gray-800 text-sm flex-1 ml-7">{label}</span>
             {badge !== null && (
               <span
-                className="w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center text-white flex-shrink-0"
-                style={{ background: 'var(--adm-primary)' }}
+                className="w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
               >
                 {badge}
               </span>
