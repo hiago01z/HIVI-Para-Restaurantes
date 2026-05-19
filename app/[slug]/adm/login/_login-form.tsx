@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 
 export function LoginForm({ slug }: { slug: string }) {
@@ -99,7 +100,7 @@ export function LoginForm({ slug }: { slug: string }) {
 
         <p className="text-center text-xs text-gray-600 mt-8">
           Senha criada pelo dono em{' '}
-          <a href="/conta" className="text-orange-500 hover:underline">hivi.vercel.app/conta</a>
+          <Link href="/conta" className="text-orange-500 hover:underline">hivi.vercel.app/conta</Link>
         </p>
       </div>
     </div>
