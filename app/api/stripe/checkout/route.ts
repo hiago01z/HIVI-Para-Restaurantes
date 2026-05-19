@@ -48,14 +48,24 @@ export async function POST(request: Request) {
 
     const stripe = new Stripe(stripeKey)
 
+    // Garante que a URL base está definida e tem scheme https
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+    if (!appUrl.startsWith('http')) {
+      console.error('[checkout] NEXT_PUBLIC_APP_URL inválida:', appUrl)
+      return NextResponse.json(
+        { error: 'URL da aplicação não configurada. Contate o suporte.' },
+        { status: 500 }
+      )
+    }
+
     let session: Stripe.Checkout.Session
     try {
       session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         payment_method_types: ['card'],
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/conta?success=1`,
-        cancel_url:  `${process.env.NEXT_PUBLIC_APP_URL}/criar-loja?cancelled=1`,
+        success_url: `${appUrl}/conta?success=1`,
+        cancel_url:  `${appUrl}/criar-loja?cancelled=1`,
         customer_email: user.email ?? undefined,
         metadata: {
           user_id:         user.id,
