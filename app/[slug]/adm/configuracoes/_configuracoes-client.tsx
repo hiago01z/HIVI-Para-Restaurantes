@@ -342,55 +342,179 @@ export function ConfiguracoesClient({
           </select>
         </div>
 
-        {/* Preview rápido */}
-        <div
-          className="rounded-2xl overflow-hidden mb-4"
-          style={{ background: theme.background_color, fontFamily: theme.font_family }}
-        >
-          {/* Header simulado */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
-                style={{ background: theme.primary_color, color: theme.text_color }}>
-                {restaurant.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-bold" style={{ color: theme.text_color }}>{restaurant.name}</span>
-            </div>
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ color: theme.icon_color }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                  <path d="M11 3a8 8 0 100 16A8 8 0 0011 3zM21 21l-4.35-4.35" />
-                </svg>
-              </div>
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ color: theme.icon_color }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                  <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          {/* Destaque simulado */}
-          <div className="p-3">
-            <p className="text-xs font-black mb-2" style={{ color: theme.primary_color }}>Destaques</p>
-            <div className="rounded-xl overflow-hidden relative h-20" style={{ background: 'rgba(128,128,128,0.2)' }}>
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }} />
-              <div className="absolute bottom-0 left-0 right-0 p-2">
-                <p className="text-xs font-black" style={{ color: theme.text_color }}>Nome do Prato</p>
-                <div className="flex gap-1.5 mt-1.5">
-                  <div className="flex-1 py-1 rounded-lg text-center text-xs font-bold" style={{ background: theme.primary_color, color: theme.text_color }}>Pedir agora</div>
-                  <div className="flex-1 py-1 rounded-lg text-center text-xs font-bold" style={{ background: 'rgba(255,255,255,0.15)', color: theme.text_color }}>Adicionar</div>
+        {/* ── Prévia do cardápio — mockup de celular ── */}
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+            Prévia em tempo real
+          </p>
+
+          {/* Phone frame */}
+          <div
+            className="mx-auto w-[270px] rounded-[2.25rem] overflow-hidden shadow-2xl"
+            style={{
+              background: theme.background_color,
+              border: '5px solid #1f2937',
+              fontFamily:
+                theme.font_family === 'serif'      ? "'Playfair Display', Georgia, serif" :
+                theme.font_family === 'sans-serif' ? "system-ui, sans-serif" :
+                theme.font_family === 'monospace'  ? "'Courier New', monospace" :
+                theme.font_family === 'cursive'    ? "Georgia, cursive" :
+                theme.font_family,
+            }}
+          >
+            {/* Status bar */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-1.5" style={{ background: 'rgba(0,0,0,0.25)' }}>
+              <span className="text-[9px] font-bold" style={{ color: theme.text_color, opacity: 0.7 }}>9:41</span>
+              <div className="flex items-center gap-1" style={{ color: theme.text_color, opacity: 0.7 }}>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5"><path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                <div className="flex items-center gap-0.5">
+                  <div className="w-3.5 h-2 rounded-sm border" style={{ borderColor: theme.text_color }}>
+                    <div className="h-full rounded-sm w-3/4" style={{ background: theme.text_color }} />
+                  </div>
                 </div>
               </div>
             </div>
-            {/* Categorias simuladas */}
-            <p className="text-xs font-black mt-3 mb-2" style={{ color: theme.primary_color }}>Cardápio</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {['Combos', 'Bebidas'].map((n) => (
-                <div key={n} className="rounded-lg h-10 relative overflow-hidden flex items-end" style={{ background: 'rgba(128,128,128,0.2)' }}>
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
-                  <span className="relative z-10 px-2 pb-1 text-xs font-black" style={{ color: theme.text_color }}>{n}</span>
+
+            {/* Header do cardápio */}
+            <div
+              className="flex items-center justify-between px-3.5 py-2.5"
+              style={{ borderBottom: '1px solid rgba(128,128,128,0.15)', background: theme.background_color }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                  style={{ background: theme.primary_color, color: theme.text_color }}
+                >
+                  {restaurant.name.charAt(0).toUpperCase()}
                 </div>
-              ))}
+                <span className="text-[11px] font-semibold truncate max-w-[90px]" style={{ color: theme.text_color }}>
+                  {restaurant.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
+                  <path d="M3 6h18M3 12h18M3 18h18"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Conteúdo scrollável */}
+            <div className="px-2.5 pt-2.5 pb-3">
+
+              {/* Carrossel destaque — quadrado */}
+              <div
+                className="relative w-full rounded-2xl overflow-hidden mb-3"
+                style={{
+                  aspectRatio: '1 / 1',
+                  background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)`,
+                }}
+              >
+                {/* Gradiente */}
+                <div
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.15) 50%, transparent 75%)' }}
+                />
+                {/* Emoji de prato (placeholder) */}
+                <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-20 select-none">
+                  🍽️
+                </div>
+                {/* Pill de preço */}
+                <div
+                  className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold"
+                  style={{ background: theme.primary_color, color: theme.text_color }}
+                >
+                  R$ 29,90
+                </div>
+                {/* Dots de navegação */}
+                <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+                  <span className="block rounded-full" style={{ width: '16px', height: '5px', background: theme.primary_color }} />
+                  <span className="block rounded-full opacity-35" style={{ width: '5px', height: '5px', background: theme.text_color }} />
+                  <span className="block rounded-full opacity-35" style={{ width: '5px', height: '5px', background: theme.text_color }} />
+                </div>
+                {/* Info rodapé */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="font-bold text-[13px] leading-tight mb-1" style={{ color: theme.text_color }}>
+                    Nome do Prato em Destaque
+                  </p>
+                  <p className="text-[10px] mb-2.5 opacity-60" style={{ color: theme.text_color }}>
+                    Descrição breve do prato especial
+                  </p>
+                  <div className="flex gap-2">
+                    <div
+                      className="flex-1 py-2 rounded-xl text-center text-[11px] font-semibold"
+                      style={{ background: theme.primary_color, color: theme.text_color }}
+                    >
+                      Pedir agora
+                    </div>
+                    <div
+                      className="flex-1 py-2 rounded-xl text-center text-[11px] font-semibold"
+                      style={{ background: 'rgba(255,255,255,0.15)', color: theme.text_color }}
+                    >
+                      Adicionar
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Label Cardápio */}
+              <p className="text-[12px] font-bold mb-2 tracking-tight" style={{ color: theme.primary_color }}>
+                Cardápio
+              </p>
+
+              {/* Grid categorias: 2 pequenos */}
+              <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                {['Combos', 'Bebidas'].map((n) => (
+                  <div
+                    key={n}
+                    className="rounded-xl aspect-square relative overflow-hidden flex items-end"
+                    style={{ background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)` }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center text-2xl opacity-15 select-none">🍔</div>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)' }} />
+                    <span className="relative z-10 px-2 pb-1.5 text-[11px] font-bold tracking-wide" style={{ color: theme.text_color }}>{n}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Grid categorias: 1 grande */}
+              <div
+                className="rounded-xl relative overflow-hidden flex items-end"
+                style={{
+                  aspectRatio: '16 / 7',
+                  background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)`,
+                }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-15 select-none">🍕</div>
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)' }} />
+                <span className="relative z-10 px-2.5 pb-2 text-[11px] font-bold tracking-wide" style={{ color: theme.text_color }}>Especiais</span>
+              </div>
+            </div>
+
+            {/* Rodapé do cardápio */}
+            <div className="px-3.5 pt-3 pb-2" style={{ borderTop: '1px solid rgba(128,128,128,0.12)' }}>
+              <div className="flex flex-col items-center gap-1.5">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold"
+                  style={{ background: theme.primary_color, color: theme.text_color }}
+                >
+                  {restaurant.name.charAt(0).toUpperCase()}
+                </div>
+                <p className="text-[11px] font-semibold" style={{ color: theme.text_color }}>
+                  {restaurant.name}
+                </p>
+                <p className="text-[9px] opacity-40 font-medium" style={{ color: theme.text_color }}>
+                  © 2026 · Feito com HIVI
+                </p>
+              </div>
+            </div>
+
+            {/* Home indicator */}
+            <div className="flex justify-center py-2">
+              <div className="w-20 h-1 rounded-full opacity-25" style={{ background: theme.text_color }} />
             </div>
           </div>
         </div>
