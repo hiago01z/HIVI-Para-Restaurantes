@@ -13,22 +13,21 @@ type Props = {
   slug: string
   restaurantName: string
   logoUrl?: string | null
-  role: string
+  primaryColor?: string
+  role?: string
 }
 
 const navItems = [
-  { href: 'pedidos',       label: 'Pedidos',         icon: ShoppingBag,     roles: ['owner', 'admin', 'waiter'] },
-  { href: 'categorias',    label: 'Categorias',       icon: LayoutGrid,      roles: ['owner', 'admin'] },
-  { href: 'pratos',        label: 'Pratos/Bebidas',   icon: UtensilsCrossed, roles: ['owner', 'admin'] },
-  { href: 'configuracoes', label: 'Configurações',    icon: Settings,        roles: ['owner', 'admin'] },
+  { href: 'pedidos',       label: 'Pedidos',        icon: ShoppingBag },
+  { href: 'categorias',    label: 'Categorias',      icon: LayoutGrid },
+  { href: 'pratos',        label: 'Pratos/Bebidas',  icon: UtensilsCrossed },
+  { href: 'configuracoes', label: 'Configurações',   icon: Settings },
 ]
 
-export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
+export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00' }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [drawerOpen, setDrawerOpen] = useState(false)
-
-  const visibleItems = navItems.filter((item) => item.roles.includes(role))
 
   async function handleSignout() {
     await fetch(`/api/adm/${slug}/logout`, { method: 'POST' })
@@ -43,13 +42,18 @@ export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
   return (
     <>
       {/* Top bar fixa */}
-      <nav className="fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3">
+      <nav className="fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3 shadow-sm">
+
         {/* Logo/Nome */}
         <Link href={`/${slug}/adm/pedidos`} className="flex items-center gap-2 flex-1 min-w-0">
           {logoUrl ? (
-            <Image src={logoUrl} alt={restaurantName} width={28} height={28} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+            <Image src={logoUrl} alt={restaurantName} width={28} height={28}
+              className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-xs flex-shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs flex-shrink-0"
+              style={{ background: primaryColor }}
+            >
               {restaurantName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -58,21 +62,24 @@ export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
         </Link>
 
         {/* Nav desktop */}
-        <div className="hidden sm:flex items-center gap-1">
-          {visibleItems.map((item) => (
-            <Link
-              key={item.href}
-              href={`/${slug}/adm/${item.href}`}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive(item.href)
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
+        <div className="hidden sm:flex items-center gap-0.5">
+          {navItems.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={`/${slug}/adm/${item.href}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                style={active
+                  ? { background: primaryColor + '18', color: primaryColor }
+                  : { color: '#6b7280' }
+                }
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </Link>
+            )
+          })}
         </div>
 
         {/* Ações */}
@@ -93,7 +100,7 @@ export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
           </button>
           <button
             onClick={handleSignout}
-            className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+            className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
             title="Sair"
           >
             <LogOut className="w-4 h-4" />
@@ -113,21 +120,24 @@ export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
               </button>
             </div>
             <nav className="flex-1 py-2">
-              {visibleItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={`/${slug}/adm/${item.href}`}
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'bg-orange-50 text-orange-600'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={`/${slug}/adm/${item.href}`}
+                    onClick={() => setDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
+                    style={active
+                      ? { background: primaryColor + '18', color: primaryColor }
+                      : { color: '#4b5563' }
+                    }
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
             </nav>
             <div className="border-t border-gray-100 p-4 space-y-2">
               <Link

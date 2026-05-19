@@ -191,7 +191,7 @@ export function ConfiguracoesClient({
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
               placeholder="https://instagram.com/seurestaurante"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
             />
           </div>
           <div>
@@ -203,7 +203,7 @@ export function ConfiguracoesClient({
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               placeholder="5511999999999 (com DDI + DDD)"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
             />
             <p className="text-xs text-gray-400 mt-1">Formato: 55 + DDD + número. Ex: 5511999999999</p>
           </div>
@@ -219,13 +219,13 @@ export function ConfiguracoesClient({
             <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
             <div
               onClick={() => logoRef.current?.click()}
-              className="relative w-full h-28 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-colors overflow-hidden"
+              className="adm-upload-area h-28"
             >
               {logoPreview ? (
                 <Image src={logoPreview} alt="logo" fill className="object-contain p-2" />
               ) : (
                 <div className="text-center">
-                  {logoLoading ? <Loader2 className="w-5 h-5 animate-spin text-orange-500 mx-auto" /> : (
+                  {logoLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--adm-primary)' }} /> : (
                     <>
                       <Upload className="w-5 h-5 text-gray-300 mx-auto mb-1" />
                       <p className="text-xs text-gray-400">Logo</p>
@@ -248,13 +248,13 @@ export function ConfiguracoesClient({
             <p className="text-sm font-medium text-gray-700 mb-2">Banner do cardápio</p>
             <div
               onClick={() => bannerRef.current?.click()}
-              className="relative w-full h-28 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-colors overflow-hidden"
+              className="adm-upload-area h-28"
             >
               {bannerPreview ? (
                 <Image src={bannerPreview} alt="banner" fill className="object-cover" />
               ) : (
                 <div className="text-center">
-                  {bannerLoading ? <Loader2 className="w-5 h-5 animate-spin text-orange-500 mx-auto" /> : (
+                  {bannerLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--adm-primary)' }} /> : (
                     <>
                       <Upload className="w-5 h-5 text-gray-300 mx-auto mb-1" />
                       <p className="text-xs text-gray-400">Banner</p>
@@ -285,7 +285,7 @@ export function ConfiguracoesClient({
               <button
                 key={preset.name}
                 onClick={() => applyPreset(preset)}
-                className="rounded-xl overflow-hidden border-2 border-transparent hover:border-orange-400 transition-all"
+                className="rounded-xl overflow-hidden border-2 border-transparent hover:border-gray-300 transition-all"
                 title={preset.name}
               >
                 <div
@@ -334,7 +334,7 @@ export function ConfiguracoesClient({
           <select
             value={theme.font_family}
             onChange={(e) => setTheme((t) => ({ ...t, font_family: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
           >
             {FONT_OPTIONS.map((f) => (
               <option key={f.value} value={f.value}>{f.label}</option>
@@ -459,7 +459,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-orange-400 bg-gray-50"
+          className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs font-mono focus:outline-none focus:ring-1 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)] bg-gray-50"
           maxLength={7}
         />
       </div>
@@ -482,9 +482,8 @@ function SaveButton({
     <button
       onClick={onClick}
       disabled={loading}
-      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50 ${
-        saved ? 'bg-green-500' : 'bg-orange-500 hover:bg-orange-600'
-      }`}
+      className="adm-btn-primary"
+      style={saved ? { background: '#22c55e' } : undefined}
     >
       {loading && <Loader2 className="w-4 h-4 animate-spin" />}
       {saved && <Check className="w-4 h-4" />}

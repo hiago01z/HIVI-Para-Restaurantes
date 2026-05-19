@@ -57,3 +57,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── ADM: inputs e elementos interativos com cor primária do restaurante ── */
+@layer utilities {
+  .adm-input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400 focus:outline-none transition-colors;
+    &:focus {
+      border-color: var(--adm-primary);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--adm-primary) 25%, transparent);
+    }
+  }
+  .adm-btn-primary {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50;
+    background: var(--adm-primary);
+    &:hover:not(:disabled) {
+      filter: brightness(0.9);
+    }
+  }
+  .adm-btn-secondary {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border border-gray-200 text-gray-700 bg-white hover:bg-gray-50;
+  }
+  .adm-upload-area {
+    @apply relative w-full rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer transition-colors overflow-hidden;
+    &:hover {
+      border-color: var(--adm-primary);
+      background: color-mix(in srgb, var(--adm-primary) 5%, white);
+    }
+  }
+  .adm-tab-active {
+    color: var(--adm-primary);
+    border-bottom-color: var(--adm-primary);
+  }
+}

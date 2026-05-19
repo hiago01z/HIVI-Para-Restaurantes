@@ -157,7 +157,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
             {t.key === 'qr' && <QrCode className="w-4 h-4" />}
             {t.label}
             {t.count > 0 && (
-              <span className="bg-orange-500 text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--adm-primary)' }}>
                 {t.count}
               </span>
             )}
@@ -168,8 +168,8 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
       {/* Aba Ler QR Code */}
       {tab === 'qr' && (
         <div className="text-center py-16">
-          <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Camera className="w-8 h-8 text-orange-500" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'color-mix(in srgb, var(--adm-primary) 15%, white)' }}>
+            <Camera className="w-8 h-8" style={{ color: 'var(--adm-primary)' }} />
           </div>
           <h2 className="text-lg font-black text-gray-900 mb-2">Escanear QR Code do cliente</h2>
           <p className="text-gray-500 text-sm mb-6 leading-relaxed max-w-xs mx-auto">
@@ -264,7 +264,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
                       {order.order_items.map((item) => (
                         <div key={item.id} className="flex justify-between items-center py-1.5">
                           <span className="text-sm text-gray-700">
-                            <span className="font-bold text-orange-500">{item.quantity}x</span> {item.product_name}
+                            <span className="font-bold" style={{ color: 'var(--adm-primary)' }}>{item.quantity}x</span> {item.product_name}
                           </span>
                           <span className="text-sm text-gray-500">{formatPrice(item.product_price * item.quantity)}</span>
                         </div>
@@ -301,13 +301,18 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
                     key={s.value}
                     onClick={() => setNewStatus(s.value)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors text-left ${
-                      newStatus === s.value
-                        ? 'border-orange-400 bg-orange-50'
-                        : 'border-gray-100 bg-white hover:bg-gray-50'
+                      newStatus === s.value ? '' : 'border-gray-100 bg-white hover:bg-gray-50'
                     }`}
+                    style={newStatus === s.value ? {
+                      borderColor: 'var(--adm-primary)',
+                      background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                    } : undefined}
                   >
                     <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${s.color.replace('text-', 'bg-').split(' ')[0]}`} />
-                    <span className={`text-sm font-medium ${newStatus === s.value ? 'text-orange-700' : 'text-gray-700'}`}>
+                    <span
+                      className="text-sm font-medium"
+                      style={newStatus === s.value ? { color: 'var(--adm-primary)' } : { color: '#374151' }}
+                    >
                       {s.label}
                     </span>
                   </button>
@@ -316,7 +321,8 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
             <button
               onClick={handleStatusChange}
               disabled={statusLoading || newStatus === editingOrder.status}
-              className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3.5 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+              style={{ background: 'var(--adm-primary)' }}
             >
               {statusLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {statusLoading ? 'Salvando...' : 'Confirmar'}

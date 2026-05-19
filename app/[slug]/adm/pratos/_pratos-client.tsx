@@ -213,7 +213,8 @@ export function PratosClient({
         <h1 className="text-xl font-black text-gray-900">Pratos / Bebidas</h1>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-bold rounded-xl transition-all"
+          style={{ background: 'var(--adm-primary)' }}
         >
           <Plus className="w-4 h-4" /> Novo item
         </button>
@@ -227,13 +228,13 @@ export function PratosClient({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
           />
         </div>
         <select
           value={filterCat}
           onChange={(e) => setFilterCat(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
         >
           <option value="">Todas as categorias</option>
           {categories.map((c) => (
@@ -247,7 +248,7 @@ export function PratosClient({
         <div className="text-center py-16">
           <div className="text-4xl mb-3">🍽️</div>
           <p className="text-gray-400 text-sm">Nenhum item encontrado.</p>
-          <button onClick={openCreate} className="mt-4 text-orange-500 text-sm font-bold">
+          <button onClick={openCreate} className="mt-4 text-sm font-bold" style={{ color: 'var(--adm-primary)' }}>
             + Adicionar primeiro item
           </button>
         </div>
@@ -273,7 +274,7 @@ export function PratosClient({
                       <p className="text-xs text-gray-400 truncate mt-0.5">{product.description}</p>
                     )}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-sm font-black text-orange-500">{formatPrice(product.price)}</span>
+                      <span className="text-sm font-black" style={{ color: 'var(--adm-primary)' }}>{formatPrice(product.price)}</span>
                       {getCategoryName(product.category_id) && (
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                           {getCategoryName(product.category_id)}
@@ -354,7 +355,7 @@ export function PratosClient({
                 <label className="block text-sm font-medium text-gray-700 mb-2">Foto</label>
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="relative w-full h-40 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-colors overflow-hidden"
+                  className="adm-upload-area h-40"
                 >
                   {previewUrl ? (
                     <Image src={previewUrl} alt="preview" fill className="object-cover" />
@@ -383,7 +384,7 @@ export function PratosClient({
                 <select
                   value={form.category_id}
                   onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
                 >
                   <option value="">Sem categoria</option>
                   {categories.map((c) => (
@@ -417,7 +418,8 @@ export function PratosClient({
               <button
                 onClick={handleSave}
                 disabled={loading || uploadLoading}
-                className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3.5 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+                style={{ background: 'var(--adm-primary)' }}
               >
                 {(loading || uploadLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
                 {loading ? 'Salvando...' : uploadLoading ? 'Enviando foto...' : modal === 'create' ? 'Criar item' : 'Salvar alterações'}
@@ -440,7 +442,7 @@ function Field({
   type?: string
   textarea?: boolean
 }) {
-  const cls = 'w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none'
+  const cls = 'w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)] resize-none'
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
@@ -458,11 +460,19 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-sm font-bold transition-colors ${
-        checked ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-gray-200 bg-white text-gray-500'
-      }`}
+      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-sm font-bold transition-colors"
+      style={checked ? {
+        borderColor: 'var(--adm-primary)',
+        background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+        color: 'var(--adm-primary)',
+      } : { borderColor: '#e5e7eb', background: 'white', color: '#6b7280' }}
     >
-      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${checked ? 'border-orange-500 bg-orange-500' : 'border-gray-300'}`}>
+      <div
+        className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+        style={checked
+          ? { borderColor: 'var(--adm-primary)', background: 'var(--adm-primary)' }
+          : { borderColor: '#d1d5db', background: 'transparent' }}
+      >
         {checked && <div className="w-2 h-2 bg-white rounded-full" />}
       </div>
       {label}

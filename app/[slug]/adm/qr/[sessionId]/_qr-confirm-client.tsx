@@ -115,7 +115,7 @@ export function QrConfirmClient({ session, restaurantName }: Props) {
           {session.orderData.items.map((item, idx) => (
             <div key={idx} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-orange-100 text-orange-600 text-xs font-black rounded-full flex items-center justify-center">
+                <span className="w-6 h-6 text-xs font-black rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--adm-primary) 15%, white)', color: 'var(--adm-primary)' }}>
                   {item.quantity}
                 </span>
                 <span className="text-sm text-gray-700">{item.product_name}</span>
@@ -141,7 +141,7 @@ export function QrConfirmClient({ session, restaurantName }: Props) {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Ex: João"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
           />
         </div>
 
@@ -152,7 +152,7 @@ export function QrConfirmClient({ session, restaurantName }: Props) {
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
             placeholder="Ex: 5"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
           />
         </div>
       </div>
@@ -166,7 +166,8 @@ export function QrConfirmClient({ session, restaurantName }: Props) {
       <button
         onClick={handleConfirm}
         disabled={loading}
-        className="w-full py-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors"
+        className="w-full py-4 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+        style={{ background: 'var(--adm-primary)' }}
       >
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
         {loading ? 'Confirmando...' : 'Confirmar pedido'}

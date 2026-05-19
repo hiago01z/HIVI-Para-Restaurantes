@@ -157,7 +157,8 @@ export function CategoriasClient({
         <h1 className="text-xl font-black text-gray-900">Categorias</h1>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-bold rounded-xl transition-all"
+          style={{ background: 'var(--adm-primary)' }}
         >
           <Plus className="w-4 h-4" /> Nova categoria
         </button>
@@ -172,7 +173,7 @@ export function CategoriasClient({
         <div className="text-center py-16">
           <div className="text-4xl mb-3">📂</div>
           <p className="text-gray-400 text-sm">Nenhuma categoria cadastrada.</p>
-          <button onClick={openCreate} className="mt-4 text-orange-500 text-sm font-bold">
+          <button onClick={openCreate} className="mt-4 text-sm font-bold" style={{ color: 'var(--adm-primary)' }}>
             + Criar primeira categoria
           </button>
         </div>
@@ -251,7 +252,7 @@ export function CategoriasClient({
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagem</label>
               <div
                 onClick={() => fileRef.current?.click()}
-                className="relative w-full h-32 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-colors overflow-hidden"
+                className="adm-upload-area h-32"
               >
                 {previewUrl ? (
                   <Image src={previewUrl} alt="preview" fill className="object-cover" />
@@ -278,7 +279,7 @@ export function CategoriasClient({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Entradas, Bebidas..."
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
               />
             </div>
 
@@ -291,7 +292,8 @@ export function CategoriasClient({
             <button
               onClick={handleSave}
               disabled={loading}
-              className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3.5 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
+              style={{ background: 'var(--adm-primary)' }}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Salvando...' : modal === 'create' ? 'Criar categoria' : 'Salvar'}
