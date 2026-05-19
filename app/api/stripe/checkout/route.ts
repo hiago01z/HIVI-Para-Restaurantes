@@ -4,18 +4,22 @@ import Stripe from 'stripe'
 import { z } from 'zod'
 
 const checkoutSchema = z.object({
-  priceId: z.string(),
-  restaurantName: z.string().min(1),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  restaurantName: z.string().min(1, 'Nome obrigatório'),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug inválido'),
 })
 
 export async function POST(request: Request) {
   try {
+    const priceId = process.env.STRIPE_PRICE_BASIC
+    if (!priceId) {
+      return NextResponse.json({ error: 'Plano não configurado' }, { status: 500 })
+    }
+
     const body = await request.json()
     const parsed = checkoutSchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -24,13 +28,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
+    // Verifica se o slug já está em uso
+    const { data: existing } = await supabase
+      .from('restaurants')
+      .select('id')
+      .eq('slug', parsed.data.slug)
+      .single()
+
+    if (existing) {
+      return NextResponse.json({ error: 'Este endereço já está em uso. Escolha outro.' }, { status: 409 })
+    }
+
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [{ price: parsed.data.priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/conta?success=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/conta?cancelled=1`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/criar-loja?cancelled=1`,
+      customer_email: user.email,
       metadata: {
         user_id: user.id,
         restaurant_name: parsed.data.restaurantName,
