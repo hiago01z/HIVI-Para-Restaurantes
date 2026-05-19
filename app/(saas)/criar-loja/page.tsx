@@ -70,7 +70,7 @@ export default function CriarLojaPage() {
 
       {/* Header */}
       <header className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
-        <Link href="/" className="text-3xl font-black tracking-tight text-gray-900">
+        <Link href="/" translate="no" className="text-2xl font-black tracking-[0.06em] text-gray-950 select-none">
           HIVI
         </Link>
         <Link href="/conta" className="text-base font-medium text-gray-500 hover:text-gray-900 transition-colors">
@@ -84,7 +84,7 @@ export default function CriarLojaPage() {
         <div className="flex items-center gap-2 mb-10">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-sm">1</div>
-            <span className="text-sm font-bold text-gray-900">Sua loja</span>
+            <span className="text-sm font-bold text-gray-900">Seu cardápio</span>
           </div>
           <div className="flex-1 h-px bg-gray-200" />
           <div className="flex items-center gap-2">
@@ -93,11 +93,11 @@ export default function CriarLojaPage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-gray-900 mb-2">
-          Criar nova loja
+        <h1 className="font-display text-3xl font-bold text-gray-950 mb-2 tracking-tight">
+          Criar novo cardápio
         </h1>
         <p className="text-base text-gray-500 mb-8 leading-relaxed">
-          Preencha as informações da sua loja. Você será redirecionado para o pagamento.
+          Preencha as informações do seu cardápio. Você será redirecionado para o pagamento.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">

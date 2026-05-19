@@ -45,7 +45,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   }
 
   async function handleDelete(loja: Loja) {
-    if (!confirm(`Excluir "${loja.name}" permanentemente? Esta ação não pode ser desfeita.`)) return
+    if (!confirm(`Excluir o cardápio "${loja.name}" permanentemente? Esta ação não pode ser desfeita.`)) return
     setLoadingId(loja.id + '-del')
     try {
       const res = await fetch(`/api/restaurants/${loja.id}`, { method: 'DELETE' })
@@ -106,7 +106,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Ver loja
+                Ver cardápio
               </Link>
               <Link
                 href={`/${loja.slug}/adm`}
@@ -123,7 +123,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 {isToggling
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : loja.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                {loja.is_active ? 'Pausar loja' : 'Ativar loja'}
+                {loja.is_active ? 'Pausar cardápio' : 'Ativar cardápio'}
               </button>
               <button
                 onClick={() => handleDelete(loja)}
@@ -133,7 +133,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 {isDeleting
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <Trash2 className="w-4 h-4" />}
-                Excluir loja
+                Excluir cardápio
               </button>
             </div>
 

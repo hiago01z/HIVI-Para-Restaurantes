@@ -348,175 +348,190 @@ export function ConfiguracoesClient({
             Prévia em tempo real
           </p>
 
-          {/* Phone frame */}
-          <div
-            className="mx-auto w-[270px] rounded-[2.25rem] overflow-hidden shadow-2xl"
-            style={{
-              background: theme.background_color,
-              border: '5px solid #1f2937',
-              fontFamily:
-                theme.font_family === 'serif'      ? "'Playfair Display', Georgia, serif" :
-                theme.font_family === 'sans-serif' ? "system-ui, sans-serif" :
-                theme.font_family === 'monospace'  ? "'Courier New', monospace" :
-                theme.font_family === 'cursive'    ? "Georgia, cursive" :
-                theme.font_family,
-            }}
-          >
-            {/* Status bar */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-1.5" style={{ background: 'rgba(0,0,0,0.25)' }}>
-              <span className="text-[9px] font-bold" style={{ color: theme.text_color, opacity: 0.7 }}>9:41</span>
-              <div className="flex items-center gap-1" style={{ color: theme.text_color, opacity: 0.7 }}>
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5"><path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/></svg>
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                <div className="flex items-center gap-0.5">
-                  <div className="w-3.5 h-2 rounded-sm border" style={{ borderColor: theme.text_color }}>
-                    <div className="h-full rounded-sm w-3/4" style={{ background: theme.text_color }} />
-                  </div>
-                </div>
-              </div>
-            </div>
+          {(() => {
+            const cardBg = `color-mix(in srgb, ${theme.background_color} 62%, ${theme.text_color} 14%)`
+            const menuFont =
+              theme.font_family === 'serif'      ? "'Playfair Display', Georgia, serif" :
+              theme.font_family === 'sans-serif' ? "system-ui, sans-serif" :
+              theme.font_family === 'monospace'  ? "'Courier New', monospace" :
+              theme.font_family === 'cursive'    ? "Georgia, cursive" :
+              theme.font_family
 
-            {/* Header do cardápio */}
-            <div
-              className="flex items-center justify-between px-3.5 py-2.5"
-              style={{ borderBottom: '1px solid rgba(128,128,128,0.15)', background: theme.background_color }}
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-                  style={{ background: theme.primary_color, color: theme.text_color }}
-                >
-                  {restaurant.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-[11px] font-semibold truncate max-w-[90px]" style={{ color: theme.text_color }}>
-                  {restaurant.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
-                  <path d="M3 6h18M3 12h18M3 18h18"/>
-                </svg>
-              </div>
-            </div>
+            const cats = [
+              { name: 'Combos',    emoji: '🍔' },
+              { name: 'Completo',  emoji: '🍽️' },
+              { name: 'Especiais', emoji: '⭐' },
+              { name: 'Bebidas',   emoji: '🥤' },
+              { name: 'Petisco',   emoji: '🍟' },
+              { name: 'Drink',     emoji: '🍹' },
+            ]
 
-            {/* Conteúdo scrollável */}
-            <div className="px-2.5 pt-2.5 pb-3">
-
-              {/* Carrossel destaque — quadrado */}
+            return (
               <div
-                className="relative w-full rounded-2xl overflow-hidden mb-3"
+                className="mx-auto rounded-[2.25rem] overflow-hidden shadow-2xl"
                 style={{
-                  aspectRatio: '1 / 1',
-                  background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)`,
+                  width: '280px',
+                  background: theme.background_color,
+                  border: '5px solid #111827',
+                  fontFamily: menuFont,
                 }}
               >
-                {/* Gradiente */}
-                <div
-                  className="absolute inset-0"
-                  style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.15) 50%, transparent 75%)' }}
-                />
-                {/* Emoji de prato (placeholder) */}
-                <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-20 select-none">
-                  🍽️
+                {/* Status bar */}
+                <div className="flex items-center justify-between px-5 pt-3 pb-1.5" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                  <span className="text-[9px] font-bold" style={{ color: theme.text_color, opacity: 0.8 }}>9:41</span>
+                  <div className="flex items-center gap-1.5" style={{ color: theme.text_color, opacity: 0.8 }}>
+                    {/* WiFi */}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
+                      <path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/>
+                    </svg>
+                    {/* Battery */}
+                    <div className="flex items-center gap-0.5">
+                      <div className="w-4 h-2.5 rounded-sm border border-current flex items-center px-0.5">
+                        <div className="h-1.5 w-2/3 rounded-sm" style={{ background: theme.text_color }} />
+                      </div>
+                      <div className="w-0.5 h-1.5 rounded-r-sm" style={{ background: theme.text_color, opacity: 0.6 }} />
+                    </div>
+                  </div>
                 </div>
-                {/* Pill de preço */}
+
+                {/* Header do cardápio */}
                 <div
-                  className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold"
-                  style={{ background: theme.primary_color, color: theme.text_color }}
+                  className="flex items-center justify-between px-3 py-2.5"
+                  style={{ borderBottom: '1px solid rgba(128,128,128,0.2)', background: theme.background_color }}
                 >
-                  R$ 29,90
-                </div>
-                {/* Dots de navegação */}
-                <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
-                  <span className="block rounded-full" style={{ width: '16px', height: '5px', background: theme.primary_color }} />
-                  <span className="block rounded-full opacity-35" style={{ width: '5px', height: '5px', background: theme.text_color }} />
-                  <span className="block rounded-full opacity-35" style={{ width: '5px', height: '5px', background: theme.text_color }} />
-                </div>
-                {/* Info rodapé */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <p className="font-bold text-[13px] leading-tight mb-1" style={{ color: theme.text_color }}>
-                    Nome do Prato em Destaque
-                  </p>
-                  <p className="text-[10px] mb-2.5 opacity-60" style={{ color: theme.text_color }}>
-                    Descrição breve do prato especial
-                  </p>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <div
-                      className="flex-1 py-2 rounded-xl text-center text-[11px] font-semibold"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black flex-shrink-0"
                       style={{ background: theme.primary_color, color: theme.text_color }}
                     >
-                      Pedir agora
+                      {restaurant.name.charAt(0).toUpperCase()}
                     </div>
-                    <div
-                      className="flex-1 py-2 rounded-xl text-center text-[11px] font-semibold"
-                      style={{ background: 'rgba(255,255,255,0.15)', color: theme.text_color }}
-                    >
-                      Adicionar
+                    <span className="text-[11px] font-semibold truncate max-w-[85px]" style={{ color: theme.text_color, fontFamily: menuFont }}>
+                      {restaurant.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {/* Search */}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    {/* Cart with badge */}
+                    <div className="relative">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
+                        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                      </svg>
+                      <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-black" style={{ background: theme.primary_color, color: theme.text_color }}>2</span>
                     </div>
+                    {/* Menu */}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5" style={{ color: theme.icon_color }}>
+                      <path d="M3 6h18M3 12h18M3 18h18"/>
+                    </svg>
                   </div>
                 </div>
-              </div>
 
-              {/* Label Cardápio */}
-              <p className="text-[12px] font-bold mb-2 tracking-tight" style={{ color: theme.primary_color }}>
-                Cardápio
-              </p>
+                {/* Conteúdo */}
+                <div className="px-2 pt-2 pb-3">
 
-              {/* Grid categorias: 2 pequenos */}
-              <div className="grid grid-cols-2 gap-1.5 mb-1.5">
-                {['Combos', 'Bebidas'].map((n) => (
+                  {/* Carrossel — quadrado */}
                   <div
-                    key={n}
-                    className="rounded-xl aspect-square relative overflow-hidden flex items-end"
-                    style={{ background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)` }}
+                    className="relative w-full rounded-2xl overflow-hidden mb-2"
+                    style={{ aspectRatio: '1/1', background: cardBg }}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl opacity-15 select-none">🍔</div>
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)' }} />
-                    <span className="relative z-10 px-2 pb-1.5 text-[11px] font-bold tracking-wide" style={{ color: theme.text_color }}>{n}</span>
+                    {/* foto simulada com gradiente de comida */}
+                    <div className="absolute inset-0 flex items-center justify-center select-none" style={{ fontSize: '72px', opacity: 0.35 }}>🥩</div>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.15) 0%, transparent 40%)' }} />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.1) 55%, transparent 80%)' }} />
+
+                    {/* Preço */}
+                    <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: theme.primary_color, color: theme.text_color }}>
+                      45,99
+                    </div>
+
+                    {/* Dots */}
+                    <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5">
+                      <span className="block rounded-full" style={{ width: '14px', height: '5px', background: theme.primary_color }} />
+                      <span className="block rounded-full opacity-40" style={{ width: '5px', height: '5px', background: theme.text_color }} />
+                      <span className="block rounded-full opacity-40" style={{ width: '5px', height: '5px', background: theme.text_color }} />
+                    </div>
+
+                    {/* Info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="font-bold leading-tight mb-0.5" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '15px' }}>
+                        Picanha na Brasa
+                      </p>
+                      <p className="mb-2.5 opacity-65 leading-snug" style={{ color: theme.text_color, fontSize: '9px' }}>
+                        Acompanha arroz, farofa e vinagrete
+                      </p>
+                      <div className="flex gap-1.5">
+                        <div className="flex-1 py-2 rounded-xl text-center font-semibold" style={{ background: theme.primary_color, color: theme.text_color, fontSize: '10px' }}>
+                          Pedir agora
+                        </div>
+                        <div className="flex-1 py-2 rounded-xl text-center font-semibold flex items-center justify-center gap-1" style={{ background: 'rgba(255,255,255,0.15)', color: theme.text_color, fontSize: '10px' }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3" style={{ color: theme.icon_color }}><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/></svg>
+                          Adicionar
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Grid categorias: 1 grande */}
-              <div
-                className="rounded-xl relative overflow-hidden flex items-end"
-                style={{
-                  aspectRatio: '16 / 7',
-                  background: `color-mix(in srgb, ${theme.background_color} 65%, ${theme.text_color} 12%)`,
-                }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-15 select-none">🍕</div>
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)' }} />
-                <span className="relative z-10 px-2.5 pb-2 text-[11px] font-bold tracking-wide" style={{ color: theme.text_color }}>Especiais</span>
-              </div>
-            </div>
+                  {/* Label */}
+                  <p className="font-bold mb-1.5 tracking-tight" style={{ color: theme.primary_color, fontFamily: menuFont, fontSize: '12px' }}>
+                    Cardápio
+                  </p>
 
-            {/* Rodapé do cardápio */}
-            <div className="px-3.5 pt-3 pb-2" style={{ borderTop: '1px solid rgba(128,128,128,0.12)' }}>
-              <div className="flex flex-col items-center gap-1.5">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold"
-                  style={{ background: theme.primary_color, color: theme.text_color }}
-                >
-                  {restaurant.name.charAt(0).toUpperCase()}
+                  {/* Categorias padrão 2+1+2+1 */}
+                  {/* Par 1: Combos + Completo */}
+                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                    {cats.slice(0, 2).map((c) => (
+                      <div key={c.name} className="rounded-xl aspect-square relative overflow-hidden flex items-end" style={{ background: cardBg }}>
+                        <div className="absolute inset-0 flex items-center justify-center select-none" style={{ fontSize: '34px', opacity: 0.3 }}>{c.emoji}</div>
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }} />
+                        <span className="relative z-10 px-2 pb-1.5 font-bold" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '11px' }}>{c.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Grande: Especiais */}
+                  <div className="rounded-xl relative overflow-hidden flex items-end mb-1.5" style={{ aspectRatio: '16/7', background: cardBg }}>
+                    <div className="absolute inset-0 flex items-center justify-center select-none" style={{ fontSize: '40px', opacity: 0.25 }}>{cats[2].emoji}</div>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }} />
+                    <span className="relative z-10 px-2.5 pb-2 font-bold" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '11px' }}>{cats[2].name}</span>
+                  </div>
+                  {/* Par 2: Bebidas + Petisco */}
+                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                    {cats.slice(3, 5).map((c) => (
+                      <div key={c.name} className="rounded-xl aspect-square relative overflow-hidden flex items-end" style={{ background: cardBg }}>
+                        <div className="absolute inset-0 flex items-center justify-center select-none" style={{ fontSize: '34px', opacity: 0.3 }}>{c.emoji}</div>
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }} />
+                        <span className="relative z-10 px-2 pb-1.5 font-bold" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '11px' }}>{c.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Grande: Drink */}
+                  <div className="rounded-xl relative overflow-hidden flex items-end" style={{ aspectRatio: '16/7', background: cardBg }}>
+                    <div className="absolute inset-0 flex items-center justify-center select-none" style={{ fontSize: '40px', opacity: 0.25 }}>{cats[5].emoji}</div>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }} />
+                    <span className="relative z-10 px-2.5 pb-2 font-bold" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '11px' }}>{cats[5].name}</span>
+                  </div>
                 </div>
-                <p className="text-[11px] font-semibold" style={{ color: theme.text_color }}>
-                  {restaurant.name}
-                </p>
-                <p className="text-[9px] opacity-40 font-medium" style={{ color: theme.text_color }}>
-                  © 2026 · Feito com HIVI
-                </p>
-              </div>
-            </div>
 
-            {/* Home indicator */}
-            <div className="flex justify-center py-2">
-              <div className="w-20 h-1 rounded-full opacity-25" style={{ background: theme.text_color }} />
-            </div>
-          </div>
+                {/* Rodapé */}
+                <div className="px-3 pt-3 pb-2" style={{ borderTop: '1px solid rgba(128,128,128,0.12)' }}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black" style={{ background: theme.primary_color, color: theme.text_color }}>
+                      {restaurant.name.charAt(0).toUpperCase()}
+                    </div>
+                    <p className="font-semibold" style={{ color: theme.text_color, fontFamily: menuFont, fontSize: '11px' }}>{restaurant.name}</p>
+                    <p style={{ color: theme.text_color, fontSize: '8px', opacity: 0.38 }}>© 2026 · Feito com HIVI</p>
+                  </div>
+                </div>
+
+                {/* Home indicator */}
+                <div className="flex justify-center pb-2.5 pt-1">
+                  <div className="w-20 h-1 rounded-full" style={{ background: theme.text_color, opacity: 0.2 }} />
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         <SaveButton onClick={saveTheme} loading={themeSaving} saved={themeSaved} label="Salvar aparência" />

@@ -3,7 +3,7 @@ import Link from 'next/link'
 export function SaasHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-5 py-3.5 flex items-center justify-between">
-      <Link href="/" className="font-display text-[1.75rem] font-bold italic tracking-tight text-gray-950">
+      <Link href="/" translate="no" className="text-2xl font-black tracking-[0.06em] text-gray-950 select-none">
         HIVI
       </Link>
       <div className="flex items-center gap-2">

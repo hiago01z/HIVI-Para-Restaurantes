@@ -7,7 +7,7 @@ export default function EntrarPage() {
 
       {/* Header simples */}
       <header className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
-        <Link href="/" className="font-display text-[1.75rem] font-bold italic tracking-tight text-gray-950">
+        <Link href="/" translate="no" className="text-2xl font-black tracking-[0.06em] text-gray-950 select-none">
           HIVI
         </Link>
         <Link href="/criar-conta" className="text-base font-medium text-orange-500 hover:text-orange-600 transition-colors">

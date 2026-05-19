@@ -28,7 +28,7 @@ export default async function ContaPage() {
 
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
-        <Link href="/" className="font-display text-2xl font-bold italic tracking-tight text-gray-950">
+        <Link href="/" translate="no" className="text-2xl font-black tracking-[0.06em] text-gray-950 select-none">
           HIVI
         </Link>
         <div className="flex items-center gap-3">
@@ -45,13 +45,13 @@ export default async function ContaPage() {
 
         {/* Minhas lojas */}
         <div className="flex items-center justify-between mb-5">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-gray-950">Minhas lojas</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-gray-950">Meus cardápios</h1>
           <Link
             href="/criar-loja"
             className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Nova loja
+            Novo cardápio
           </Link>
         </div>
 
@@ -60,13 +60,13 @@ export default async function ContaPage() {
             <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-7 h-7 text-orange-500" />
             </div>
-            <p className="font-display font-semibold text-gray-900 mb-1">Nenhuma loja ainda</p>
-            <p className="text-sm text-gray-500 mb-5">Crie sua primeira loja e comece a receber pedidos.</p>
+            <p className="font-display font-semibold text-gray-900 mb-1">Nenhum cardápio ainda</p>
+            <p className="text-sm text-gray-500 mb-5">Crie seu primeiro cardápio e comece a receber pedidos.</p>
             <Link
               href="/criar-loja"
               className="inline-block px-6 py-2.5 bg-orange-500 text-white font-bold rounded-xl text-sm hover:bg-orange-600 transition-colors"
             >
-              Criar minha loja
+              Criar meu cardápio
             </Link>
           </div>
         ) : (
@@ -75,15 +75,15 @@ export default async function ContaPage() {
 
             {/* Adicionar mais */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-dashed border-gray-200 text-center">
-              <p className="text-sm text-gray-500 mb-3">Quer adicionar mais um restaurante?</p>
+              <p className="text-sm text-gray-500 mb-3">Quer adicionar mais um cardápio?</p>
               <Link
                 href="/criar-loja"
                 className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Adicionar loja
+                Adicionar cardápio
               </Link>
-              <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por loja adicional</p>
+              <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por cardápio adicional</p>
             </div>
           </div>
         )}
