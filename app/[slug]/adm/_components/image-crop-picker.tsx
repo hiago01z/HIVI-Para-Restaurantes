@@ -28,8 +28,11 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
     const [imgPos, setImgPos] = useState({ x: 0, y: 0 })
     const [imgNatural, setImgNatural] = useState<{ w: number; h: number } | null>(null)
     const [isDragging, setIsDragging] = useState(false)
+    const [zoom, setZoom] = useState(1)
     const dragRef = useRef({ mx: 0, my: 0, px: 0, py: 0, moved: false })
     const hasMoved = useRef(false)
+    const hasImageRef = useRef(false)
+    const applyZoomRef = useRef<(delta: number) => void>(() => {})
     const containerRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -57,15 +60,31 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
       return () => { if (fileBlobUrl) URL.revokeObjectURL(fileBlobUrl) }
     }, [fileBlobUrl])
 
+    // Non-passive wheel listener para zoom (passive: false é obrigatório para preventDefault)
+    useEffect(() => {
+      const el = containerRef.current
+      if (!el) return
+      const handler = (e: WheelEvent) => {
+        if (!hasImageRef.current) return
+        e.preventDefault()
+        applyZoomRef.current(e.deltaY < 0 ? 0.1 : -0.1)
+      }
+      el.addEventListener('wheel', handler, { passive: false })
+      return () => el.removeEventListener('wheel', handler)
+    }, [])
+
     // Active blob URL: file selection takes priority over initialUrl blob
     const activeBlobUrl = fileBlobUrl ?? initialBlobUrl
+    // Mantém refs atualizados a cada render (usados pelo wheel handler estável)
+    hasImageRef.current = !!activeBlobUrl
 
-    function getScaling() {
+    function getScaling(zoomOverride?: number) {
       if (!imgNatural || !containerRef.current) return null
       const cs = containerRef.current.offsetWidth
       if (!cs) return null
       const { w, h } = imgNatural
-      const scale = Math.max(cs / w, cs / h)
+      const baseScale = Math.max(cs / w, cs / h)
+      const scale = baseScale * (zoomOverride ?? zoom)
       const sw = w * scale
       const sh = h * scale
       return {
@@ -105,6 +124,20 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
       setIsDragging(false)
     }
 
+    function applyZoom(delta: number) {
+      const next = Math.max(0.5, Math.min(3, parseFloat((zoom + delta).toFixed(2))))
+      const s = getScaling(next)
+      if (s) {
+        setImgPos(cur => ({
+          x: Math.max(-s.maxX, Math.min(s.maxX, cur.x)),
+          y: Math.max(-s.maxY, Math.min(s.maxY, cur.y)),
+        }))
+      }
+      hasMoved.current = true
+      setZoom(next)
+    }
+    applyZoomRef.current = applyZoom
+
     function handleContainerClick() {
       if (dragRef.current.moved) { dragRef.current.moved = false; return }
       if (!displayUrl) fileInputRef.current?.click()
@@ -118,26 +151,27 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
       setFileBlobUrl(url)
       setImgPos({ x: 0, y: 0 })
       setImgNatural(null)
+      setZoom(1)
       hasMoved.current = false
       e.target.value = ''
     }
 
     useImperativeHandle(ref, () => ({
-      // True if a new file was selected OR the user repositioned the existing image
-      hasNewImage: () => pendingFile !== null || hasMoved.current,
+      // True if a new file was selected OR o usuário reposicionou/deu zoom na imagem existente
+      hasNewImage: () => pendingFile !== null || hasMoved.current || zoom !== 1,
       getCroppedFile: async () => {
         if (!activeBlobUrl || !imgNatural || !containerRef.current) return null
         const cs = containerRef.current.offsetWidth
         if (!cs) return null
-        return cropToSquare(activeBlobUrl, imgPos, imgNatural, cs)
+        return cropToSquare(activeBlobUrl, imgPos, imgNatural, cs, zoom)
       },
     }))
 
     // While initialBlobUrl is loading, fall back to the remote URL so the image shows immediately
     const displayUrl = activeBlobUrl ?? initialUrl ?? null
     const s = getScaling()
-    // Drag is available once the blob is ready and the image has room to pan
-    const canDrag = !!activeBlobUrl && !!s && (s.maxX > 0.5 || s.maxY > 0.5)
+    // Drag disponível quando o blob está pronto e há espaço para mover (ou zoom > 1)
+    const canDrag = !!activeBlobUrl && !!s && (s.maxX > 0.5 || s.maxY > 0.5 || zoom > 1)
 
     return (
       <div>
@@ -198,9 +232,36 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
                 </div>
               )}
 
-              {/* Change image button */}
+              {/* Controles de zoom */}
+              <div
+                className="absolute bottom-2 left-2 flex items-center gap-1"
+                onPointerDown={e => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => applyZoom(-0.1)}
+                  className="w-7 h-7 flex items-center justify-center text-white rounded-lg text-base font-bold leading-none"
+                  style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+                >−</button>
+                <span
+                  className="text-white text-xs font-semibold px-1.5 py-1 rounded-md"
+                  style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+                >
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => applyZoom(0.1)}
+                  className="w-7 h-7 flex items-center justify-center text-white rounded-lg text-base font-bold leading-none"
+                  style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+                >+</button>
+              </div>
+
+              {/* Botão trocar imagem */}
               <button
                 type="button"
+                onPointerDown={e => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
                 className="absolute bottom-2 right-2 px-2.5 py-1 text-xs font-semibold text-white rounded-lg"
                 style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
@@ -237,6 +298,7 @@ async function cropToSquare(
   pos: { x: number; y: number },
   natural: { w: number; h: number },
   containerSize: number,
+  zoom: number,
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new window.Image()
@@ -250,7 +312,8 @@ async function cropToSquare(
         if (!ctx) throw new Error('Canvas indisponível')
 
         const { w, h } = natural
-        const scale = Math.max(containerSize / w, containerSize / h)
+        const baseScale = Math.max(containerSize / w, containerSize / h)
+        const scale = baseScale * zoom
         const sw = w * scale
         const sh = h * scale
 
