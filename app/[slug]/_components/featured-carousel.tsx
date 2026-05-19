@@ -39,15 +39,8 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     router.push(`/${slug}/pedido`)
   }
 
-  function prev() {
-    setAdded(false)
-    setCurrent((c) => (c - 1 + products.length) % products.length)
-  }
-
-  function next() {
-    setAdded(false)
-    setCurrent((c) => (c + 1) % products.length)
-  }
+  function prev() { setAdded(false); setCurrent((c) => (c - 1 + products.length) % products.length) }
+  function next() { setAdded(false); setCurrent((c) => (c + 1) % products.length) }
 
   return (
     <div className="mb-5">
@@ -55,32 +48,20 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
         {/* Foto */}
         {product.image_url ? (
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src={product.image_url} alt={product.name} fill className="object-cover" priority />
         ) : (
-          <div
-            className="w-full h-full flex items-center justify-center text-7xl"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
-          >
-            🍽️
-          </div>
+          <div className="w-full h-full flex items-center justify-center text-7xl opacity-20"
+            style={{ background: 'var(--menu-card)' }}>🍽️</div>
         )}
 
         {/* Gradiente inferior */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.3) 45%, transparent 70%)' }}
-        />
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)' }} />
 
         {/* Preço — topo direito */}
         <div
-          className="absolute top-3 right-3 px-3 py-1 rounded-full text-white font-black text-sm"
-          style={{ background: 'var(--menu-primary)' }}
+          className="absolute top-3 right-3 px-3 py-1 rounded-full font-black text-sm"
+          style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
         >
           {formatPrice(product.price)}
         </div>
@@ -91,11 +72,11 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             {products.map((_, i) => (
               <span
                 key={i}
-                className="block rounded-full transition-all"
+                className="block rounded-full transition-all duration-300"
                 style={{
-                  width: i === current ? '20px' : '6px',
+                  width: i === current ? '18px' : '6px',
                   height: '6px',
-                  background: i === current ? 'var(--menu-primary)' : 'rgba(255,255,255,0.4)',
+                  background: i === current ? 'var(--menu-primary)' : 'rgba(255,255,255,0.35)',
                 }}
               />
             ))}
@@ -105,18 +86,14 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
         {/* Setas laterais */}
         {products.length > 1 && (
           <>
-            <button
-              onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-lg"
-              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
-            >
+            <button onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl"
+              style={{ background: 'rgba(0,0,0,0.45)', color: 'var(--menu-text)', backdropFilter: 'blur(4px)' }}>
               ‹
             </button>
-            <button
-              onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-lg"
-              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
-            >
+            <button onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl"
+              style={{ background: 'rgba(0,0,0,0.45)', color: 'var(--menu-text)', backdropFilter: 'blur(4px)' }}>
               ›
             </button>
           </>
@@ -124,9 +101,11 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
         {/* Infos + botões — rodapé */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="text-white font-black text-xl leading-tight">{product.name}</p>
+          <p className="font-black text-xl leading-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
+            {product.name}
+          </p>
           {product.description && (
-            <p className="text-white/65 text-xs leading-relaxed line-clamp-2 mt-1 mb-3">
+            <p className="text-xs leading-relaxed line-clamp-2 mt-1 mb-3" style={{ color: 'var(--menu-text-muted)' }}>
               {product.description}
             </p>
           )}
@@ -136,8 +115,8 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             {/* Pedir agora */}
             <button
               onClick={handleOrderNow}
-              className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm"
-              style={{ background: 'var(--menu-primary)' }}
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
+              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
             >
               Pedir agora
             </button>
@@ -145,17 +124,17 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             {/* Adicionar ao prato */}
             <button
               onClick={handleAddToCart}
-              className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all"
               style={{
-                background: added ? '#22c55e' : 'rgba(255,255,255,0.18)',
+                background: added ? '#22c55e' : 'rgba(255,255,255,0.15)',
+                color: 'var(--menu-text)',
                 backdropFilter: 'blur(6px)',
               }}
             >
-              {added ? (
-                <><Check className="w-4 h-4" /> Adicionado</>
-              ) : (
-                <><UtensilsCrossed className="w-4 h-4" /> Adicionar ao prato</>
-              )}
+              {added
+                ? <><Check className="w-4 h-4" /> Adicionado</>
+                : <><UtensilsCrossed className="w-4 h-4" style={{ color: 'var(--menu-icon)' }} /> Adicionar ao prato</>
+              }
             </button>
           </div>
         </div>

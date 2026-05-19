@@ -16,7 +16,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
-    .select('primary_color, secondary_color, background_color, font_family, banner_url')
+    .select('primary_color, secondary_color, background_color, font_family, banner_url, text_color, icon_color')
     .eq('restaurant_id', restaurant.id)
     .single()
 
@@ -41,6 +41,8 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         background_color: '#2C1A0E',
         font_family: 'serif',
         banner_url: null,
+        text_color: '#FFFFFF',
+        icon_color: '#FF6B00',
       }}
       staffCount={staff?.length ?? 0}
     />

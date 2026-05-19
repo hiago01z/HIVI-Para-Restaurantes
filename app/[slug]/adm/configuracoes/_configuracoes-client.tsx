@@ -21,13 +21,15 @@ type Theme = {
   background_color: string
   font_family: string
   banner_url: string | null
+  text_color: string
+  icon_color: string
 }
 
 const PRESET_THEMES = [
-  { name: 'Rústico', primary: '#FF6B00', secondary: '#1A0A00', bg: '#2C1A0E', font: 'serif' },
-  { name: 'Moderno', primary: '#6366F1', secondary: '#0F172A', bg: '#1E293B', font: 'sans-serif' },
-  { name: 'Claro',   primary: '#F97316', secondary: '#F3F4F6', bg: '#FFFFFF', font: 'sans-serif' },
-  { name: 'Verde',   primary: '#10B981', secondary: '#064E3B', bg: '#022C22', font: 'serif' },
+  { name: 'Rústico', primary: '#FF6B00', secondary: '#1A0A00', bg: '#2C1A0E', font: 'serif',      text: '#FFFFFF', icon: '#FF6B00' },
+  { name: 'Moderno', primary: '#6366F1', secondary: '#0F172A', bg: '#1E293B', font: 'sans-serif', text: '#FFFFFF', icon: '#6366F1' },
+  { name: 'Claro',   primary: '#F97316', secondary: '#F3F4F6', bg: '#FFFFFF', font: 'sans-serif', text: '#111827', icon: '#F97316' },
+  { name: 'Verde',   primary: '#10B981', secondary: '#064E3B', bg: '#022C22', font: 'serif',      text: '#FFFFFF', icon: '#10B981' },
 ]
 
 const FONT_OPTIONS = [
@@ -98,6 +100,8 @@ export function ConfiguracoesClient({
         background_color: theme.background_color,
         font_family: theme.font_family,
         banner_url: theme.banner_url,
+        text_color: theme.text_color,
+        icon_color: theme.icon_color,
       }, { onConflict: 'restaurant_id' })
     setThemeSaving(false)
     setThemeSaved(true)
@@ -111,6 +115,8 @@ export function ConfiguracoesClient({
       secondary_color: preset.secondary,
       background_color: preset.bg,
       font_family: preset.font,
+      text_color: preset.text,
+      icon_color: preset.icon,
     }))
   }
 
@@ -301,14 +307,24 @@ export function ConfiguracoesClient({
             onChange={(v) => setTheme((t) => ({ ...t, primary_color: v }))}
           />
           <ColorField
-            label="Cor secundária"
-            value={theme.secondary_color}
-            onChange={(v) => setTheme((t) => ({ ...t, secondary_color: v }))}
-          />
-          <ColorField
             label="Cor de fundo"
             value={theme.background_color}
             onChange={(v) => setTheme((t) => ({ ...t, background_color: v }))}
+          />
+          <ColorField
+            label="Cor do texto"
+            value={theme.text_color}
+            onChange={(v) => setTheme((t) => ({ ...t, text_color: v }))}
+          />
+          <ColorField
+            label="Cor dos ícones"
+            value={theme.icon_color}
+            onChange={(v) => setTheme((t) => ({ ...t, icon_color: v }))}
+          />
+          <ColorField
+            label="Cor secundária"
+            value={theme.secondary_color}
+            onChange={(v) => setTheme((t) => ({ ...t, secondary_color: v }))}
           />
         </div>
 
@@ -328,15 +344,55 @@ export function ConfiguracoesClient({
 
         {/* Preview rápido */}
         <div
-          className="rounded-2xl p-4 mb-4 text-center"
+          className="rounded-2xl overflow-hidden mb-4"
           style={{ background: theme.background_color, fontFamily: theme.font_family }}
         >
-          <p className="text-sm font-bold" style={{ color: theme.primary_color }}>
-            Destaques
-          </p>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {restaurant.name} — prévia
-          </p>
+          {/* Header simulado */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
+                style={{ background: theme.primary_color, color: theme.text_color }}>
+                {restaurant.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs font-bold" style={{ color: theme.text_color }}>{restaurant.name}</span>
+            </div>
+            <div className="flex gap-2">
+              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ color: theme.icon_color }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                  <path d="M11 3a8 8 0 100 16A8 8 0 0011 3zM21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ color: theme.icon_color }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                  <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          {/* Destaque simulado */}
+          <div className="p-3">
+            <p className="text-xs font-black mb-2" style={{ color: theme.primary_color }}>Destaques</p>
+            <div className="rounded-xl overflow-hidden relative h-20" style={{ background: 'rgba(128,128,128,0.2)' }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }} />
+              <div className="absolute bottom-0 left-0 right-0 p-2">
+                <p className="text-xs font-black" style={{ color: theme.text_color }}>Nome do Prato</p>
+                <div className="flex gap-1.5 mt-1.5">
+                  <div className="flex-1 py-1 rounded-lg text-center text-xs font-bold" style={{ background: theme.primary_color, color: theme.text_color }}>Pedir agora</div>
+                  <div className="flex-1 py-1 rounded-lg text-center text-xs font-bold" style={{ background: 'rgba(255,255,255,0.15)', color: theme.text_color }}>Adicionar</div>
+                </div>
+              </div>
+            </div>
+            {/* Categorias simuladas */}
+            <p className="text-xs font-black mt-3 mb-2" style={{ color: theme.primary_color }}>Cardápio</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {['Combos', 'Bebidas'].map((n) => (
+                <div key={n} className="rounded-lg h-10 relative overflow-hidden flex items-end" style={{ background: 'rgba(128,128,128,0.2)' }}>
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
+                  <span className="relative z-10 px-2 pb-1 text-xs font-black" style={{ color: theme.text_color }}>{n}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <SaveButton onClick={saveTheme} loading={themeSaving} saved={themeSaved} label="Salvar aparência" />
