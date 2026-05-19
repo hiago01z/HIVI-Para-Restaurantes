@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 const sessionSchema = z.object({
   restaurantId: z.string().uuid(),
@@ -14,6 +15,15 @@ const sessionSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  // Rate limit: 5 sessões QR por IP por 5 minutos
+  const ip = getClientIp(request)
+  if (!rateLimit(`qr:${ip}`, 5, 5 * 60_000)) {
+    return NextResponse.json(
+      { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const parsed = sessionSchema.safeParse(body)

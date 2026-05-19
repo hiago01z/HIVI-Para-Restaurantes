@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Image from 'next/image'
 import {
-  ShoppingBag, UtensilsCrossed, LayoutGrid, Settings,
+  ShoppingBag, UtensilsCrossed, LayoutGrid, Settings, Users,
   X, Menu, LogOut, ExternalLink,
 } from 'lucide-react'
 
@@ -21,6 +21,7 @@ const navItems = [
   { href: 'pedidos',       label: 'Pedidos',        icon: ShoppingBag },
   { href: 'categorias',    label: 'Categorias',      icon: LayoutGrid },
   { href: 'pratos',        label: 'Pratos/Bebidas',  icon: UtensilsCrossed },
+  { href: 'funcionarios',  label: 'Equipe',          icon: Users },
   { href: 'configuracoes', label: 'Configurações',   icon: Settings },
 ]
 

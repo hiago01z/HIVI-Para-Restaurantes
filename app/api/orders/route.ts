@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 const orderSchema = z.object({
   restaurantId: z.string().uuid(),
@@ -23,6 +24,15 @@ const orderSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  // Rate limit: 10 pedidos por IP por minuto
+  const ip = getClientIp(request)
+  if (!rateLimit(`orders:${ip}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: 'Muitas requisições. Aguarde um momento e tente novamente.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const parsed = orderSchema.safeParse(body)

@@ -476,10 +476,16 @@ export function ConfiguracoesClient({
 
       {/* ── Funcionários ── */}
       <Section title="Equipe">
-        <p className="text-sm text-gray-500">
-          {staffCount} {staffCount === 1 ? 'funcionário cadastrado' : 'funcionários cadastrados'}.
-          O gerenciamento completo de funcionários (convite, roles) estará disponível em breve.
+        <p className="text-sm text-gray-500 mb-4">
+          {staffCount} {staffCount === 1 ? 'membro na equipe' : 'membros na equipe'}.
+          Gerencie quem tem acesso ao painel do restaurante.
         </p>
+        <a
+          href={`/${restaurant.slug}/adm/funcionarios`}
+          className="adm-btn-primary inline-flex items-center gap-2 text-sm"
+        >
+          Gerenciar equipe
+        </a>
       </Section>
     </div>
   )
