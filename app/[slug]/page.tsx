@@ -16,7 +16,13 @@ function CategoryCard({ cat, slug, large = false }: { cat: Category; slug: strin
       style={{ background: 'var(--menu-card)' }}
     >
       {cat.image_url ? (
-        <Image src={cat.image_url} alt={cat.name} fill className="object-cover" />
+        <Image
+          src={cat.image_url}
+          alt={cat.name}
+          fill
+          sizes="(max-width: 640px) 50vw, 33vw"
+          style={{ objectFit: 'cover' }}
+        />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-30">
           🍽️

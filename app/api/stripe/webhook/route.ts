@@ -61,6 +61,71 @@ export async function POST(request: Request) {
         restaurant_id: newRestaurant.id,
       })
 
+      // Copiar categorias e produtos do restaurante template (se configurado)
+      const templateId = process.env.TEMPLATE_RESTAURANT_ID
+      if (templateId) {
+        const { data: templateCats } = await supabase
+          .from('categories')
+          .select('id, name, image_url, display_order')
+          .eq('restaurant_id', templateId)
+          .order('display_order', { ascending: true })
+
+        const catIdMap: Record<string, string> = {}
+
+        if (templateCats && templateCats.length > 0) {
+          for (const cat of templateCats) {
+            const { data: newCat } = await supabase
+              .from('categories')
+              .insert({
+                restaurant_id: newRestaurant.id,
+                name: cat.name,
+                image_url: cat.image_url,
+                display_order: cat.display_order,
+              })
+              .select('id')
+              .single()
+            if (newCat) catIdMap[cat.id] = newCat.id
+          }
+
+          const { data: templateProds } = await supabase
+            .from('products')
+            .select('name, description, price, image_url, category_id, is_featured, is_available')
+            .eq('restaurant_id', templateId)
+
+          if (templateProds && templateProds.length > 0) {
+            await supabase.from('products').insert(
+              templateProds.map((p) => ({
+                restaurant_id: newRestaurant.id,
+                name: p.name,
+                description: p.description,
+                price: p.price,
+                image_url: p.image_url,
+                category_id: p.category_id ? (catIdMap[p.category_id] ?? null) : null,
+                is_featured: p.is_featured,
+                is_available: p.is_available,
+              }))
+            )
+          }
+        }
+
+        // Copiar tema do template (cores, fonte)
+        const { data: templateTheme } = await supabase
+          .from('restaurant_themes')
+          .select('primary_color, secondary_color, background_color, font_family, font_size_base')
+          .eq('restaurant_id', templateId)
+          .single()
+
+        if (templateTheme) {
+          await supabase.from('restaurant_themes').update({
+            primary_color: templateTheme.primary_color,
+            secondary_color: templateTheme.secondary_color,
+            background_color: templateTheme.background_color,
+            font_family: templateTheme.font_family,
+            font_size_base: templateTheme.font_size_base,
+          }).eq('restaurant_id', newRestaurant.id)
+        }
+      }
+
       // Envia e-mail de boas-vindas via Resend
       if (session.customer_email) {
         try {

@@ -182,9 +182,9 @@ export function CategoriasClient({
           {categories.map((cat, idx) => (
             <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
               {/* Imagem */}
-              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 relative">
                 {cat.image_url ? (
-                  <Image src={cat.image_url} alt={cat.name} width={56} height={56} className="w-full h-full object-cover" />
+                  <Image src={cat.image_url} alt={cat.name} fill sizes="56px" style={{ objectFit: 'cover' }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xl">📂</div>
                 )}
@@ -252,14 +252,15 @@ export function CategoriasClient({
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagem</label>
               <div
                 onClick={() => fileRef.current?.click()}
-                className="adm-upload-area h-32"
+                className="adm-upload-area aspect-square"
               >
                 {previewUrl ? (
-                  <Image src={previewUrl} alt="preview" fill className="object-cover" />
+                  <Image src={previewUrl} alt="preview" fill sizes="(max-width: 448px) 100vw, 448px" style={{ objectFit: 'cover' }} />
                 ) : (
                   <div className="text-center">
                     <Upload className="w-6 h-6 text-gray-300 mx-auto mb-1" />
                     <p className="text-sm text-gray-400">Clique para enviar</p>
+                    <p className="text-xs text-gray-300 mt-1">Recomendado: 800 × 800 px</p>
                   </div>
                 )}
                 {previewUrl && (
@@ -268,6 +269,7 @@ export function CategoriasClient({
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-400 mt-1.5 text-center">Recomendado: 800 × 800 px (quadrado)</p>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
 
