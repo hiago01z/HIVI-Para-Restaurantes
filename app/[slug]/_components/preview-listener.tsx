@@ -35,6 +35,9 @@ export function PreviewListener() {
         text?: string
         font?: string
         icon?: string
+        labelFont?: string
+        labelColor?: string
+        labelTextShadow?: string
       }
 
       const root = document.documentElement
@@ -61,6 +64,11 @@ export function PreviewListener() {
           `color-mix(in srgb, ${t.bg} 70%, ${t.text} 8%)`
         )
       }
+
+      // Label sobre imagem
+      if (t.labelFont)       root.style.setProperty('--label-font', t.labelFont)
+      if (t.labelColor)      root.style.setProperty('--label-color', t.labelColor)
+      if (t.labelTextShadow) root.style.setProperty('--label-text-shadow', t.labelTextShadow)
 
       // Atualiza o elemento raiz do menu diretamente (estilos inline do layout)
       const menuRoot = document.getElementById('menu-root')

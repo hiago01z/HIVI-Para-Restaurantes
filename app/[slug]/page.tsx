@@ -33,11 +33,11 @@ function CategoryCard({ cat, slug, large = false }: { cat: Category; slug: strin
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)' }}
       />
       <span
-        className="relative z-10 px-3 pb-3 font-bold text-base leading-snug tracking-wide w-full"
+        className="relative z-10 px-3 pb-3 text-xl leading-snug w-full block"
         style={{
-          fontFamily: 'var(--menu-font)',
-          color: 'var(--menu-text)',
-          textShadow: '0 1px 6px rgba(0,0,0,0.6)',
+          fontFamily: 'var(--label-font)',
+          color: 'var(--label-color)',
+          textShadow: 'var(--label-text-shadow)',
         }}
       >
         {cat.name}
@@ -147,10 +147,10 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {cats.length > 0 && (
           <section className="mb-8">
             <h2
-              className="text-xl font-bold mb-3 tracking-tight"
-              style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-primary)' }}
+              className="text-sm italic font-medium mb-3 tracking-widest uppercase"
+              style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-text-muted)', opacity: 0.7 }}
             >
-              Cardápio
+              Categorias
             </h2>
             <CategoriesGrid cats={cats} slug={slug} />
           </section>

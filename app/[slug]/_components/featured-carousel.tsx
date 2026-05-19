@@ -101,7 +101,14 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
         {/* Infos + botões — rodapé */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="font-bold text-2xl leading-tight tracking-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
+          <p
+            className="text-2xl leading-tight"
+            style={{
+              fontFamily: 'var(--label-font)',
+              color: 'var(--label-color)',
+              textShadow: 'var(--label-text-shadow)',
+            }}
+          >
             {product.name}
           </p>
           {product.description && (

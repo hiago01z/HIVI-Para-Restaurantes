@@ -5,7 +5,7 @@ import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { PreviewListener } from './_components/preview-listener'
 import { PausedPage } from './_components/paused-page'
-import { getContrastColor } from '@/lib/color-utils'
+import { getContrastColor, computeLabelShadow } from '@/lib/color-utils'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -74,7 +74,7 @@ export default async function SlugLayout({
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
-    .select('primary_color, secondary_color, background_color, font_family, font_size_base, text_color, icon_color')
+    .select('primary_color, secondary_color, background_color, font_family, font_size_base, text_color, icon_color, label_font, label_color, label_effect, label_stroke_color, label_stroke_size, label_offset_distance, label_offset_angle')
     .eq('restaurant_id', restaurant.id)
     .single()
 
@@ -98,6 +98,25 @@ export default async function SlugLayout({
   const textOnPrimary = getContrastColor(primary)
   const textOnBg      = getContrastColor(bg)
 
+  // ── Label sobre imagem ──────────────────────────────────────────────────────
+  const labelFontRaw    = theme?.label_font            ?? 'dancing-script'
+  const labelColor      = theme?.label_color           ?? '#ffffff'
+  const labelEffect     = theme?.label_effect          ?? 'offset'
+  const labelStrColor   = theme?.label_stroke_color    ?? '#000000'
+  const labelStrSize    = (theme?.label_stroke_size    ?? 50) as number
+  const labelOffDist    = (theme?.label_offset_distance ?? 50) as number
+  const labelOffAngle   = (theme?.label_offset_angle   ?? -45) as number
+
+  const LABEL_FONT_MAP: Record<string, string> = {
+    'dancing-script': "'Dancing Script', cursive",
+    'satisfy':        "'Satisfy', cursive",
+    'pacifico':       "'Pacifico', cursive",
+    'menu':           font,
+    'system':         "system-ui, sans-serif",
+  }
+  const labelFontValue  = LABEL_FONT_MAP[labelFontRaw] ?? font
+  const labelTextShadow = computeLabelShadow(labelEffect, labelStrColor, labelStrSize, labelOffDist, labelOffAngle)
+
   const cssVars = [
     `--menu-primary: ${primary}`,
     `--menu-secondary: ${secondary}`,
@@ -110,10 +129,20 @@ export default async function SlugLayout({
     `--menu-card: color-mix(in srgb, ${bg} 70%, ${textColor} 8%)`,
     `--menu-text-on-primary: ${textOnPrimary}`,
     `--menu-text-on-bg: ${textOnBg}`,
+    `--label-font: ${labelFontValue}`,
+    `--label-color: ${labelColor}`,
+    `--label-text-shadow: ${labelTextShadow}`,
   ].join('; ')
+
+  // Carrega fontes cursivas do Google Fonts usadas em labels sobre imagens
+  const SCRIPT_FONTS = ['dancing-script', 'satisfy', 'pacifico']
+  const loadScriptFonts = SCRIPT_FONTS.includes(labelFontRaw)
 
   return (
     <div id="menu-root" style={{ background: bg, fontFamily: font, fontSize, minHeight: '100vh', color: textColor }}>
+      {loadScriptFonts && (
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Satisfy&family=Pacifico&display=swap');`}</style>
+      )}
       <style>{`:root { ${cssVars} }`}</style>
       <PreviewListener />
       <CartProvider slug={slug}>

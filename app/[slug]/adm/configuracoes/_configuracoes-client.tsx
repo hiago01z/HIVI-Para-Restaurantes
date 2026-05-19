@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Upload, Download, Instagram, Phone, Check } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
+import { computeLabelShadow } from '@/lib/color-utils'
 
 type Restaurant = {
   id: string
@@ -22,6 +23,36 @@ type Theme = {
   banner_url: string | null
   text_color: string
   icon_color: string
+  // Label sobre imagem
+  label_font: string
+  label_color: string
+  label_effect: string
+  label_stroke_color: string
+  label_stroke_size: number
+  label_offset_distance: number
+  label_offset_angle: number
+}
+
+const LABEL_FONT_OPTIONS = [
+  { value: 'dancing-script', label: 'Script (Dancing)' },
+  { value: 'satisfy',        label: 'Satisfy' },
+  { value: 'pacifico',       label: 'Pacifico' },
+  { value: 'menu',           label: 'Mesma do menu' },
+  { value: 'system',         label: 'Sans-serif' },
+]
+
+const LABEL_EFFECT_OPTIONS = [
+  { value: 'outline', label: 'Contorno' },
+  { value: 'fill',    label: 'Fundo' },
+  { value: 'offset',  label: 'Desalinhado' },
+]
+
+const LABEL_FONT_MAP: Record<string, string> = {
+  'dancing-script': "'Dancing Script', cursive",
+  'satisfy':        "'Satisfy', cursive",
+  'pacifico':       "'Pacifico', cursive",
+  'menu':           'inherit',
+  'system':         'system-ui, sans-serif',
 }
 
 const PRESET_THEMES = [
@@ -73,16 +104,26 @@ export function ConfiguracoesClient({
   const sendThemeToIframe = useCallback(() => {
     const iframe = iframeRef.current
     if (!iframe?.contentWindow) return
+    const labelTextShadow = computeLabelShadow(
+      theme.label_effect,
+      theme.label_stroke_color,
+      theme.label_stroke_size,
+      theme.label_offset_distance,
+      theme.label_offset_angle,
+    )
     iframe.contentWindow.postMessage(
       {
         type: 'HIVI_THEME_PREVIEW',
         theme: {
-          primary:   theme.primary_color,
-          secondary: theme.secondary_color,
-          bg:        theme.background_color,
-          text:      theme.text_color,
-          icon:      theme.icon_color,
-          font:      fontMap[theme.font_family] ?? theme.font_family,
+          primary:         theme.primary_color,
+          secondary:       theme.secondary_color,
+          bg:              theme.background_color,
+          text:            theme.text_color,
+          icon:            theme.icon_color,
+          font:            fontMap[theme.font_family] ?? theme.font_family,
+          labelFont:       LABEL_FONT_MAP[theme.label_font] ?? 'inherit',
+          labelColor:      theme.label_color,
+          labelTextShadow: labelTextShadow,
         },
       },
       window.location.origin
@@ -123,14 +164,21 @@ export function ConfiguracoesClient({
     await supabase
       .from('restaurant_themes')
       .upsert({
-        restaurant_id: restaurant.id,
-        primary_color: theme.primary_color,
-        secondary_color: theme.secondary_color,
-        background_color: theme.background_color,
-        font_family: theme.font_family,
-        banner_url: theme.banner_url,
-        text_color: theme.text_color,
-        icon_color: theme.icon_color,
+        restaurant_id:       restaurant.id,
+        primary_color:       theme.primary_color,
+        secondary_color:     theme.secondary_color,
+        background_color:    theme.background_color,
+        font_family:         theme.font_family,
+        banner_url:          theme.banner_url,
+        text_color:          theme.text_color,
+        icon_color:          theme.icon_color,
+        label_font:          theme.label_font,
+        label_color:         theme.label_color,
+        label_effect:        theme.label_effect,
+        label_stroke_color:  theme.label_stroke_color,
+        label_stroke_size:   theme.label_stroke_size,
+        label_offset_distance: theme.label_offset_distance,
+        label_offset_angle:  theme.label_offset_angle,
       }, { onConflict: 'restaurant_id' })
     setThemeSaving(false)
     setThemeSaved(true)
@@ -337,6 +385,111 @@ export function ConfiguracoesClient({
           </select>
         </div>
 
+        {/* ── Texto sobre imagens ── */}
+        <div className="mb-5 pt-4 border-t border-gray-100">
+          <p className="text-sm font-semibold text-gray-700 mb-3">Texto sobre imagens</p>
+          <p className="text-xs text-gray-400 mb-4">
+            Estilo das nomenclaturas de categorias e destaques exibidas sobre fotos.
+          </p>
+
+          {/* Fonte do label */}
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Fonte</label>
+            <select
+              value={theme.label_font}
+              onChange={(e) => setTheme((t) => ({ ...t, label_font: e.target.value }))}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+            >
+              {LABEL_FONT_OPTIONS.map((f) => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Cor do texto + Cor do efeito */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <ColorField
+              label="Cor do texto"
+              value={theme.label_color}
+              onChange={(v) => setTheme((t) => ({ ...t, label_color: v }))}
+            />
+            <ColorField
+              label="Cor do efeito"
+              value={theme.label_stroke_color}
+              onChange={(v) => setTheme((t) => ({ ...t, label_stroke_color: v }))}
+            />
+          </div>
+
+          {/* Tipo de efeito */}
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-600 mb-2">Tipo de efeito</label>
+            <div className="grid grid-cols-3 gap-2">
+              {LABEL_EFFECT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTheme((t) => ({ ...t, label_effect: opt.value }))}
+                  className={`py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all ${
+                    theme.label_effect === opt.value ? '' : 'border-gray-100 text-gray-500 bg-white'
+                  }`}
+                  style={theme.label_effect === opt.value ? {
+                    borderColor: 'var(--adm-primary)',
+                    color: 'var(--adm-primary)',
+                    background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                  } : undefined}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Preview do label */}
+          <div
+            className="relative rounded-xl overflow-hidden mb-4 flex items-center justify-center"
+            style={{ height: '80px', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}
+          >
+            <span
+              style={{
+                fontFamily: LABEL_FONT_MAP[theme.label_font] ?? 'inherit',
+                color: theme.label_color,
+                textShadow: computeLabelShadow(
+                  theme.label_effect, theme.label_stroke_color,
+                  theme.label_stroke_size, theme.label_offset_distance, theme.label_offset_angle
+                ),
+                fontSize: '1.5rem',
+              }}
+            >
+              Combos
+            </span>
+          </div>
+
+          {/* Sliders */}
+          <div className="space-y-3">
+            <SliderField
+              label="Espessura"
+              value={theme.label_stroke_size}
+              min={0} max={100}
+              onChange={(v) => setTheme((t) => ({ ...t, label_stroke_size: v }))}
+            />
+            {theme.label_effect === 'offset' && (
+              <>
+                <SliderField
+                  label="Distância"
+                  value={theme.label_offset_distance}
+                  min={0} max={100}
+                  onChange={(v) => setTheme((t) => ({ ...t, label_offset_distance: v }))}
+                />
+                <SliderField
+                  label="Direção"
+                  value={theme.label_offset_angle}
+                  min={-180} max={180}
+                  onChange={(v) => setTheme((t) => ({ ...t, label_offset_angle: v }))}
+                />
+              </>
+            )}
+          </div>
+        </div>
+
         {/* ── Prévia ao vivo — iframe do cardápio real ── */}
         <div className="mb-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
@@ -458,6 +611,47 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-widest mb-4">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+function SliderField({
+  label, value, min, max, onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-xs font-medium text-gray-600">{label}</label>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onChange(Math.max(min, value - 1))}
+            className="w-6 h-6 rounded-md bg-gray-100 text-gray-600 text-sm font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >−</button>
+          <span className="text-xs font-mono w-8 text-center text-gray-700">{value}</span>
+          <button
+            onClick={() => onChange(Math.min(max, value + 1))}
+            className="w-6 h-6 rounded-md bg-gray-100 text-gray-600 text-sm font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >+</button>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+        style={{
+          background: `linear-gradient(to right, var(--adm-primary) ${((value - min) / (max - min)) * 100}%, #e5e7eb ${((value - min) / (max - min)) * 100}%)`,
+          accentColor: 'var(--adm-primary)',
+        }}
+      />
     </div>
   )
 }

@@ -16,7 +16,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
-    .select('primary_color, secondary_color, background_color, font_family, banner_url, text_color, icon_color')
+    .select('primary_color, secondary_color, background_color, font_family, banner_url, text_color, icon_color, label_font, label_color, label_effect, label_stroke_color, label_stroke_size, label_offset_distance, label_offset_angle')
     .eq('restaurant_id', restaurant.id)
     .single()
 
@@ -35,14 +35,21 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
       }}
-      theme={theme ?? {
-        primary_color: '#FF6B00',
-        secondary_color: '#1A0A00',
-        background_color: '#2C1A0E',
-        font_family: 'serif',
-        banner_url: null,
-        text_color: '#FFFFFF',
-        icon_color: '#FF6B00',
+      theme={{
+        primary_color:        theme?.primary_color        ?? '#FF6B00',
+        secondary_color:      theme?.secondary_color      ?? '#1A0A00',
+        background_color:     theme?.background_color     ?? '#2C1A0E',
+        font_family:          theme?.font_family          ?? 'serif',
+        banner_url:           theme?.banner_url           ?? null,
+        text_color:           theme?.text_color           ?? '#FFFFFF',
+        icon_color:           theme?.icon_color           ?? '#FF6B00',
+        label_font:           theme?.label_font           ?? 'dancing-script',
+        label_color:          theme?.label_color          ?? '#ffffff',
+        label_effect:         theme?.label_effect         ?? 'offset',
+        label_stroke_color:   theme?.label_stroke_color   ?? '#000000',
+        label_stroke_size:    (theme?.label_stroke_size   ?? 50) as number,
+        label_offset_distance:(theme?.label_offset_distance ?? 50) as number,
+        label_offset_angle:   (theme?.label_offset_angle  ?? -45) as number,
       }}
       staffCount={staff?.length ?? 0}
     />

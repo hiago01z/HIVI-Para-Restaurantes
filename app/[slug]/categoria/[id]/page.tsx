@@ -82,8 +82,19 @@ export default async function CategoriaPage({
 
         {/* Nome da categoria */}
         <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="text-3xl font-black text-white">{category.name}</h1>
-          <p className="text-white/50 text-sm mt-0.5">{pratos.length} {pratos.length === 1 ? 'item' : 'itens'}</p>
+          <h1
+            className="text-3xl leading-tight"
+            style={{
+              fontFamily: 'var(--label-font)',
+              color: 'var(--label-color)',
+              textShadow: 'var(--label-text-shadow)',
+            }}
+          >
+            {category.name}
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--label-color)', opacity: 0.6 }}>
+            {pratos.length} {pratos.length === 1 ? 'item' : 'itens'}
+          </p>
         </div>
       </div>
 
