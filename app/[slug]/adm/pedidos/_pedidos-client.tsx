@@ -52,7 +52,6 @@ function formatTime(dateStr: string) {
 }
 
 type Props = {
-  slug: string
   restaurantId: string
   initialOrders: Order[]
 }
