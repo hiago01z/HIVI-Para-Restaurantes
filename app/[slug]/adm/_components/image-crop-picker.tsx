@@ -20,21 +20,45 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
     { initialUrl, sizeHint = 'Recomendado: 800 × 800 px (quadrado)' },
     ref,
   ) {
+    // Blob URL from user-selected file
+    const [fileBlobUrl, setFileBlobUrl] = useState<string | null>(null)
+    // Blob URL pre-fetched from initialUrl (enables drag + canvas crop for existing images)
+    const [initialBlobUrl, setInitialBlobUrl] = useState<string | null>(null)
     const [pendingFile, setPendingFile] = useState<File | null>(null)
-    const [blobUrl, setBlobUrl] = useState<string | null>(null)
     const [imgPos, setImgPos] = useState({ x: 0, y: 0 })
     const [imgNatural, setImgNatural] = useState<{ w: number; h: number } | null>(null)
     const [isDragging, setIsDragging] = useState(false)
     const dragRef = useRef({ mx: 0, my: 0, px: 0, py: 0, moved: false })
+    const hasMoved = useRef(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    // Revoke previous blob URL on change or unmount
+    // Pre-fetch initialUrl as a local blob so drag and canvas crop work for existing images
     useEffect(() => {
+      if (!initialUrl) return
+      let cancelled = false
+      let created: string | null = null
+      fetch(initialUrl)
+        .then((r) => r.blob())
+        .then((blob) => {
+          if (cancelled) return
+          created = URL.createObjectURL(blob)
+          setInitialBlobUrl(created)
+        })
+        .catch(() => { /* image still displays via initialUrl fallback */ })
       return () => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl)
+        cancelled = true
+        if (created) URL.revokeObjectURL(created)
       }
-    }, [blobUrl])
+    }, [initialUrl])
+
+    // Revoke file blob URL when replaced or on unmount
+    useEffect(() => {
+      return () => { if (fileBlobUrl) URL.revokeObjectURL(fileBlobUrl) }
+    }, [fileBlobUrl])
+
+    // Active blob URL: file selection takes priority over initialUrl blob
+    const activeBlobUrl = fileBlobUrl ?? initialBlobUrl
 
     function getScaling() {
       if (!imgNatural || !containerRef.current) return null
@@ -54,7 +78,7 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
     }
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-      if (!blobUrl || !imgNatural) return
+      if (!activeBlobUrl || !imgNatural) return
       e.preventDefault()
       e.currentTarget.setPointerCapture(e.pointerId)
       dragRef.current = { mx: e.clientX, my: e.clientY, px: imgPos.x, py: imgPos.y, moved: false }
@@ -67,7 +91,10 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
       if (!s) return
       const dx = e.clientX - dragRef.current.mx
       const dy = e.clientY - dragRef.current.my
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragRef.current.moved = true
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        dragRef.current.moved = true
+        hasMoved.current = true
+      }
       setImgPos({
         x: Math.max(-s.maxX, Math.min(s.maxX, dragRef.current.px + dx)),
         y: Math.max(-s.maxY, Math.min(s.maxY, dragRef.current.py + dy)),
@@ -80,7 +107,7 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
 
     function handleContainerClick() {
       if (dragRef.current.moved) { dragRef.current.moved = false; return }
-      if (!blobUrl && !initialUrl) fileInputRef.current?.click()
+      if (!displayUrl) fileInputRef.current?.click()
     }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -88,27 +115,29 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
       if (!file) return
       const url = URL.createObjectURL(file)
       setPendingFile(file)
-      setBlobUrl(url)
+      setFileBlobUrl(url)
       setImgPos({ x: 0, y: 0 })
       setImgNatural(null)
+      hasMoved.current = false
       e.target.value = ''
     }
 
     useImperativeHandle(ref, () => ({
-      hasNewImage: () => pendingFile !== null,
+      // True if a new file was selected OR the user repositioned the existing image
+      hasNewImage: () => pendingFile !== null || hasMoved.current,
       getCroppedFile: async () => {
-        if (!pendingFile) return null
-        if (!imgNatural || !containerRef.current) return pendingFile
+        if (!activeBlobUrl || !imgNatural || !containerRef.current) return null
         const cs = containerRef.current.offsetWidth
-        if (!cs) return pendingFile
-        return cropToSquare(pendingFile, imgPos, imgNatural, cs)
+        if (!cs) return null
+        return cropToSquare(activeBlobUrl, imgPos, imgNatural, cs)
       },
     }))
 
-    const displayUrl = blobUrl ?? initialUrl ?? null
+    // While initialBlobUrl is loading, fall back to the remote URL so the image shows immediately
+    const displayUrl = activeBlobUrl ?? initialUrl ?? null
     const s = getScaling()
-    // Drag is only available for newly selected files with room to move
-    const canDrag = !!blobUrl && !!s && (s.maxX > 0.5 || s.maxY > 0.5)
+    // Drag is available once the blob is ready and the image has room to pan
+    const canDrag = !!activeBlobUrl && !!s && (s.maxX > 0.5 || s.maxY > 0.5)
 
     return (
       <div>
@@ -134,8 +163,9 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
                   setImgNatural({ w: img.naturalWidth, h: img.naturalHeight })
                 }}
                 style={
-                  blobUrl && s
+                  s
                     ? {
+                        // Explicit pixel layout — fills container and responds to drag
                         position: 'absolute',
                         width: `${s.sw}px`,
                         height: `${s.sh}px`,
@@ -145,11 +175,12 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
                         userSelect: 'none',
                       }
                     : {
+                        // Fallback while natural dimensions are not yet known
                         position: 'absolute',
-                        inset: 0,
+                        top: 0, left: 0, right: 0, bottom: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'cover' as const,
                         pointerEvents: 'none',
                         userSelect: 'none',
                       }
@@ -202,14 +233,13 @@ export const ImageCropPicker = forwardRef<ImageCropPickerHandle, Props>(
 )
 
 async function cropToSquare(
-  file: File,
+  blobUrl: string,   // local blob URL — no CORS issues for canvas
   pos: { x: number; y: number },
   natural: { w: number; h: number },
   containerSize: number,
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new window.Image()
-    const url = URL.createObjectURL(file)
 
     img.onload = () => {
       try {
@@ -224,14 +254,13 @@ async function cropToSquare(
         const sw = w * scale
         const sh = h * scale
 
-        // pos.x > 0 → image shifted right → visible region is the LEFT portion → srcX decreases
+        // pos.x > 0 → image shifted right → visible region is LEFT portion → srcX decreases
         const srcX = Math.max(0, ((sw - containerSize) / 2 - pos.x) / scale)
         const srcY = Math.max(0, ((sh - containerSize) / 2 - pos.y) / scale)
         const srcW = Math.min(containerSize / scale, w - srcX)
         const srcH = Math.min(containerSize / scale, h - srcY)
 
         ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
-        URL.revokeObjectURL(url)
 
         canvas.toBlob(
           (blob) => {
@@ -242,16 +271,11 @@ async function cropToSquare(
           0.92,
         )
       } catch (err) {
-        URL.revokeObjectURL(url)
         reject(err)
       }
     }
 
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Falha ao carregar imagem'))
-    }
-
-    img.src = url
+    img.onerror = () => reject(new Error('Falha ao carregar imagem'))
+    img.src = blobUrl
   })
 }
