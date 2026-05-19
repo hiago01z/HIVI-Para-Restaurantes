@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart, Search, X, Menu } from 'lucide-react'
+import { UtensilsCrossed, Search, X, Menu } from 'lucide-react'
 import { useCart } from '@/contexts/cart-context'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
@@ -69,7 +69,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
             href={`/${slug}/pedido`}
             className="relative w-9 h-9 flex items-center justify-center rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
           >
-            <ShoppingCart className="w-5 h-5" />
+            <UtensilsCrossed className="w-5 h-5" />
             {totalItems > 0 && (
               <span
                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-xs font-black flex items-center justify-center"
