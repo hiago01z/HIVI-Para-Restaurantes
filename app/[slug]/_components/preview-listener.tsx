@@ -1,0 +1,57 @@
+'use client'
+import { useEffect } from 'react'
+
+/**
+ * Escuta mensagens postMessage do tipo HIVI_THEME_PREVIEW
+ * e aplica as CSS variables em tempo real sem recarregar a página.
+ * Usado para a prévia ao vivo no painel ADM > Configurações.
+ */
+export function PreviewListener() {
+  useEffect(() => {
+    function handler(e: MessageEvent) {
+      if (e.data?.type !== 'HIVI_THEME_PREVIEW') return
+      const t = e.data.theme as {
+        primary?: string
+        secondary?: string
+        bg?: string
+        text?: string
+        font?: string
+        icon?: string
+      }
+
+      const root = document.documentElement
+
+      if (t.primary)   root.style.setProperty('--menu-primary',   t.primary)
+      if (t.secondary) root.style.setProperty('--menu-secondary', t.secondary)
+      if (t.icon)      root.style.setProperty('--menu-icon',      t.icon)
+      if (t.font)      root.style.setProperty('--menu-font',      t.font)
+
+      if (t.bg) {
+        root.style.setProperty('--menu-bg', t.bg)
+      }
+      if (t.text) {
+        root.style.setProperty('--menu-text',       t.text)
+        root.style.setProperty('--menu-text-muted', t.text + '99')
+      }
+      if (t.bg && t.text) {
+        root.style.setProperty(
+          '--menu-card',
+          `color-mix(in srgb, ${t.bg} 70%, ${t.text} 8%)`
+        )
+      }
+
+      // Atualiza o elemento raiz do menu diretamente (estilos inline do layout)
+      const menuRoot = document.getElementById('menu-root')
+      if (menuRoot) {
+        if (t.bg)   menuRoot.style.background   = t.bg
+        if (t.text) menuRoot.style.color        = t.text
+        if (t.font) menuRoot.style.fontFamily   = t.font
+      }
+    }
+
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+  return null
+}

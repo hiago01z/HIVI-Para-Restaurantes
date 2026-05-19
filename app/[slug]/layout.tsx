@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CartProvider } from '@/contexts/cart-context'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { PreviewListener } from './_components/preview-listener'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -72,8 +73,9 @@ export default async function SlugLayout({
   ].join('; ')
 
   return (
-    <div style={{ background: bg, fontFamily: font, fontSize, minHeight: '100vh', color: textColor }}>
+    <div id="menu-root" style={{ background: bg, fontFamily: font, fontSize, minHeight: '100vh', color: textColor }}>
       <style>{`:root { ${cssVars} }`}</style>
+      <PreviewListener />
       <CartProvider slug={slug}>
         {children}
       </CartProvider>

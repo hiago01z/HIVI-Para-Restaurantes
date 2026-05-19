@@ -2,8 +2,18 @@ import Link from 'next/link'
 import { QrCode, Smartphone, TrendingUp, Clock, ScanLine, UtensilsCrossed, CheckCircle2 } from 'lucide-react'
 import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
+import { createClient } from '@/lib/supabase/server'
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Busca o primeiro restaurante ativo para a prévia ao vivo
+  const supabase = await createClient()
+  const { data: demoRestaurant } = await supabase
+    .from('restaurants')
+    .select('slug')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
   return (
     <div className="min-h-screen bg-white">
 
@@ -21,38 +31,90 @@ export default function LandingPage() {
           QR code nas mesas, pedidos em tempo real e painel completo para o seu restaurante.
         </p>
 
-        {/* Mockup do app */}
-        <div className="mx-auto w-60 bg-[#2C1A0E] rounded-3xl p-2.5 shadow-2xl mb-12">
-          <div className="rounded-2xl overflow-hidden">
-            <div className="bg-[#2C1A0E] flex items-center gap-2 px-3 pt-3 pb-2">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xs font-display italic">B</span>
+        {/* Mockup do app — iframe ao vivo ou fallback estático */}
+        <div className="mb-12 flex justify-center">
+          {demoRestaurant ? (
+            /* ── Phone frame com iframe do cardápio real ── */
+            <div
+              style={{
+                width: '252px',
+                background: '#111827',
+                border: '6px solid #111827',
+                borderRadius: '2.5rem',
+                padding: '14px 0 10px',
+                position: 'relative',
+                boxShadow: '0 32px 64px -12px rgba(0,0,0,0.35)',
+              }}
+            >
+              {/* Notch */}
+              <div style={{
+                position: 'absolute', top: 0, left: '50%',
+                transform: 'translateX(-50%)',
+                width: '80px', height: '20px',
+                background: '#111827',
+                borderRadius: '0 0 12px 12px',
+                zIndex: 10,
+              }} />
+              {/* Tela */}
+              <div style={{
+                width: '240px',
+                height: '520px',
+                overflow: 'hidden',
+                borderRadius: '1.5rem',
+                position: 'relative',
+                background: '#000',
+              }}>
+                <iframe
+                  src={`/${demoRestaurant.slug}`}
+                  title="Demonstração do cardápio"
+                  style={{
+                    width: '390px',
+                    height: '844px',
+                    transform: 'scale(0.6154)',
+                    transformOrigin: 'top left',
+                    border: 'none',
+                    pointerEvents: 'none',
+                    display: 'block',
+                  }}
+                />
+                {/* Overlay para bloquear interação */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 5 }} />
               </div>
-              <div className="flex-1 h-7 bg-[#3D2110] rounded-full" />
-              <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
-              <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
+              {/* Home indicator */}
+              <div style={{
+                width: '72px', height: '4px',
+                background: 'rgba(255,255,255,0.22)',
+                borderRadius: '2px',
+                margin: '10px auto 0',
+              }} />
             </div>
-            <div className="bg-[#2C1A0E] px-3 pb-1">
-              <p className="text-orange-400 font-display font-bold italic text-lg mb-0.5">Destaques</p>
-              <p className="text-gray-500 text-[10px] leading-tight mb-3">ingredientes, preços e mais</p>
-              <div className="flex gap-2 mb-2">
-                <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-semibold">Combos</span>
+          ) : (
+            /* ── Fallback estático quando não há restaurante ativo ── */
+            <div className="w-60 bg-[#2C1A0E] rounded-3xl p-2.5 shadow-2xl">
+              <div className="rounded-2xl overflow-hidden">
+                <div className="bg-[#2C1A0E] flex items-center gap-2 px-3 pt-3 pb-2">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-black text-sm">B</span>
+                  </div>
+                  <div className="flex-1 h-7 bg-[#3D2110] rounded-full" />
+                  <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
+                  <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
                 </div>
-                <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-semibold">Completo</span>
-                </div>
-              </div>
-              <div className="flex gap-2 pb-4">
-                <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-semibold">Bebidas</span>
-                </div>
-                <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-semibold">Especial</span>
+                <div className="bg-[#2C1A0E] px-3 pb-1">
+                  <div className="w-full aspect-square bg-[#3D2110] rounded-2xl mb-2 flex items-center justify-center">
+                    <span className="text-5xl opacity-30">🥩</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    {['Combos 🍔','Completo 🍽️','Bebidas 🥤','Especiais ⭐'].map((c) => (
+                      <div key={c} className="h-14 bg-[#3D2110] rounded-xl flex items-end p-2">
+                        <span className="text-orange-400 text-[10px] font-semibold leading-tight">{c}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <Link
