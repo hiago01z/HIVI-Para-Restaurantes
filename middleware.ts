@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -9,9 +10,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
@@ -24,11 +23,10 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const url = request.nextUrl
   const pathParts = url.pathname.split('/').filter(Boolean)
 
-  // Proteger rotas HIVI que exigem conta Google
+  // ── Proteger rotas HIVI (/conta, /criar-loja) ─────────────
   const saasProtected = ['/conta', '/criar-loja']
   if (!user && saasProtected.some((p) => url.pathname.startsWith(p))) {
     const loginUrl = new URL('/entrar', request.url)
@@ -36,38 +34,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Proteger rotas /[slug]/adm/**
+  // ── Proteger rotas ADM (/[slug]/adm/**) ───────────────────
   const isAdmRoute = pathParts.length >= 2 && pathParts[1] === 'adm'
-  const isQrRoute = pathParts[2] === 'qr'
-  const isLoginRoute = pathParts[2] === 'login'
+  const isAdmLogin = pathParts[2] === 'login'
+  const isAdmQr = pathParts[2] === 'qr'
+  const isAdmApiLogin = url.pathname.startsWith('/api/adm/')
 
-  if (isAdmRoute && !isQrRoute && !isLoginRoute) {
-    if (!user) {
-      const slug = pathParts[0]
+  if (isAdmRoute && !isAdmLogin && !isAdmQr && !isAdmApiLogin) {
+    const slug = pathParts[0]
+    const cookieName = admCookieName(slug)
+    const token = request.cookies.get(cookieName)?.value
+
+    const valid = token ? await verifyAdmToken(slug, token) : false
+
+    if (!valid) {
       const loginUrl = new URL(`/${slug}/adm/login`, request.url)
       loginUrl.searchParams.set('redirect', url.pathname)
       return NextResponse.redirect(loginUrl)
-    }
-
-    // Verificar se o usuário pertence ao restaurante
-    const slug = pathParts[0]
-    const { data: restaurant } = await supabase
-      .from('restaurants')
-      .select('id')
-      .eq('slug', slug)
-      .single()
-
-    if (restaurant) {
-      const { data: restaurantUser } = await supabase
-        .from('restaurant_users')
-        .select('id, role')
-        .eq('restaurant_id', restaurant.id)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!restaurantUser) {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
     }
   }
 

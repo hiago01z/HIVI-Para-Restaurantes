@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink, LayoutDashboard, Pause, Play, Trash2, CreditCard, Loader2 } from 'lucide-react'
@@ -11,14 +11,16 @@ type Loja = {
   slug: string
   is_active: boolean
   stripe_customer_id: string | null
+  has_adm_password?: boolean
 }
 
 type Props = {
   lojas?: Loja[]
   showPortalOnly?: boolean
+  AdmPasswordForm?: React.ComponentType<{ restaurantId: string; hasPassword: boolean }>
 }
 
-export function ContaActions({ lojas = [], showPortalOnly = false }: Props) {
+export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordForm }: Props) {
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -134,6 +136,16 @@ export function ContaActions({ lojas = [], showPortalOnly = false }: Props) {
                 Excluir loja
               </button>
             </div>
+
+            {/* Senha ADM */}
+            {AdmPasswordForm && (
+              <div className="mt-2">
+                <AdmPasswordForm
+                  restaurantId={loja.id}
+                  hasPassword={!!loja.has_adm_password}
+                />
+              </div>
+            )}
           </div>
         )
       })}

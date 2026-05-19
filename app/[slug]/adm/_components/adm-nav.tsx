@@ -8,7 +8,6 @@ import {
   ShoppingBag, UtensilsCrossed, LayoutGrid, Settings,
   X, Menu, LogOut, ExternalLink,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 type Props = {
   slug: string
@@ -32,8 +31,7 @@ export function AdmNav({ slug, restaurantName, logoUrl, role }: Props) {
   const visibleItems = navItems.filter((item) => item.roles.includes(role))
 
   async function handleSignout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch(`/api/adm/${slug}/logout`, { method: 'POST' })
     router.push(`/${slug}/adm/login`)
     router.refresh()
   }

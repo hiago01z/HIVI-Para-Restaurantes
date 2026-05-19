@@ -2,15 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 
 export function LoginForm({ slug }: { slug: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? `/${slug}/adm/pedidos`
 
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -18,21 +16,31 @@ export function LoginForm({ slug }: { slug: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim() || !password) return
+    if (!password) return
     setErro('')
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const res = await fetch(`/api/adm/${slug}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
 
-    if (error) {
-      setErro('E-mail ou senha incorretos.')
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErro(data.error ?? 'Senha incorreta')
+        return
+      }
+
+      router.push(redirect)
+      router.refresh()
+    } catch {
+      setErro('Erro de conexão. Tente novamente.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    router.push(redirect)
-    router.refresh()
   }
 
   return (
@@ -40,35 +48,25 @@ export function LoginForm({ slug }: { slug: string }) {
       <div className="w-full max-w-sm">
 
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-black text-2xl">H</span>
+          <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Lock className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-black text-white">Acesso ao painel</h1>
-          <p className="text-gray-400 text-sm mt-1">Área exclusiva do restaurante</p>
+          <h1 className="text-2xl font-black text-white">Painel ADM</h1>
+          <p className="text-gray-400 text-sm mt-1">
+            <span className="font-semibold text-orange-400">{slug}</span>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">E-mail</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              disabled={loading}
-              className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha do ADM</label>
             <div className="relative">
               <input
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoFocus
                 autoComplete="current-password"
                 disabled={loading}
                 className="w-full px-4 py-3 pr-11 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base"
@@ -91,16 +89,17 @@ export function LoginForm({ slug }: { slug: string }) {
 
           <button
             type="submit"
-            disabled={loading || !email || !password}
-            className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2"
+            disabled={loading || !password}
+            className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+            {loading ? 'Verificando...' : 'Entrar'}
           </button>
         </form>
 
         <p className="text-center text-xs text-gray-600 mt-8">
-          Área exclusiva para funcionários do restaurante.
+          Senha criada pelo dono em{' '}
+          <a href="/conta" className="text-orange-500 hover:underline">hivi.vercel.app/conta</a>
         </p>
       </div>
     </div>

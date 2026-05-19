@@ -5,7 +5,12 @@
       "Bash(npm install *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git commit -m 'docs: atualiza TASKS e checklist de deploy com status atual *)",
+      "Bash(git commit -m 'docs: adiciona regra de commit e push obrigatório após cada tarefa *)",
+      "Bash(git commit -m 'feat: redesign cardápio — carrossel de destaques + grid de categorias *)",
+      "Bash(git commit -m 'feat: cardápio totalmente customizável + layout categorias 2+1+2 *)",
+      "Bash(git commit -m 'feat: auth ADM dedicada com senha por restaurante *)"
     ]
   }
 }

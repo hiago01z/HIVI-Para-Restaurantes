@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { ContaActions } from './_conta-actions'
+import { AdmPasswordForm } from './_adm-password-form'
 
 export default async function ContaPage() {
   const supabase = await createClient()
@@ -12,11 +13,14 @@ export default async function ContaPage() {
 
   const { data: restaurantes } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active, stripe_customer_id')
+    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
-  const lojas = restaurantes ?? []
+  const lojas = (restaurantes ?? []).map((l) => ({
+    ...l,
+    has_adm_password: !!l.adm_password_hash,
+  }))
   const temStripe = lojas.some((l) => l.stripe_customer_id)
 
   return (
@@ -67,7 +71,7 @@ export default async function ContaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <ContaActions lojas={lojas} />
+            <ContaActions lojas={lojas} AdmPasswordForm={AdmPasswordForm} />
 
             {/* Adicionar mais */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-dashed border-gray-200 text-center">
