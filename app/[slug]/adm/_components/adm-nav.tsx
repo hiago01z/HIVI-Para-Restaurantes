@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import Image from 'next/image'
 import {
   ShoppingBag, UtensilsCrossed, LayoutGrid, Settings, Users,
   X, Menu, LogOut, ExternalLink,
@@ -48,8 +47,8 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
         {/* Logo/Nome */}
         <Link href={`/${slug}/adm/pedidos`} className="flex items-center gap-2 flex-1 min-w-0">
           {logoUrl ? (
-            <Image src={logoUrl} alt={restaurantName} width={28} height={28}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={restaurantName} className="h-7 w-auto object-contain max-w-[90px] flex-shrink-0" />
           ) : (
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0"
