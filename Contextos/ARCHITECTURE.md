@@ -193,7 +193,7 @@ created_at      timestamptz DEFAULT now()
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/api/auth/google` | Inicia fluxo Google OAuth → redireciona para Supabase |
-| GET | `/api/auth/callback` | Callback OAuth → troca code por sessão → redireciona para `/conta` |
+| GET | `/auth/callback` | Callback OAuth → troca code por sessão → redireciona para `/conta` |
 | POST | `/api/auth/signout` | Encerra sessão Supabase → redireciona para `/entrar` |
 
 ### Stripe

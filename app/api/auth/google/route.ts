@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/api/auth/callback?next=${next}`,
+      redirectTo: `${origin}/auth/callback?next=${next}`,
     },
   })
 
