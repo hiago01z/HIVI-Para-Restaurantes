@@ -1,10 +1,23 @@
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, LayoutDashboard, Pause, Trash2, Plus, Settings } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { ContaActions } from './_conta-actions'
 
-export default function ContaPage() {
-  const lojas = [
-    { nome: 'Restaurante Exemplo', slug: 'restaurante-exemplo', ativo: true },
-  ]
+export default async function ContaPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/entrar')
+
+  const { data: restaurantes } = await supabase
+    .from('restaurants')
+    .select('id, name, slug, is_active, stripe_customer_id')
+    .eq('owner_id', user.id)
+    .order('created_at', { ascending: false })
+
+  const lojas = restaurantes ?? []
+  const temStripe = lojas.some((l) => l.stripe_customer_id)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -15,10 +28,12 @@ export default function ContaPage() {
           HIVI
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/conta/configuracoes" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            <Settings className="w-5 h-5" />
-          </Link>
-          <span className="text-sm font-medium text-gray-700">Conta</span>
+          <span className="text-sm text-gray-500 hidden sm:block truncate max-w-40">{user.email}</span>
+          <form action="/api/auth/signout" method="POST">
+            <button type="submit" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
+              Sair
+            </button>
+          </form>
         </div>
       </header>
 
@@ -52,43 +67,7 @@ export default function ContaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {lojas.map((loja) => (
-              <div key={loja.slug} className="bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="font-bold text-gray-900">{loja.nome}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">hivi.com.br/{loja.slug}</p>
-                  </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${loja.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {loja.ativo ? 'Ativa' : 'Pausada'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href={`/${loja.slug}`}
-                    className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Ver loja
-                  </Link>
-                  <Link
-                    href={`/${loja.slug}/adm`}
-                    className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Painel ADM
-                  </Link>
-                  <button className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                    <Pause className="w-4 h-4" />
-                    {loja.ativo ? 'Pausar loja' : 'Ativar loja'}
-                  </button>
-                  <button className="flex items-center justify-center gap-1.5 py-2.5 border border-red-200 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                    Excluir loja
-                  </button>
-                </div>
-              </div>
-            ))}
+            <ContaActions lojas={lojas} />
 
             {/* Adicionar mais */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-dashed border-gray-200 text-center">
@@ -100,29 +79,34 @@ export default function ContaPage() {
                 <Plus className="w-4 h-4" />
                 Adicionar loja
               </Link>
-              <p className="text-xs text-gray-400 mt-2">Cobrança adicional por loja</p>
+              <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por loja adicional</p>
             </div>
+          </div>
+        )}
+
+        {/* Billing */}
+        {temStripe && (
+          <div className="mt-6 bg-white rounded-2xl p-5 shadow-sm">
+            <h2 className="font-black text-gray-900 mb-1">Assinatura</h2>
+            <p className="text-sm text-gray-500 mb-4">Gerencie pagamentos, faturas e cancele pelo portal Stripe.</p>
+            <ContaActions lojas={[]} showPortalOnly />
           </div>
         )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-gray-100 bg-white px-5 py-6 mt-8">
         <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-gray-400 mb-3">
-          <Link href="#" className="hover:text-gray-700 transition-colors">Como funciona</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Preços</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">FAQ</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Feedback</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Entrar</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Privacidade</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Termos</Link>
-          <Link href="#" className="hover:text-gray-700 transition-colors">Exclusão de dados</Link>
+          <Link href="/como-funciona" className="hover:text-gray-700 transition-colors">Como funciona</Link>
+          <Link href="/precos" className="hover:text-gray-700 transition-colors">Preços</Link>
+          <Link href="/faq" className="hover:text-gray-700 transition-colors">FAQ</Link>
+          <Link href="/feedback" className="hover:text-gray-700 transition-colors">Feedback</Link>
+          <Link href="/privacidade" className="hover:text-gray-700 transition-colors">Privacidade</Link>
+          <Link href="/termos" className="hover:text-gray-700 transition-colors">Termos</Link>
         </nav>
         <p className="text-center text-xs text-gray-400">
           2026 HIVI Tecnologia — Todos os direitos reservados
         </p>
       </footer>
-
     </div>
   )
 }

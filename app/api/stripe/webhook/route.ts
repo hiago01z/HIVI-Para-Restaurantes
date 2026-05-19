@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { sendRestaurantCreatedEmail } from '@/lib/resend'
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -34,7 +35,25 @@ export async function POST(request: Request) {
         is_active: true,
       })
 
-      if (error) console.error('Erro ao criar restaurante:', error)
+      if (error) {
+        console.error('Erro ao criar restaurante:', error)
+        break
+      }
+
+      // Também cria linha em restaurant_themes com defaults
+      await supabase.from('restaurant_themes').insert({
+        restaurant_id: (await supabase.from('restaurants').select('id').eq('slug', slug).single()).data?.id,
+      })
+
+      // Envia e-mail de boas-vindas via Resend
+      if (session.customer_email) {
+        try {
+          await sendRestaurantCreatedEmail(session.customer_email, restaurant_name, slug)
+        } catch (emailErr) {
+          console.error('Erro ao enviar e-mail:', emailErr)
+          // Não falha o webhook por causa do e-mail
+        }
+      }
       break
     }
 

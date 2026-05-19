@@ -11,6 +11,13 @@
 |---|---|
 | 2026-05-18 | Criação da documentação base do projeto (PROJECT, ARCHITECTURE, PHASES, FEATURES, TASKS, RULES, README) |
 | 2026-05-18 | Fase 0 — Setup do projeto: Next.js 15 + TypeScript + Tailwind + shadcn/ui + Supabase client + middleware + migrations SQL + estrutura completa de pastas + APIs base (orders, qrcode, whatsapp, stripe) + build passando sem erros |
+| 2026-05-19 | Fase 1 — Template Inicial HIVI: landing page, /entrar, /criar-conta, /conta (real auth + Supabase), /criar-loja (Stripe checkout), /api/auth/google (OAuth), /api/auth/signout, proteção de rotas no middleware |
+| 2026-05-19 | Fase 2 — Cardápio Público: CartContext (localStorage), layout com tema dinâmico CSS vars, home com destaques + categorias, página de categoria com ordenação, página de pedido com modal QR Code + modal Entrega, meu-pedido com Supabase Realtime, /api/qrcode/session, /api/orders atualizada |
+| 2026-05-19 | Fase 3 — Pedidos e QR Code: /api/qrcode/confirm já existia, /api/orders atualizada, tela de confirmação QR do garçom (/[slug]/adm/qr/[sessionId]) com validação de expiração e confirmação |
+| 2026-05-19 | Fase 4 — Painel ADM: login e-mail+senha, layout com AdmNav (mobile drawer + desktop), pedidos realtime (tabs entrega/mesa/QR, cards, alterar status), pratos CRUD completo (upload Supabase Storage, toggle destaque/disponível), categorias CRUD com reordenação ↑↓, configurações (redes sociais, logo, banner, tema com color picker + presets, QR code download) |
+| 2026-05-19 | Fase 6 — Temas: CSS vars dinâmicos no cardápio público (primary_color, secondary_color, background_color, font_family), 4 temas pré-definidos no ADM, color picker com preview ao vivo |
+| 2026-05-19 | Fase 5 — Integrações: Resend email via webhook Stripe (restaurant created), WhatsApp automático via UltraMSG já wired no PATCH status, tema criado automaticamente no webhook |
+| 2026-05-19 | Fase 7 — Billing: /api/stripe/portal (Stripe customer portal), /api/restaurants/[id] (PATCH toggle is_active + DELETE), /conta atualizado com ContaActions client (pausar/ativar/excluir/portal Stripe) |
 
 ---
 

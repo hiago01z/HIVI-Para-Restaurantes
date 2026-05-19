@@ -44,42 +44,37 @@ hivi.com.br/[slug]/adm     → Painel administrativo do restaurante (dono e func
 
 ## Status do Projeto
 
-**Fase atual**: Fase 1 — Template Inicial (HIVI SaaS)
+**Fase atual**: Fase 8 — Testes e Deploy
 
 | Fase | Status |
 |---|---|
 | 0 — Setup e Infraestrutura | ✅ Concluído |
-| 1 — Template Inicial (HIVI SaaS) | ⬜ Pendente |
-| 2 — Cardápio Público | ⬜ Pendente |
-| 3 — Pedidos e QR Code | ⬜ Pendente |
-| 4 — Painel Administrativo do Restaurante | ⬜ Pendente |
-| 5 — Integrações (WhatsApp + Email) | ⬜ Pendente |
-| 6 — Temas e Personalização | ⬜ Pendente |
-| 7 — Billing e Gestão de Conta | ⬜ Pendente |
+| 1 — Template Inicial (HIVI SaaS) | ✅ Concluído |
+| 2 — Cardápio Público | ✅ Concluído |
+| 3 — Pedidos e QR Code | ✅ Concluído |
+| 4 — Painel Administrativo do Restaurante | ✅ Concluído |
+| 5 — Integrações (WhatsApp + Email) | ✅ Concluído |
+| 6 — Temas e Personalização | ✅ Concluído |
+| 7 — Billing e Gestão de Conta | ✅ Concluído |
 | 8 — Testes e Deploy | ⬜ Pendente |
 
 ---
 
 ## Variáveis de Ambiente
 
-Crie `.env.local` baseado em `.env.example`:
+Crie `.env.local` baseado em `.env.example`.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+| Serviço | Status |
+|---|---|
+| Supabase (URL, Anon Key, Service Role) | ✅ Configurado |
+| Stripe (Secret, Webhook, Publishable, Price) | ✅ Configurado |
+| UltraMSG (Instance ID, Token) | ✅ Configurado |
+| Google OAuth | ✅ Configurado no painel Supabase |
+| Resend (API Key) | ⬜ Pendente |
+| `NEXT_PUBLIC_APP_URL` | ✅ Configurado (`https://hivi.vercel.app`) |
 
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-
-RESEND_API_KEY=
-
-ULTRAMSG_INSTANCE_ID=
-ULTRAMSG_TOKEN=
-
-NEXT_PUBLIC_APP_URL=https://hivi.com.br
-```
+> **Guia completo de obtenção de cada chave (incluindo Google OAuth passo a passo):**
+> [`Contextos/SETUP_KEYS.md`](./Contextos/SETUP_KEYS.md)
 
 ---
 

@@ -1,7 +1,7 @@
 import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
 
-export default function EntrarPage() {
+export default function CriarContaPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
@@ -10,8 +10,8 @@ export default function EntrarPage() {
         <Link href="/" className="text-3xl font-black tracking-tight text-gray-900">
           HIVI
         </Link>
-        <Link href="/criar-conta" className="text-base font-medium text-orange-500 hover:text-orange-600 transition-colors">
-          Criar conta
+        <Link href="/entrar" className="text-base font-medium text-gray-500 hover:text-gray-900 transition-colors">
+          Entrar
         </Link>
       </header>
 
@@ -20,10 +20,10 @@ export default function EntrarPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-black text-gray-900 mb-2">
-              Entrar na HIVI
+              Criar sua conta
             </h1>
             <p className="text-base text-gray-500">
-              Acesse sua conta para gerenciar seus restaurantes.
+              Comece grátis. Sem cartão de crédito para testar.
             </p>
           </div>
 
@@ -44,7 +44,7 @@ export default function EntrarPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
-              Ao entrar, você concorda com os{' '}
+              Ao criar conta, você concorda com os{' '}
               <Link href="/termos" className="text-orange-500 hover:underline">Termos de uso</Link>
               {' '}e a{' '}
               <Link href="/privacidade" className="text-orange-500 hover:underline">Política de privacidade</Link>.
@@ -53,9 +53,9 @@ export default function EntrarPage() {
 
           <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-base text-gray-600">
-              Ainda não tem conta?{' '}
-              <Link href="/criar-conta" className="text-orange-500 font-bold hover:underline">
-                Criar conta
+              Já tem uma conta?{' '}
+              <Link href="/entrar" className="text-orange-500 font-bold hover:underline">
+                Entrar
               </Link>
             </p>
           </div>

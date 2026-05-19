@@ -1,19 +1,46 @@
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { QrConfirmClient } from './_qr-confirm-client'
+
 export default async function QrConfirmPage({
   params,
 }: {
   params: Promise<{ slug: string; sessionId: string }>
 }) {
-  const { sessionId } = await params
+  const { slug, sessionId } = await params
+  const supabase = await createClient()
+
+  const { data: session } = await supabase
+    .from('qr_sessions')
+    .select('id, restaurant_id, order_data, confirmed, expires_at')
+    .eq('id', sessionId)
+    .single()
+
+  if (!session) notFound()
+
+  // Verificar que o restaurante corresponde ao slug
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('id, name, slug')
+    .eq('id', session.restaurant_id)
+    .single()
+
+  if (!restaurant || restaurant.slug !== slug) notFound()
+
+  const expired = new Date(session.expires_at) < new Date()
 
   return (
-    <main className="min-h-screen p-4 flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold mb-4">Confirmar Pedido</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Sessão: {sessionId}
-      </p>
-      <button className="w-full max-w-sm py-3 bg-primary text-primary-foreground rounded-md font-medium">
-        Confirmar Pedido
-      </button>
-    </main>
+    <QrConfirmClient
+      session={{
+        id: session.id,
+        confirmed: session.confirmed,
+        expired,
+        orderData: session.order_data as {
+          items: { product_id: string; product_name: string; product_price: number; quantity: number }[]
+          total: number
+        },
+      }}
+      restaurantName={restaurant.name}
+    />
   )
 }

@@ -3,21 +3,22 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const orderSchema = z.object({
-  restaurant_id: z.string().uuid(),
+  restaurantId: z.string().uuid(),
   type: z.enum(['table', 'delivery']),
   customer_name: z.string().min(1),
-  customer_phone: z.string().optional(),
-  table_number: z.string().optional(),
-  address: z.string().optional(),
-  payment_method: z.string().optional(),
-  change_for: z.number().optional(),
-  notes: z.string().optional(),
+  customer_phone: z.string().optional().nullable(),
+  table_number: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  payment_method: z.string().optional().nullable(),
+  change_for: z.number().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  total: z.number().positive(),
   items: z.array(z.object({
     product_id: z.string().uuid(),
     product_name: z.string(),
     product_price: z.number(),
     quantity: z.number().int().min(1),
-    notes: z.string().optional(),
+    notes: z.string().optional().nullable(),
   })).min(1),
 })
 
@@ -30,30 +31,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { items, ...orderData } = parsed.data
-    const total = items.reduce((sum, item) => sum + item.product_price * item.quantity, 0)
+    const { restaurantId, items, total, ...rest } = parsed.data
 
     const supabase = await createClient()
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({ ...orderData, total })
-      .select()
+      .insert({ restaurant_id: restaurantId, total, ...rest })
+      .select('id, order_number')
       .single()
 
-    if (orderError) {
+    if (orderError || !order) {
       return NextResponse.json({ error: 'Erro ao criar pedido' }, { status: 500 })
     }
 
     const { error: itemsError } = await supabase
       .from('order_items')
-      .insert(items.map(item => ({ ...item, order_id: order.id })))
+      .insert(
+        items.map((item) => ({
+          order_id: order.id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_price: item.product_price,
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+        }))
+      )
 
     if (itemsError) {
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
     }
 
-    return NextResponse.json({ order }, { status: 201 })
+    return NextResponse.json({ orderId: order.id, orderNumber: order.order_number }, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }

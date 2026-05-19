@@ -189,18 +189,37 @@ created_at      timestamptz DEFAULT now()
 
 ## Rotas de API
 
+### Auth
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/auth/google` | Inicia fluxo Google OAuth → redireciona para Supabase |
+| GET | `/api/auth/callback` | Callback OAuth → troca code por sessão → redireciona para `/conta` |
+| POST | `/api/auth/signout` | Encerra sessão Supabase → redireciona para `/entrar` |
+
 ### Stripe
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/stripe/checkout` | Criar sessão de checkout |
-| POST | `/api/stripe/webhook` | Receber eventos Stripe |
+| POST | `/api/stripe/checkout` | Cria sessão de checkout (valida slug + auth) |
+| POST | `/api/stripe/webhook` | Eventos Stripe: cria restaurante, ativa/desativa, envia e-mail Resend |
+| POST | `/api/stripe/portal` | Cria sessão do Billing Portal (gerenciar assinatura) |
+
+### Restaurantes
+| Método | Rota | Descrição |
+|---|---|---|
+| PATCH | `/api/restaurants/[id]` | Pausar ou ativar loja (`is_active`) |
+| DELETE | `/api/restaurants/[id]` | Excluir restaurante (dono autenticado) |
 
 ### Pedidos
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/orders` | Cliente cria novo pedido |
-| PATCH | `/api/orders/[id]/status` | Funcionário altera status → dispara WhatsApp |
-| POST | `/api/qrcode/confirm` | Garçom confirma pedido via QR code |
+| POST | `/api/orders` | Cliente cria pedido (entrega ou mesa) |
+| PATCH | `/api/orders/[id]/status` | Funcionário altera status → dispara WhatsApp automático |
+
+### QR Code
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/api/qrcode/session` | Cliente cria qr_session com itens do carrinho (TTL 15 min) |
+| POST | `/api/qrcode/confirm` | Garçom confirma sessão → cria pedido `type=table` |
 
 ### WhatsApp
 | Método | Rota | Descrição |
@@ -220,27 +239,23 @@ created_at      timestamptz DEFAULT now()
 
 ## Variáveis de Ambiente
 
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+| Variável | Serviço | Status |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase | ✅ Configurada |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase | ✅ Configurada |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | ✅ Configurada |
+| `STRIPE_SECRET_KEY` | Stripe | ✅ Configurada |
+| `STRIPE_WEBHOOK_SECRET` | Stripe | ✅ Configurada |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe | ✅ Configurada |
+| `STRIPE_PRICE_BASIC` | Stripe | ✅ Configurada |
+| `ULTRAMSG_INSTANCE_ID` | UltraMSG | ✅ Configurada |
+| `ULTRAMSG_TOKEN` | UltraMSG | ✅ Configurada |
+| `RESEND_API_KEY` | Resend | ⬜ Pendente |
+| `RESEND_FROM_EMAIL` | Resend | ⬜ Pendente |
+| `NEXT_PUBLIC_APP_URL` | App | ✅ Configurada (`https://hivi.vercel.app`) |
+| Google OAuth | Supabase Dashboard | ✅ Configurado |
 
-# Stripe
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-
-# Resend
-RESEND_API_KEY=
-
-# UltraMSG
-ULTRAMSG_INSTANCE_ID=
-ULTRAMSG_TOKEN=
-
-# App
-NEXT_PUBLIC_APP_URL=https://hivi.com.br
-```
+> Guia detalhado de obtenção de cada chave: [`Contextos/SETUP_KEYS.md`](./SETUP_KEYS.md)
 
 ---
 

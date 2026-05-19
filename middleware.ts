@@ -28,6 +28,14 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const pathParts = url.pathname.split('/').filter(Boolean)
 
+  // Proteger rotas HIVI que exigem conta Google
+  const saasProtected = ['/conta', '/criar-loja']
+  if (!user && saasProtected.some((p) => url.pathname.startsWith(p))) {
+    const loginUrl = new URL('/entrar', request.url)
+    loginUrl.searchParams.set('next', url.pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
   // Proteger rotas /[slug]/adm/**
   const isAdmRoute = pathParts.length >= 2 && pathParts[1] === 'adm'
   const isQrRoute = pathParts[2] === 'qr'

@@ -1,8 +1,29 @@
-export default function CategoriasPage() {
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { CategoriasClient } from './_categorias-client'
+
+export default async function CategoriasPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const supabase = await createClient()
+
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (!restaurant) notFound()
+
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name, image_url, display_order')
+    .eq('restaurant_id', restaurant.id)
+    .order('display_order', { ascending: true })
+
   return (
-    <main className="min-h-screen p-4">
-      <h1 className="text-2xl font-bold text-primary mb-6">Categorias</h1>
-      <p className="text-muted-foreground text-sm">Nenhuma categoria cadastrada.</p>
-    </main>
+    <CategoriasClient
+      restaurantId={restaurant.id}
+      initialCategories={categories ?? []}
+    />
   )
 }
