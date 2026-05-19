@@ -148,12 +148,6 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {/* Destaques — carrossel grande */}
         {featured.length > 0 && (
           <section className="mb-6 mt-3">
-            <h2
-              className="text-xl font-bold mb-3 tracking-tight"
-              style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-primary)' }}
-            >
-              Destaques
-            </h2>
             <FeaturedCarousel products={featured} slug={slug} />
           </section>
         )}
