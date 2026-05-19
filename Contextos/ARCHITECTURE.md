@@ -1,6 +1,6 @@
 # HIVI Para Restaurantes — Arquitetura Técnica
 
-## Estrutura de Pastas (Next.js App Router)
+## Estrutura de Pastas (Next.js 15 App Router)
 
 ```
 hivi/

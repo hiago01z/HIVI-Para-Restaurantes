@@ -21,7 +21,7 @@ SaaS multi-tenant de cardápio digital online para restaurantes. O restaurante c
 
 | Tecnologia | Uso |
 |---|---|
-| **Next.js 14** (App Router) | Framework principal (frontend + backend) |
+| **Next.js 15** (App Router) | Framework principal (frontend + backend) |
 | **Supabase** | Banco de dados (PostgreSQL), Auth, Storage de imagens |
 | **Stripe** | Pagamento de planos e assinaturas |
 | **Google OAuth** | Login na plataforma HIVI (via Supabase Auth) |
