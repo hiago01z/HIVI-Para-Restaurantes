@@ -91,7 +91,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false }: Props) {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="font-bold text-gray-900">{loja.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">hivi.com.br/{loja.slug}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '')}/{loja.slug}</p>
               </div>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${loja.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                 {loja.is_active ? 'Ativa' : 'Pausada'}

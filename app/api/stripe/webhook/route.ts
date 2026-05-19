@@ -40,9 +40,25 @@ export async function POST(request: Request) {
         break
       }
 
-      // Também cria linha em restaurant_themes com defaults
+      // Buscar o ID do restaurante recém-criado
+      const { data: newRestaurant } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('slug', slug)
+        .single()
+
+      if (!newRestaurant) break
+
+      // Adicionar dono em restaurant_users (role=owner) para acesso ao ADM
+      await supabase.from('restaurant_users').insert({
+        restaurant_id: newRestaurant.id,
+        user_id,
+        role: 'owner',
+      })
+
+      // Criar tema padrão
       await supabase.from('restaurant_themes').insert({
-        restaurant_id: (await supabase.from('restaurants').select('id').eq('slug', slug).single()).data?.id,
+        restaurant_id: newRestaurant.id,
       })
 
       // Envia e-mail de boas-vindas via Resend
