@@ -64,6 +64,28 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
 
   const supabase = createClient()
 
+  // Som de notificação de novo pedido (Web Audio API — sem arquivo externo)
+  function playNewOrderSound() {
+    try {
+      const ctx = new AudioContext()
+      // Dois beeps: agudo + médio
+      ;[[880, 0, 0.15], [1100, 0.18, 0.15]].forEach(([freq, start, duration]) => {
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.frequency.value = freq as number
+        osc.type = 'sine'
+        gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
+        osc.start(ctx.currentTime + (start as number))
+        osc.stop(ctx.currentTime + (start as number) + (duration as number))
+      })
+    } catch {
+      // AudioContext pode ser bloqueado pelo browser até primeira interação do usuário
+    }
+  }
+
   // Realtime: escuta novos pedidos e atualizações
   useEffect(() => {
     const channel = supabase
@@ -89,6 +111,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
             .single()
           if (data) {
             setOrders((prev) => [data as Order, ...prev])
+            playNewOrderSound()
           }
         }
       )

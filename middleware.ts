@@ -54,6 +54,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Injeta pathname nos headers para que layouts server-side possam lê-lo
+  supabaseResponse.headers.set('x-pathname', url.pathname)
+
   return supabaseResponse
 }
 

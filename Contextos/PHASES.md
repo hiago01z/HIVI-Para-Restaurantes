@@ -5,141 +5,136 @@
 | Fase | Nome | Status |
 |---|---|---|
 | 0 | Setup e Infraestrutura | ✅ Concluído |
-| 1 | Template Inicial (HIVI SaaS) | ⬜ Pendente |
-| 2 | Cardápio Público do Restaurante | ⬜ Pendente |
-| 3 | Sistema de Pedidos e QR Code | ⬜ Pendente |
-| 4 | Painel Administrativo do Restaurante | ⬜ Pendente |
-| 5 | Integrações (WhatsApp + Email) | ⬜ Pendente |
-| 6 | Temas e Personalização | ⬜ Pendente |
-| 7 | Billing e Gestão de Conta | ⬜ Pendente |
-| 8 | Testes, Polimento e Deploy | ⬜ Pendente |
+| 1 | Template Inicial (HIVI SaaS) | ✅ Concluído |
+| 2 | Cardápio Público do Restaurante | ✅ Concluído |
+| 3 | Sistema de Pedidos e QR Code | ✅ Concluído |
+| 4 | Painel Administrativo do Restaurante | ✅ Concluído |
+| 5 | Integrações (WhatsApp + Email) | ✅ Concluído |
+| 6 | Temas e Personalização | ✅ Concluído |
+| 7 | Billing e Gestão de Conta | ✅ Concluído |
+| 8 | Testes, Polimento e Deploy | 🔄 Em andamento |
 
 ---
 
-## Fase 0 — Setup e Infraestrutura
+## Fase 0 — Setup e Infraestrutura ✅
 
-**Objetivo**: Base técnica do projeto antes de qualquer feature.
-
-- [ ] Criar projeto Next.js 14 com App Router + TypeScript
-- [ ] Configurar Tailwind CSS + Shadcn/ui
-- [ ] Criar projeto no Supabase (banco, auth, storage)
-- [ ] Configurar Google OAuth no Supabase Auth
-- [ ] Criar migrations iniciais do banco (todas as tabelas)
-- [ ] Configurar Row Level Security (RLS) em todas as tabelas
-- [ ] Configurar projeto no Vercel + variáveis de ambiente
-- [ ] Configurar conta Stripe (produtos/planos)
-- [ ] Configurar conta Resend (domínio de e-mail)
-- [ ] Configurar conta UltraMSG (instância WhatsApp)
-- [ ] Criar `middleware.ts` para proteção das rotas `/[slug]/adm`
-- [ ] Criar `lib/supabase/client.ts` e `lib/supabase/server.ts`
-- [ ] Criar `.env.example` com todas as variáveis
+- [x] Criar projeto Next.js 14 com App Router + TypeScript
+- [x] Configurar Tailwind CSS + Shadcn/ui
+- [x] Criar projeto no Supabase (banco, auth, storage)
+- [x] Configurar Google OAuth no Supabase Auth
+- [x] Criar migrations iniciais do banco (todas as tabelas)
+- [x] Configurar Row Level Security (RLS) em todas as tabelas
+- [x] Configurar projeto no Vercel + variáveis de ambiente
+- [x] Configurar conta Stripe (produtos/planos)
+- [x] Configurar conta UltraMSG (instância WhatsApp)
+- [x] Criar `middleware.ts` para proteção das rotas `/[slug]/adm`
+- [x] Criar `lib/supabase/client.ts` e `lib/supabase/server.ts`
+- [x] Criar `.env.example` com todas as variáveis
+- [ ] Configurar conta Resend (domínio de e-mail) — API key pendente
 
 ---
 
-## Fase 1 — Template Inicial (HIVI SaaS)
+## Fase 1 — Template Inicial (HIVI SaaS) ✅
 
-**Objetivo**: Vitrine da HIVI onde donos de restaurante conhecem e contratam o produto.
-
-- [ ] Landing page: Hero, Como funciona, Benefícios, Depoimentos, Preços, Rodapé
-- [ ] Header com links de navegação, "Criar conta" e "Entrar"
-- [ ] Autenticação Google OAuth + callback `/auth/callback`
-- [ ] Área de conta `/conta`: listar lojas, ações por loja
-- [ ] Fluxo "Criar nova loja" com checkout Stripe
-
----
-
-## Fase 2 — Cardápio Público do Restaurante
-
-**Objetivo**: O cliente escaneia o QR code e navega pelo cardápio.
-
-- [ ] Home do cardápio: header, destaques, grid de categorias, busca
-- [ ] Listagem por categoria com ordenação por preço
-- [ ] Carrinho de pedidos (estado global)
-- [ ] Tela de pedido: resumo, botões QR Code e Entrega
-- [ ] Modal QR Code de mesa
-- [ ] Modal Dados para Entrega com formulário completo
-- [ ] Tela "Meu Pedido" com status em realtime (Supabase Realtime)
+- [x] Landing page: Hero, Como funciona, Benefícios, Depoimentos, Preços, Rodapé
+- [x] Header com logo HiviLogo (iconmark SVG de garfo + HIVI text)
+- [x] Favicon dinâmico via app/icon.tsx
+- [x] Autenticação Google OAuth + callback `/auth/callback`
+- [x] Área de conta `/conta`: listar cardápios, ações por cardápio
+- [x] Fluxo "Criar novo cardápio" com checkout Stripe
+- [x] Preview ao vivo na landing: iframe do primeiro restaurante ativo
 
 ---
 
-## Fase 3 — Sistema de Pedidos e QR Code
+## Fase 2 — Cardápio Público do Restaurante ✅
 
-**Objetivo**: Fluxo completo do garçom escanear QR code e confirmar pedido.
-
-- [ ] `POST /api/orders` — cliente cria pedido
-- [ ] `POST /api/qrcode/confirm` — garçom confirma pedido QR
-- [ ] `PATCH /api/orders/[id]/status` — funcionário altera status
-- [ ] Rota `/[slug]/adm/qr/[session_id]` — tela de confirmação do garçom
-
----
-
-## Fase 4 — Painel Administrativo do Restaurante
-
-**Objetivo**: Dono e funcionários gerenciam a loja pelo painel adm.
-
-- [ ] Login do restaurante (e-mail + senha via Supabase Auth)
-- [ ] Guard de rota ADM (middleware por role)
-- [ ] Layout e navegação do ADM (header + menu hambúrguer)
-- [ ] Pedidos: lista com tabs (Entrega / Mesa / QR Code)
-- [ ] Pedidos: filtros, cards completos, alterar status, "Ver itens"
-- [ ] Pedidos: aba "Ler QR Code" com câmera + scanner
-- [ ] Pratos/Bebidas: listagem, filtros, toggle destaques, CRUD + upload
-- [ ] Categorias: listagem, reordenação, CRUD + upload
-- [ ] Configurações: redes sociais, temas, QR code da loja, funcionários
+- [x] Home do cardápio: header, carrossel de destaques, grid de categorias, busca
+- [x] Listagem por categoria com ordenação por preço
+- [x] Carrinho de pedidos (estado global via CartContext)
+- [x] Tela de pedido: resumo, botões QR Code e Entrega
+- [x] Modal QR Code de mesa
+- [x] Modal Dados para Entrega com formulário completo
+- [x] Tela "Meu Pedido" com status em realtime (Supabase Realtime)
+- [x] Rodapé com identidade do restaurante + redes sociais
+- [x] Página de restaurante pausado (PausedPage)
+- [x] OG meta tags por restaurante (title, description, openGraph, twitter card)
+- [x] Título da aba: nome do restaurante (generateMetadata)
 
 ---
 
-## Fase 5 — Integrações (WhatsApp + Email)
+## Fase 3 — Sistema de Pedidos e QR Code ✅
 
-**Objetivo**: Automações de comunicação.
-
-- [ ] `lib/ultramsg.ts` — cliente UltraMSG
-- [ ] Mensagens automáticas por status (apenas pedidos de entrega):
-  - `confirmed` → "Seu pedido foi confirmado!"
-  - `preparing` → "Seu pedido está sendo preparado"
-  - `ready` → "Seu pedido está pronto!"
-  - `out_for_delivery` → "Seu pedido saiu para entrega!"
-  - `delivered` → "Pedido entregue! Obrigado."
-  - `cancelled` → "Seu pedido foi cancelado."
-- [ ] `lib/resend.ts` — e-mail de boas-vindas, confirmação, pagamento
+- [x] `POST /api/orders` — cliente cria pedido
+- [x] `POST /api/qrcode/confirm` — garçom confirma pedido QR
+- [x] `PATCH /api/orders/[id]/status` — funcionário altera status
+- [x] Rota `/[slug]/adm/qr/[session_id]` — tela de confirmação do garçom
 
 ---
 
-## Fase 6 — Temas e Personalização
+## Fase 4 — Painel Administrativo do Restaurante ✅
 
-**Objetivo**: Cada restaurante tem aparência única no cardápio.
-
-- [ ] CSS variables por restaurante (`--primary`, `--background`, etc.)
-- [ ] Aplicar tema no layout do cardápio público via `restaurant_themes`
-- [ ] Preview ao vivo no painel de configurações
-- [ ] Temas pré-definidos (Rústico, Moderno, Claro, Colorido)
-- [ ] Logo e banner aplicados na home do cardápio
-
----
-
-## Fase 7 — Billing e Gestão de Conta
-
-**Objetivo**: Ciclo completo de pagamento e gestão de lojas.
-
-- [ ] Webhook Stripe: ativar restaurante após pagamento confirmado
-- [ ] Webhook Stripe: pausar/cancelar se assinatura vencer
-- [ ] Checkout de nova loja (plano adicional)
-- [ ] Portal do cliente Stripe (gerenciar assinatura)
-- [ ] Lógica de pausar loja (página de aviso para clientes)
-- [ ] Lógica de excluir loja (soft delete)
+- [x] Login do restaurante (e-mail + senha via Supabase Auth)
+- [x] Guard de rota ADM (middleware por JWT/cookie)
+- [x] Layout e navegação do ADM (header + menu hambúrguer)
+- [x] **Dashboard ADM** com métricas do dia (pedidos, receita, em andamento)
+- [x] Pedidos: lista com tabs (Entrega / Mesa / QR Code)
+- [x] Pedidos: filtros, cards completos, alterar status, "Ver itens"
+- [x] Pedidos: aba "Ler QR Code" com câmera + scanner
+- [x] Pedidos: **notificação sonora** de novo pedido (Web Audio API)
+- [x] Pratos/Bebidas: listagem, filtros, toggle destaques, CRUD + upload
+- [x] Categorias: listagem, reordenação, CRUD + upload
+- [x] Configurações: redes sociais, temas, QR code da loja, funcionários
+- [x] Configurações: **preview ao vivo** via iframe real + postMessage
 
 ---
 
-## Fase 8 — Testes, Polimento e Deploy
+## Fase 5 — Integrações (WhatsApp + Email) ✅
 
-**Objetivo**: Produto pronto para produção.
+- [x] `lib/ultramsg.ts` — cliente UltraMSG
+- [x] Mensagens automáticas WhatsApp por status (pedidos de entrega apenas)
+- [x] `lib/resend.ts` — e-mail de boas-vindas no webhook Stripe
+- [ ] Configurar Resend API key + domínio verificado
 
-- [ ] Testes dos fluxos críticos (pedido, QR code, WhatsApp)
-- [ ] Responsividade mobile-first em todas as telas (375px)
-- [ ] SEO básico na landing page (meta tags, OG)
-- [ ] Páginas de erro 404 e restaurante pausado
-- [ ] Loading states e skeleton screens
-- [ ] Rate limiting nas APIs públicas
-- [ ] Configurar domínio customizado na Vercel
-- [ ] Revisar todas as políticas RLS do Supabase
-- [ ] Documentar variáveis de ambiente e processo de deploy
+---
+
+## Fase 6 — Temas e Personalização ✅
+
+- [x] CSS variables por restaurante (`--menu-primary`, `--menu-bg`, etc.)
+- [x] Aplicar tema no layout do cardápio público via `restaurant_themes`
+- [x] **Preview ao vivo** via iframe real com postMessage
+- [x] Temas pré-definidos (Rústico, Moderno, Claro, Verde)
+- [x] Logo e banner aplicados na home do cardápio
+- [x] Cor dos ícones customizável por restaurante
+
+---
+
+## Fase 7 — Billing e Gestão de Conta ✅
+
+- [x] Webhook Stripe: ativar restaurante após pagamento confirmado
+- [x] Webhook Stripe: pausar/cancelar se assinatura vencer
+- [x] Checkout de novo cardápio (plano adicional)
+- [x] Portal do cliente Stripe (gerenciar assinatura)
+- [x] Lógica de pausar cardápio (página de aviso para clientes)
+- [x] Lógica de excluir cardápio
+- [ ] Configurar Stripe Billing Portal no dashboard
+
+---
+
+## Fase 8 — Testes, Polimento e Deploy 🔄
+
+- [x] Página 404 personalizada HIVI (app/not-found.tsx)
+- [x] Página de restaurante pausado (PausedPage com design neutro)
+- [x] SEO básico por restaurante (meta tags, OG, Twitter card)
+- [x] Favicon + ícone do navegador
+- [x] Dashboard ADM com métricas
+- [x] Notificação sonora de novo pedido
+- [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
+- [ ] Testar pedido de mesa com QR Code (câmera real)
+- [ ] Testar pedido de entrega + WhatsApp automático
+- [ ] Testar upload de imagens (logo, banner, categorias, pratos)
+- [ ] Responsividade mobile em todas as telas (375px — testes reais)
+- [ ] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
+- [ ] Loading/skeleton states
+- [ ] Página de cardápio vazio (sem pratos cadastrados)
+- [ ] Gerenciamento completo de funcionários (convidar via e-mail, remover, alterar role)
+- [ ] Configurar domínio customizado na Vercel (hivi.com.br)

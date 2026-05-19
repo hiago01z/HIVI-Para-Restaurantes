@@ -24,6 +24,25 @@
 | 2026-05-19 | Infra: migration SQL executada no Supabase (todas as tabelas + RLS) |
 | 2026-05-19 | Infra: Supabase Realtime ativado na tabela orders |
 | 2026-05-19 | Infra: bucket restaurant-images criado no Supabase Storage |
+| 2026-05-19 | Design: tipografia Playfair Display + Inter, font-display utility class, antialiasing |
+| 2026-05-19 | Design: cores ADM → var(--adm-primary) em todos os 5 arquivos client do ADM |
+| 2026-05-19 | Fix: build error `<a href="/conta">` → `<Link>` em _login-form.tsx (ESLint) |
+| 2026-05-19 | Fix: badge "Pendente" de senha ADM atualiza localmente após salvar (localHasPassword state) |
+| 2026-05-19 | Design: heading "Destaques" removido do carrossel na home do cardápio público |
+| 2026-05-19 | Design: rodapé da loja pública com identidade do restaurante + redes sociais + copyright HIVI |
+| 2026-05-19 | Design: prévia do ADM configurações → iframe real do cardápio com postMessage em tempo real |
+| 2026-05-19 | Design: logo HIVI → font-black straight uppercase + translate="no" em todos os headers/footers |
+| 2026-05-19 | Rename: "loja/lojas" → "cardápio/cardápios" em todas as interfaces SAAS |
+| 2026-05-19 | SEO: título da aba do navegador exibe nome do restaurante (generateMetadata em [slug]/layout.tsx) |
+| 2026-05-19 | Feature: prévia ao vivo via iframe nos dois locais (ADM configurações + landing SAAS) com PostMessage |
+| 2026-05-19 | Design: logo HIVI com iconmark SVG de garfo de 3 dentes (componente HiviLogo reutilizável) |
+| 2026-05-19 | Design: favicon dinâmico via app/icon.tsx (next/og) — garfo laranja 32x32 |
+| 2026-05-19 | Feature: página "restaurante pausado" em vez de 404 quando is_active=false (ADM ainda acessível) |
+| 2026-05-19 | Feature: página 404 personalizada HIVI (app/not-found.tsx) |
+| 2026-05-19 | SEO: OG meta tags completos por restaurante (title, description, openGraph, twitter card, logo) |
+| 2026-05-19 | Feature: dashboard ADM com métricas do dia (pedidos, em andamento, receita, últimos pedidos, totais) |
+| 2026-05-19 | Feature: notificação sonora de novo pedido no ADM (Web Audio API — dois beeps, sem arquivo externo) |
+| 2026-05-19 | Infra: middleware injeta x-pathname header para layouts server-side detectarem rota ADM |
 
 ---
 
@@ -37,18 +56,21 @@
 
 ## Pendente
 
-### Fase 8 — Testes e Deploy
+### Configurações externas (requer ação manual)
+- [ ] Configurar Resend (API key em resend.com + domínio verificado)
+- [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
+- [ ] Atualizar NEXT_PUBLIC_APP_URL para domínio final (hivi.com.br)
+
+### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
-- [ ] Testar pedido de mesa com QR Code
-- [ ] Testar pedido de entrega + WhatsApp
-- [ ] Testar upload de imagens (produtos, categorias, logo, banner)
-- [ ] Testar troca de tema com preview ao vivo
-- [ ] Responsividade mobile (cardápio público + ADM)
-- [ ] SEO + meta tags por restaurante
-- [ ] Rate limiting nas APIs públicas
-- [ ] Configurar Resend (API key + domínio verificado)
-- [ ] Configurar Stripe Billing Portal (dashboard.stripe.com/settings/billing/portal)
-- [ ] Atualizar NEXT_PUBLIC_APP_URL para domínio final quando hivi.com.br estiver ativo
+- [ ] Testar pedido de mesa com QR Code (câmera real)
+- [ ] Testar pedido de entrega + WhatsApp automático
+- [ ] Testar upload de imagens (logo, banner, categorias, pratos)
+- [ ] Responsividade mobile em todas as telas (375px — testes reais no dispositivo)
+- [ ] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
+- [ ] Loading/skeleton states nas telas de carregamento
+- [ ] Página de restaurante sem pratos cadastrados (estado vazio no cardápio)
+- [ ] Gerenciamento de funcionários (convidar, remover, alterar role) — tela existente, falta integração completa
 
 ---
 
@@ -72,3 +94,7 @@
 | 2026-05-18 | ADM do restaurante tem auth separada da conta HIVI | Funcionários não precisam de conta HIVI |
 | 2026-05-18 | Plano único inicial — Básico R$ 59,99/mês | Simplificar o lançamento; novos planos serão criados conforme features forem entregues |
 | 2026-05-19 | Dono do restaurante adicionado em restaurant_users no webhook | Permite acesso direto ao ADM com a sessão Google OAuth sem login separado |
+| 2026-05-19 | preview ao vivo via postMessage (iframe → PreviewListener) | Sem URL params, sem nova rota — atualiza CSS vars diretamente no iframe já carregado |
+| 2026-05-19 | Restaurante pausado → página específica (não 404) | UX: cliente entende que o restaurante existe mas está temporariamente fechado |
+| 2026-05-19 | ADM acessível mesmo quando restaurante pausado | Dono precisa poder reativar sem contato com suporte |
+| 2026-05-19 | Som de novo pedido via Web Audio API | Sem arquivo de áudio externo, zero dependência adicional |

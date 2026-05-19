@@ -1,6 +1,53 @@
-import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { DashboardClient } from './_components/dashboard-client'
 
-export default async function AdmPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function AdmDashboardPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
   const { slug } = await params
-  redirect(`/${slug}/adm/pedidos`)
+  const supabase = await createClient()
+
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('id, name')
+    .eq('slug', slug)
+    .single()
+
+  if (!restaurant) notFound()
+
+  // Pedidos de hoje
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  const { data: todayOrders } = await supabase
+    .from('orders')
+    .select('id, order_number, type, status, customer_name, total, created_at')
+    .eq('restaurant_id', restaurant.id)
+    .gte('created_at', todayStart.toISOString())
+    .order('created_at', { ascending: false })
+
+  // Total de pratos e categorias
+  const [{ count: totalProducts }, { count: totalCategories }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_id', restaurant.id),
+    supabase
+      .from('categories')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_id', restaurant.id),
+  ])
+
+  return (
+    <DashboardClient
+      slug={slug}
+      restaurantName={restaurant.name}
+      todayOrders={(todayOrders ?? []) as Parameters<typeof DashboardClient>[0]['todayOrders']}
+      totalProducts={totalProducts ?? 0}
+      totalCategories={totalCategories ?? 0}
+    />
+  )
 }

@@ -18,7 +18,8 @@ export default async function AdmLayout({
     .eq('slug', slug)
     .single()
 
-  if (!restaurant || !restaurant.is_active) notFound()
+  // Restaurante não existe → 404. Se pausado, ainda permite acesso ADM (dono precisa reativar).
+  if (!restaurant) notFound()
 
   // Buscar cor primária do restaurante para usar como accent no ADM
   const { data: theme } = await supabase

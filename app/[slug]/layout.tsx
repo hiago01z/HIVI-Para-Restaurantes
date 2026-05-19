@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { CartProvider } from '@/contexts/cart-context'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { PreviewListener } from './_components/preview-listener'
+import { PausedPage } from './_components/paused-page'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -11,11 +13,32 @@ export async function generateMetadata(
   const supabase = await createClient()
   const { data } = await supabase
     .from('restaurants')
-    .select('name')
+    .select('name, logo_url')
     .eq('slug', slug)
     .single()
+
+  const name   = data?.name    ?? 'Cardápio'
+  const logo   = data?.logo_url ?? null
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi.com.br'
+
   return {
-    title: data?.name ?? 'Cardápio',
+    title: name,
+    description: `Acesse o cardápio de ${name} e faça seu pedido online.`,
+    openGraph: {
+      title:       name,
+      description: `Acesse o cardápio de ${name} e faça seu pedido online.`,
+      url:         `${appUrl}/${slug}`,
+      siteName:    'HIVI',
+      locale:      'pt_BR',
+      type:        'website',
+      ...(logo ? { images: [{ url: logo, width: 512, height: 512, alt: name }] } : {}),
+    },
+    twitter: {
+      card:        'summary',
+      title:       name,
+      description: `Acesse o cardápio de ${name} e faça seu pedido online.`,
+      ...(logo ? { images: [logo] } : {}),
+    },
   }
 }
 
@@ -31,11 +54,22 @@ export default async function SlugLayout({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, is_active')
+    .select('id, name, logo_url, is_active')
     .eq('slug', slug)
     .single()
 
-  if (!restaurant || !restaurant.is_active) notFound()
+  if (!restaurant) notFound()
+
+  // Se o restaurante estiver pausado, verifica se é rota ADM (dono ainda precisa acessar)
+  if (!restaurant.is_active) {
+    const hdrs = await headers()
+    const pathname = hdrs.get('x-pathname') ?? ''
+    const isAdmPath = pathname.split('/').filter(Boolean).includes('adm')
+
+    if (!isAdmPath) {
+      return <PausedPage name={restaurant.name} logoUrl={restaurant.logo_url} />
+    }
+  }
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
@@ -47,10 +81,9 @@ export default async function SlugLayout({
   const secondary  = theme?.secondary_color  ?? '#1A0A00'
   const bg         = theme?.background_color ?? '#2C1A0E'
   const textColor  = theme?.text_color       ?? '#FFFFFF'
-  const iconColor  = theme?.icon_color       ?? primary   // fallback = primary
+  const iconColor  = theme?.icon_color       ?? primary
   const fontSize   = theme?.font_size_base   ?? '16px'
 
-  // Mapeia font_family genérica para web fonts carregadas no root layout
   const rawFont    = theme?.font_family ?? 'serif'
   const fontMap: Record<string, string> = {
     'serif':      "'Playfair Display', Georgia, serif",
@@ -67,7 +100,7 @@ export default async function SlugLayout({
     `--menu-font: ${font}`,
     `--menu-font-size: ${fontSize}`,
     `--menu-text: ${textColor}`,
-    `--menu-text-muted: ${textColor}99`,           // 60% opacity da cor do texto
+    `--menu-text-muted: ${textColor}99`,
     `--menu-icon: ${iconColor}`,
     `--menu-card: color-mix(in srgb, ${bg} 70%, ${textColor} 8%)`,
   ].join('; ')
