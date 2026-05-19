@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Plus, Pencil, Trash2, X, Loader2, Star, Upload, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Star, Search } from 'lucide-react'
+import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
 
 type Category = { id: string; name: string }
 type Product = {
@@ -49,20 +50,17 @@ export function PratosClient({
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<Form>(EMPTY_FORM)
   const [loading, setLoading] = useState(false)
-  const [uploadLoading, setUploadLoading] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [erro, setErro] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [search, setSearch] = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [pickerKey, setPickerKey] = useState(0)
+  const cropPickerRef = useRef<ImageCropPickerHandle>(null)
 
   function openCreate() {
     setEditing(null)
     setForm(EMPTY_FORM)
-    setPreviewUrl(null)
-    setPendingFile(null)
     setErro('')
+    setPickerKey((k) => k + 1)
     setModal('create')
   }
 
@@ -76,41 +74,26 @@ export function PratosClient({
       is_featured: p.is_featured,
       is_available: p.is_available,
     })
-    setPreviewUrl(p.image_url)
-    setPendingFile(null)
     setErro('')
+    setPickerKey((k) => k + 1)
     setModal('edit')
   }
 
   function closeModal() {
     setModal(null)
     setEditing(null)
-    setPreviewUrl(null)
-    setPendingFile(null)
     setErro('')
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPendingFile(file)
-    setPreviewUrl(URL.createObjectURL(file))
-  }
-
   async function uploadImage(file: File): Promise<string | null> {
-    setUploadLoading(true)
-    try {
-      const ext = file.name.split('.').pop()
-      const path = `${restaurantId}/products/${Date.now()}.${ext}`
-      const { error } = await supabase.storage
-        .from('restaurant-images')
-        .upload(path, file, { upsert: true })
-      if (error) return null
-      const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
-      return data.publicUrl
-    } finally {
-      setUploadLoading(false)
-    }
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `${restaurantId}/products/${Date.now()}.${ext}`
+    const { error } = await supabase.storage
+      .from('restaurant-images')
+      .upload(path, file, { upsert: true })
+    if (error) return null
+    const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
+    return data.publicUrl
   }
 
   async function handleSave() {
@@ -123,8 +106,9 @@ export function PratosClient({
 
     try {
       let imageUrl = editing?.image_url ?? null
-      if (pendingFile) {
-        imageUrl = await uploadImage(pendingFile)
+      if (cropPickerRef.current?.hasNewImage()) {
+        const cropped = await cropPickerRef.current.getCroppedFile()
+        if (cropped) imageUrl = await uploadImage(cropped)
       }
 
       const payload = {
@@ -353,26 +337,11 @@ export function PratosClient({
               {/* Upload de imagem */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Foto</label>
-                <div
-                  onClick={() => fileRef.current?.click()}
-                  className="adm-upload-area h-40"
-                >
-                  {previewUrl ? (
-                    <Image src={previewUrl} alt="preview" fill className="object-cover" />
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400">Clique para enviar foto</p>
-                      <p className="text-xs text-gray-300 mt-1">JPG, PNG até 5MB</p>
-                    </div>
-                  )}
-                  {previewUrl && (
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm font-medium">Trocar foto</p>
-                    </div>
-                  )}
-                </div>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <ImageCropPicker
+                  key={pickerKey}
+                  ref={cropPickerRef}
+                  initialUrl={modal === 'edit' ? (editing?.image_url ?? null) : null}
+                />
               </div>
 
               <Field label="Nome *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Ex: X-Burguer" />
@@ -417,12 +386,12 @@ export function PratosClient({
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
               <button
                 onClick={handleSave}
-                disabled={loading || uploadLoading}
+                disabled={loading}
                 className="w-full py-3.5 disabled:opacity-50 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
                 style={{ background: 'var(--adm-primary)' }}
               >
-                {(loading || uploadLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
-                {loading ? 'Salvando...' : uploadLoading ? 'Enviando foto...' : modal === 'create' ? 'Criar item' : 'Salvar alterações'}
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? 'Salvando...' : modal === 'create' ? 'Criar item' : 'Salvar alterações'}
               </button>
             </div>
           </div>

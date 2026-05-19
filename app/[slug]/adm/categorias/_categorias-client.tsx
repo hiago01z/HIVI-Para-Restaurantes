@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Plus, Pencil, Trash2, X, Loader2, Upload, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, ChevronUp, ChevronDown } from 'lucide-react'
+import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
 
 type Category = {
   id: string
@@ -24,43 +25,31 @@ export function CategoriasClient({
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [pickerKey, setPickerKey] = useState(0)
+  const cropPickerRef = useRef<ImageCropPickerHandle>(null)
 
   function openCreate() {
     setEditing(null)
     setName('')
-    setPreviewUrl(null)
-    setPendingFile(null)
     setErro('')
+    setPickerKey((k) => k + 1)
     setModal('create')
   }
 
   function openEdit(cat: Category) {
     setEditing(cat)
     setName(cat.name)
-    setPreviewUrl(cat.image_url)
-    setPendingFile(null)
     setErro('')
+    setPickerKey((k) => k + 1)
     setModal('edit')
   }
 
   function closeModal() {
     setModal(null)
     setEditing(null)
-    setPreviewUrl(null)
-    setPendingFile(null)
     setErro('')
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPendingFile(file)
-    setPreviewUrl(URL.createObjectURL(file))
   }
 
   async function uploadImage(file: File): Promise<string> {
@@ -81,8 +70,9 @@ export function CategoriasClient({
 
     try {
       let imageUrl = editing?.image_url ?? null
-      if (pendingFile) {
-        imageUrl = await uploadImage(pendingFile)
+      if (cropPickerRef.current?.hasNewImage()) {
+        const cropped = await cropPickerRef.current.getCroppedFile()
+        if (cropped) imageUrl = await uploadImage(cropped)
       }
 
       if (modal === 'edit' && editing) {
@@ -250,27 +240,11 @@ export function CategoriasClient({
             {/* Upload imagem */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagem</label>
-              <div
-                onClick={() => fileRef.current?.click()}
-                className="adm-upload-area aspect-square"
-              >
-                {previewUrl ? (
-                  <Image src={previewUrl} alt="preview" fill sizes="(max-width: 448px) 100vw, 448px" style={{ objectFit: 'cover' }} />
-                ) : (
-                  <div className="text-center">
-                    <Upload className="w-6 h-6 text-gray-300 mx-auto mb-1" />
-                    <p className="text-sm text-gray-400">Clique para enviar</p>
-                    <p className="text-xs text-gray-300 mt-1">Recomendado: 800 × 800 px</p>
-                  </div>
-                )}
-                {previewUrl && (
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm font-medium">Trocar imagem</p>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-1.5 text-center">Recomendado: 800 × 800 px (quadrado)</p>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              <ImageCropPicker
+                key={pickerKey}
+                ref={cropPickerRef}
+                initialUrl={modal === 'edit' ? (editing?.image_url ?? null) : null}
+              />
             </div>
 
             {/* Nome */}
