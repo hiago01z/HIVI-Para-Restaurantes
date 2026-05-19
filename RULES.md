@@ -88,6 +88,17 @@ Atualizar o README sempre que:
 
 ---
 
+### 4. Sempre realizar commit e push ao final de cada tarefa
+
+Após qualquer alteração de código ou documentação:
+1. Fazer `git add` nos arquivos alterados
+2. Criar commit com mensagem descritiva
+3. Fazer `git push origin main` para disparar o deploy na Vercel
+
+**Motivo**: o deploy é automático via Vercel — sem push, nenhuma mudança vai para produção.
+
+---
+
 ## Checklist Antes de Commitar
 
 - [ ] Leu os contextos antes de implementar?
@@ -97,3 +108,4 @@ Atualizar o README sempre que:
 - [ ] Inputs estão sendo validados?
 - [ ] Não há `console.log` de dados sensíveis?
 - [ ] Testou em mobile (375px)?
+- [ ] Commit e push realizados?
