@@ -123,7 +123,7 @@ export async function POST(
     userId = existingUser.id
   } else {
     // Criar usuário via invite (Supabase envia e-mail de convite)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi.com.br'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi-web.com'
     const { data: newUser, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       parsed.data.email,
       { redirectTo: `${appUrl}/auth/callback` }

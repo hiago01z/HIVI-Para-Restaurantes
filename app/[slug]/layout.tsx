@@ -19,7 +19,7 @@ export async function generateMetadata(
 
   const name   = data?.name    ?? 'Cardápio'
   const logo   = data?.logo_url ?? null
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi.com.br'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi-web.com'
 
   return {
     title: name,

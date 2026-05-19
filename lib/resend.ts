@@ -4,7 +4,7 @@ export const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function sendWelcomeEmail(to: string, name: string) {
   return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi.com.br',
+    from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi-web.com',
     to,
     subject: 'Bem-vindo à HIVI! 🎉',
     html: `
@@ -20,7 +20,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
 
 export async function sendRestaurantCreatedEmail(to: string, restaurantName: string, slug: string) {
   return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi.com.br',
+    from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi-web.com',
     to,
     subject: `Restaurante "${restaurantName}" criado com sucesso!`,
     html: `

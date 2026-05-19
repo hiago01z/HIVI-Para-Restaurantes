@@ -105,7 +105,7 @@ export function ConfiguracoesClient({
   // QR Code
   const menuUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${restaurant.slug}`
-    : `https://hivi.com.br/${restaurant.slug}`
+    : `https://hivi-web.com/${restaurant.slug}`
 
   async function saveSocial() {
     setSocialSaving(true)

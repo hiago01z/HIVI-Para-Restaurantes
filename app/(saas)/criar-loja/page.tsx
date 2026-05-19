@@ -124,7 +124,7 @@ export default function CriarLojaPage() {
             </label>
             <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50 focus-within:ring-2 focus-within:ring-orange-400">
               <span className="px-3 py-3.5 text-sm text-gray-400 border-r border-gray-200 bg-gray-100 whitespace-nowrap">
-                hivi.com.br/
+                hivi-web.com/
               </span>
               <input
                 type="text"

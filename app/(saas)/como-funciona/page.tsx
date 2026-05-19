@@ -29,7 +29,7 @@ export default function ComoFuncionaPage() {
                 icon: UserPlus,
                 step: '1',
                 title: 'Crie sua conta',
-                desc: 'Acesse hivi.com.br, clique em "Criar conta" e entre com o Google. Em seguida, escolha o Plano Básico e conclua o pagamento via cartão.',
+                desc: 'Acesse hivi-web.com, clique em "Criar conta" e entre com o Google. Em seguida, escolha o Plano Básico e conclua o pagamento via cartão.',
               },
               {
                 icon: Settings,

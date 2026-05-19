@@ -95,7 +95,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-xl font-black text-gray-900 mb-3">9. Contato</h2>
             <p>
-              Dúvidas sobre os termos? Entre em contato: <a href="mailto:contato@hivi.com.br" className="text-orange-500 hover:underline font-medium">contato@hivi.com.br</a>
+              Dúvidas sobre os termos? Entre em contato: <a href="mailto:contato@hivi-web.com" className="text-orange-500 hover:underline font-medium">contato@hivi-web.com</a>
             </p>
           </section>
 

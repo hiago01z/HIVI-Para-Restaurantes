@@ -13,7 +13,7 @@ const faqs = [
   {
     categoria: 'Cardápio e pedidos',
     itens: [
-      { q: 'Como os clientes acessam o cardápio?', a: 'Escaneando o QR code impresso na mesa ou acessando diretamente o link do restaurante (hivi.com.br/seu-restaurante).' },
+      { q: 'Como os clientes acessam o cardápio?', a: 'Escaneando o QR code impresso na mesa ou acessando diretamente o link do restaurante (hivi-web.com/seu-restaurante).' },
       { q: 'Posso ter quantos pratos e categorias quiser?', a: 'Sim. Não há limite de categorias nem de pratos cadastrados no plano.' },
       { q: 'Posso colocar fotos nos pratos?', a: 'Sim. Cada prato pode ter uma foto em alta qualidade. As imagens são armazenadas com segurança na nuvem.' },
       { q: 'Como funciona o pedido de mesa?', a: 'O cliente monta o carrinho e gera um QR code na tela. O garçom escaneia esse QR code no painel administrativo, confirma o pedido e ele entra na fila automaticamente.' },
