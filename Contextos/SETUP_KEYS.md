@@ -256,12 +256,13 @@ O `STRIPE_WEBHOOK_SECRET` que você usa localmente (gerado pelo `stripe listen`)
 
 ```
 [x] Google OAuth configurado no Supabase (Client ID + Secret)
+[x] Supabase: migration SQL executada (todas as tabelas + RLS)
+[x] Supabase: tabela orders com Realtime ativado
+[x] Supabase: bucket restaurant-images criado (público)
+[x] Stripe webhook criado para domínio de produção (hivi.vercel.app/api/stripe/webhook)
+[x] Variáveis de ambiente inseridas na Vercel
+[x] NEXT_PUBLIC_APP_URL configurado (https://hivi.vercel.app)
 [ ] Resend API key inserida + domínio verificado
-[ ] NEXT_PUBLIC_APP_URL atualizado para domínio de produção
-[ ] Stripe webhook criado para domínio de produção
-[ ] Supabase: tabela orders com Realtime ativado
-[ ] Supabase: bucket restaurant-images criado (público)
-[ ] Supabase: migration SQL executada
 [ ] Stripe: Billing Portal configurado (dashboard.stripe.com/settings/billing/portal)
-[ ] Variáveis de ambiente inseridas na Vercel
+[ ] NEXT_PUBLIC_APP_URL atualizado para https://hivi.com.br (quando domínio estiver ativo)
 ```
