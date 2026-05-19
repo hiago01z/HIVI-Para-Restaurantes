@@ -1,29 +1,43 @@
 @echo off
-chcp 65001 >nul
-title HIVI — Servidor Local
+title HIVI - Servidor Local
 
 cd /d "%~dp0"
 
 echo.
-echo  ╔══════════════════════════════════════════╗
-echo  ║         HIVI Para Restaurantes           ║
-echo  ║         Iniciando servidor local...      ║
-echo  ╚══════════════════════════════════════════╝
+echo  =========================================
+echo   HIVI Para Restaurantes
+echo   Iniciando servidor local...
+echo  =========================================
 echo.
 
-:: Verifica se node está instalado
+:: Tenta encontrar o node em locais comuns se nao estiver no PATH
 where node >nul 2>&1
 if %errorlevel% neq 0 (
-    echo  [ERRO] Node.js nao encontrado.
-    echo  Instale em: https://nodejs.org
-    echo.
-    pause
-    exit /b 1
+    if exist "C:\Program Files\nodejs\npm.cmd" (
+        set PATH=C:\Program Files\nodejs;%PATH%
+    ) else if exist "%APPDATA%\nvm\nvm.exe" (
+        echo  [AVISO] Usando nvm - ative a versao do Node primeiro.
+    ) else (
+        echo  [ERRO] Node.js nao encontrado.
+        echo  Instale em: https://nodejs.org
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
-:: Verifica node_modules
+:: Verifica se npm esta disponivel
+where npm >nul 2>&1
+if %errorlevel% neq 0 (
+    set PATH=C:\Program Files\nodejs;%PATH%
+)
+
+echo  Node.js encontrado!
+echo.
+
+:: Instala dependencias se necessario
 if not exist "node_modules\" (
-    echo  Instalando dependencias...
+    echo  Instalando dependencias pela primeira vez...
     echo.
     call npm install
     if %errorlevel% neq 0 (
@@ -37,43 +51,28 @@ if not exist "node_modules\" (
 
 :: Verifica .env.local
 if not exist ".env.local" (
-    echo  [ERRO] Arquivo .env.local nao encontrado.
+    echo  [AVISO] .env.local nao encontrado - crie com base no .env.example
     echo.
-    echo  Crie o arquivo .env.local na pasta do projeto
-    echo  com base no .env.example e preencha as chaves:
-    echo.
-    echo    - NEXT_PUBLIC_SUPABASE_URL
-    echo    - NEXT_PUBLIC_SUPABASE_ANON_KEY
-    echo    - SUPABASE_SERVICE_ROLE_KEY
-    echo    - STRIPE_SECRET_KEY
-    echo    - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-    echo    - STRIPE_WEBHOOK_SECRET
-    echo    - RESEND_API_KEY
-    echo.
-    pause
-    exit /b 1
 )
 
-:: Pega o IP local (ignora loopback)
-set LOCAL_IP=
+:: Pega o IP local
+set LOCAL_IP=SEU-IP-LOCAL
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4" ^| findstr /v "127.0.0.1"') do (
-    if not defined LOCAL_IP (
-        set RAW_IP=%%a
-    )
+    set RAW=%%a
+    goto :found
 )
-for /f "tokens=* delims= " %%a in ("%RAW_IP%") do set LOCAL_IP=%%a
+:found
+for /f "tokens=* delims= " %%a in ("%RAW%") do set LOCAL_IP=%%a
 
-echo  Tudo certo! Servidor iniciando...
+echo  Servidor rodando em:
 echo.
-echo  ┌─────────────────────────────────────────┐
-echo  │  PC      →  http://localhost:3000        │
-echo  │  Celular →  http://%LOCAL_IP%:3000
-echo  └─────────────────────────────────────────┘
+echo    PC      : http://localhost:3000
+echo    Celular : http://%LOCAL_IP%:3000
 echo.
-echo  Pressione Ctrl+C para parar o servidor.
+echo  Pressione Ctrl+C para parar.
 echo.
 
-npx next dev -H 0.0.0.0 -p 3000
+npm run dev:host
 
 echo.
 echo  Servidor parado.
