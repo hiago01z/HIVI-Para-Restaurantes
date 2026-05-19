@@ -1,11 +1,10 @@
 import Link from 'next/link'
+import { HiviLogo } from './hivi-logo'
 
 export function SaasHeader() {
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-5 py-3.5 flex items-center justify-between">
-      <Link href="/" translate="no" className="text-2xl font-black tracking-[0.06em] text-gray-950 select-none">
-        HIVI
-      </Link>
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
+      <HiviLogo size="md" />
       <div className="flex items-center gap-2">
         <Link
           href="/entrar"

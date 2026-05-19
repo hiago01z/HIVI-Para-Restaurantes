@@ -3,6 +3,7 @@ import { QrCode, Smartphone, TrendingUp, Clock, ScanLine, UtensilsCrossed, Check
 import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import { createClient } from '@/lib/supabase/server'
+import { HiviLogo } from '@/components/saas/hivi-logo'
 
 export default async function LandingPage() {
   // Busca o primeiro restaurante ativo para a prévia ao vivo
@@ -21,6 +22,12 @@ export default async function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="bg-gray-50 px-5 pt-14 pb-20 text-center">
+
+        {/* Logo mark grande — identidade da marca no hero */}
+        <div className="flex justify-center mb-6">
+          <HiviLogo size="lg" className="pointer-events-none" />
+        </div>
+
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 mb-4">
           Cardápio digital para restaurantes
         </p>

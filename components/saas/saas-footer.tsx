@@ -1,10 +1,11 @@
 import Link from 'next/link'
+import { HiviLogo } from './hivi-logo'
 
 export function SaasFooter() {
   return (
     <footer className="border-t border-gray-100 px-5 py-10">
-      <div className="text-center mb-5">
-        <span translate="no" className="text-base font-black tracking-[0.1em] text-gray-400 select-none">HIVI</span>
+      <div className="flex justify-center mb-5">
+        <HiviLogo size="sm" />
       </div>
       <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium text-gray-400 tracking-wide uppercase mb-5">
         <Link href="/como-funciona" className="hover:text-gray-700 transition-colors">Como funciona</Link>
@@ -16,7 +17,9 @@ export function SaasFooter() {
         <Link href="/termos"        className="hover:text-gray-700 transition-colors">Termos</Link>
       </nav>
       <p className="text-center text-xs text-gray-400">
-        &copy; 2026 <span translate="no" className="font-black tracking-[0.06em]">HIVI</span> Tecnologia &mdash; Todos os direitos reservados
+        &copy; {new Date().getFullYear()}{' '}
+        <span translate="no" className="font-black tracking-[0.06em]">HIVI</span>
+        {' '}Tecnologia &mdash; Todos os direitos reservados
       </p>
     </footer>
   )
