@@ -29,33 +29,53 @@ export async function POST(request: Request) {
     }
 
     // Verifica se o slug já está em uso
+    // .maybeSingle() não lança erro quando não há resultados (diferente de .single())
     const { data: existing } = await supabase
       .from('restaurants')
       .select('id')
       .eq('slug', parsed.data.slug)
-      .single()
+      .maybeSingle()
 
     if (existing) {
       return NextResponse.json({ error: 'Este endereço já está em uso. Escolha outro.' }, { status: 409 })
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/conta?success=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/criar-loja?cancelled=1`,
-      customer_email: user.email,
-      metadata: {
-        user_id: user.id,
-        restaurant_name: parsed.data.restaurantName,
-        slug: parsed.data.slug,
-      },
-    })
+    const stripeKey = process.env.STRIPE_SECRET_KEY
+    if (!stripeKey) {
+      console.error('[checkout] STRIPE_SECRET_KEY não configurada')
+      return NextResponse.json({ error: 'Configuração de pagamento ausente.' }, { status: 500 })
+    }
+
+    const stripe = new Stripe(stripeKey)
+
+    let session: Stripe.Checkout.Session
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/conta?success=1`,
+        cancel_url:  `${process.env.NEXT_PUBLIC_APP_URL}/criar-loja?cancelled=1`,
+        customer_email: user.email ?? undefined,
+        metadata: {
+          user_id:         user.id,
+          restaurant_name: parsed.data.restaurantName,
+          slug:            parsed.data.slug,
+        },
+      })
+    } catch (stripeErr) {
+      const msg = stripeErr instanceof Error ? stripeErr.message : String(stripeErr)
+      console.error('[checkout] Stripe error:', msg)
+      return NextResponse.json(
+        { error: `Erro no pagamento: ${msg}` },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ url: session.url })
-  } catch {
-    return NextResponse.json({ error: 'Erro ao criar sessão de pagamento' }, { status: 500 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[checkout] Unexpected error:', msg)
+    return NextResponse.json({ error: `Erro inesperado: ${msg}` }, { status: 500 })
   }
 }
