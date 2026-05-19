@@ -43,6 +43,11 @@
 | 2026-05-19 | Feature: dashboard ADM com métricas do dia (pedidos, em andamento, receita, últimos pedidos, totais) |
 | 2026-05-19 | Feature: notificação sonora de novo pedido no ADM (Web Audio API — dois beeps, sem arquivo externo) |
 | 2026-05-19 | Infra: middleware injeta x-pathname header para layouts server-side detectarem rota ADM |
+| 2026-05-19 | Fase 8: rate limiting nas APIs públicas (orders: 10/min, qrcode/session: 5/5min) via lib/rate-limit.ts |
+| 2026-05-19 | Fase 8: loading skeletons em todas as páginas do ADM (dashboard, pedidos, pratos, categorias, configurações, funcionários) |
+| 2026-05-19 | Fase 8: gerenciamento de equipe (/adm/funcionarios) — listar, convidar por e-mail (Supabase invite), remover, cargos (dono/gerente/funcionário) |
+| 2026-05-19 | Fix: icon.tsx com force-dynamic para evitar erro de prerender local com @vercel/og |
+| 2026-05-19 | Infra: domínio hivi-web.com conectado na Vercel, Resend configurado, Supabase e Stripe atualizados |
 
 ---
 
@@ -57,9 +62,12 @@
 ## Pendente
 
 ### Configurações externas (requer ação manual)
-- [ ] Configurar Resend (API key em resend.com + domínio verificado)
+- [x] Resend: API key + domínio hivi-web.com verificado + RESEND_FROM_EMAIL configurado
+- [x] NEXT_PUBLIC_APP_URL atualizado para https://hivi-web.com na Vercel
+- [x] Domínio hivi-web.com conectado na Vercel
+- [x] Supabase: Site URL e Redirect URLs atualizados para hivi-web.com
+- [x] Stripe webhook atualizado para hivi-web.com/api/stripe/webhook
 - [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
-- [ ] Atualizar NEXT_PUBLIC_APP_URL para domínio final (hivi.com.br)
 
 ### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
@@ -67,10 +75,6 @@
 - [ ] Testar pedido de entrega + WhatsApp automático
 - [ ] Testar upload de imagens (logo, banner, categorias, pratos)
 - [ ] Responsividade mobile em todas as telas (375px — testes reais no dispositivo)
-- [ ] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
-- [ ] Loading/skeleton states nas telas de carregamento
-- [ ] Página de restaurante sem pratos cadastrados (estado vazio no cardápio)
-- [ ] Gerenciamento de funcionários (convidar, remover, alterar role) — tela existente, falta integração completa
 
 ---
 

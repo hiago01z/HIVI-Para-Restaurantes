@@ -10,7 +10,13 @@
       "Bash(git commit -m 'docs: adiciona regra de commit e push obrigatório após cada tarefa *)",
       "Bash(git commit -m 'feat: redesign cardápio — carrossel de destaques + grid de categorias *)",
       "Bash(git commit -m 'feat: cardápio totalmente customizável + layout categorias 2+1+2 *)",
-      "Bash(git commit -m 'feat: auth ADM dedicada com senha por restaurante *)"
+      "Bash(git commit -m 'feat: auth ADM dedicada com senha por restaurante *)",
+      "Bash(git commit -m 'fix\\(adm\\): replace <a> with <Link> in login form to fix ESLint build error *)",
+      "Bash(git commit -m 'fix\\(conta\\): update UI immediately after saving ADM password *)",
+      "Bash(git commit -m 'fix\\(menu\\): remove '\\\\''Destaques'\\\\'' heading above featured carousel *)",
+      "Bash(git commit -m 'feat\\(menu\\): redesign footer with restaurant identity, social chips and HIVI credit *)",
+      "Bash(git commit -m 'feat\\(adm\\): redesign theme preview as realistic phone mockup *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

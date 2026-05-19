@@ -63,13 +63,13 @@ export function CategoriasClient({
     setPreviewUrl(URL.createObjectURL(file))
   }
 
-  async function uploadImage(file: File): Promise<string | null> {
+  async function uploadImage(file: File): Promise<string> {
     const ext = file.name.split('.').pop()
     const path = `${restaurantId}/categories/${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('restaurant-images')
       .upload(path, file, { upsert: true })
-    if (error) return null
+    if (error) throw new Error(`Falha no upload da imagem: ${error.message}`)
     const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
     return data.publicUrl
   }

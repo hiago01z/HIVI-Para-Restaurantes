@@ -20,8 +20,9 @@
 | UltraMSG | `ULTRAMSG_INSTANCE_ID` | ✅ Configurada |
 | UltraMSG | `ULTRAMSG_TOKEN` | ✅ Configurada |
 | Google OAuth | Configurar no painel Supabase | ✅ Configurado |
-| Resend | `RESEND_API_KEY` | ⬜ Pendente |
-| App | `NEXT_PUBLIC_APP_URL` | ✅ Configurado (`https://hivi.vercel.app`) |
+| Resend | `RESEND_API_KEY` | ✅ Configurada |
+| Resend | `RESEND_FROM_EMAIL` | ✅ Configurada (`noreply@hivi-web.com`) |
+| App | `NEXT_PUBLIC_APP_URL` | ✅ Configurado (`https://hivi-web.com`) |
 
 ---
 
@@ -149,7 +150,7 @@ O `STRIPE_WEBHOOK_SECRET` local (para testes com `stripe listen`) é diferente d
 ### Para produção (Vercel/deploy):
 1. Acesse [dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks)
 2. Clique **"+ Add endpoint"**
-3. URL: `https://hivi.com.br/api/stripe/webhook`
+3. URL: `https://hivi-web.com/api/stripe/webhook`
 4. Eventos a escutar:
    - `checkout.session.completed`
    - `customer.subscription.deleted`
@@ -225,8 +226,8 @@ Para upload de imagens (logo, banner, produtos, categorias):
 | `ULTRAMSG_INSTANCE_ID` | `instance...` | Mesmo do `.env.local` |
 | `ULTRAMSG_TOKEN` | `...` | Mesmo do `.env.local` |
 | `RESEND_API_KEY` | `re_...` | Quando obtido |
-| `RESEND_FROM_EMAIL` | `noreply@hivi.com.br` | Após verificar domínio no Resend |
-| `NEXT_PUBLIC_APP_URL` | `https://hivi.vercel.app` | ✅ Configurado — atualizar para `https://hivi.com.br` quando o domínio estiver ativo |
+| `RESEND_FROM_EMAIL` | `noreply@hivi-web.com` | ✅ Configurado |
+| `NEXT_PUBLIC_APP_URL` | `https://hivi-web.com` | ✅ Configurado |
 
 ### ⚠️ STRIPE_WEBHOOK_SECRET — atenção especial
 
@@ -234,7 +235,7 @@ O `STRIPE_WEBHOOK_SECRET` que você usa localmente (gerado pelo `stripe listen`)
 
 1. Acesse [dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks)
 2. Clique **"+ Add endpoint"**
-3. URL: `https://hivi.com.br/api/stripe/webhook`
+3. URL: `https://hivi-web.com/api/stripe/webhook`
 4. Eventos:
    - `checkout.session.completed`
    - `customer.subscription.deleted`
@@ -259,10 +260,12 @@ O `STRIPE_WEBHOOK_SECRET` que você usa localmente (gerado pelo `stripe listen`)
 [x] Supabase: migration SQL executada (todas as tabelas + RLS)
 [x] Supabase: tabela orders com Realtime ativado
 [x] Supabase: bucket restaurant-images criado (público)
-[x] Stripe webhook criado para domínio de produção (hivi.vercel.app/api/stripe/webhook)
+[x] Stripe webhook criado para domínio de produção (hivi-web.com/api/stripe/webhook)
 [x] Variáveis de ambiente inseridas na Vercel
-[x] NEXT_PUBLIC_APP_URL configurado (https://hivi.vercel.app)
-[ ] Resend API key inserida + domínio verificado
+[x] NEXT_PUBLIC_APP_URL configurado (https://hivi-web.com)
+[x] Resend API key inserida + domínio hivi-web.com verificado
+[x] RESEND_FROM_EMAIL configurado (noreply@hivi-web.com)
+[x] Domínio hivi-web.com conectado na Vercel
+[x] Supabase: Site URL e Redirect URLs atualizados para hivi-web.com
 [ ] Stripe: Billing Portal configurado (dashboard.stripe.com/settings/billing/portal)
-[ ] NEXT_PUBLIC_APP_URL atualizado para https://hivi.com.br (quando domínio estiver ativo)
 ```
