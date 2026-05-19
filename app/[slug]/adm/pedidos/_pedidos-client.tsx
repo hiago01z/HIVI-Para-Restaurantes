@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode, Camera } from 'lucide-react'
+import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { QrScanner } from '../_components/qr-scanner'
 
 type OrderItem = {
   id: string
@@ -50,11 +52,13 @@ function formatTime(dateStr: string) {
 }
 
 type Props = {
+  slug: string
   restaurantId: string
   initialOrders: Order[]
 }
 
 export function PedidosClient({ restaurantId, initialOrders }: Props) {
+  const router = useRouter()
   const [orders, setOrders] = useState<Order[]>(initialOrders)
   const [tab, setTab] = useState<'delivery' | 'table' | 'qr'>('delivery')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -188,21 +192,24 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
         ))}
       </div>
 
-      {/* Aba Ler QR Code */}
+      {/* Aba Ler QR Code — scanner real */}
       {tab === 'qr' && (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'color-mix(in srgb, var(--adm-primary) 15%, white)' }}>
-            <Camera className="w-8 h-8" style={{ color: 'var(--adm-primary)' }} />
-          </div>
-          <h2 className="text-xl font-bold tracking-tight text-gray-900 mb-2">Escanear QR Code do cliente</h2>
-          <p className="text-gray-500 text-sm mb-6 leading-relaxed max-w-xs mx-auto">
-            O cliente gera um QR code com o pedido. Escaneie para confirmar.
-          </p>
-          <p className="text-xs text-gray-400">
-            Use a câmera do dispositivo para escanear o QR code.<br />
-            O link redirecionará para a tela de confirmação.
-          </p>
-        </div>
+        <QrScanner
+          onDetect={(url) => {
+            // Extrai o path de uma URL completa ou usa direto se já for path
+            try {
+              const parsed = new URL(url)
+              router.push(parsed.pathname)
+            } catch {
+              // Não é URL completa, pode ser path direto
+              if (url.startsWith('/')) {
+                router.push(url)
+              } else {
+                router.push(`/${url}`)
+              }
+            }
+          }}
+        />
       )}
 
       {/* Lista de pedidos */}

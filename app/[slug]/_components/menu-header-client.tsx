@@ -41,22 +41,24 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
         className="fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 gap-3"
         style={{ background: 'var(--menu-bg)', borderBottom: '1px solid rgba(128,128,128,0.15)' }}
       >
-        {/* Logo / Nome */}
-        <Link href={`/${slug}`} className="flex items-center gap-2 flex-1 min-w-0">
+        {/* Logo */}
+        <Link href={`/${slug}`} className="flex items-center flex-shrink-0">
           {logoUrl ? (
-            <Image src={logoUrl} alt={restaurantName} width={32} height={32} className="rounded-full object-cover w-8 h-8 flex-shrink-0" />
+            <div className="h-9 w-auto flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoUrl} alt={restaurantName} className="h-9 w-auto object-contain max-w-[120px]" />
+            </div>
           ) : (
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
-              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
+              className="w-9 h-9 flex items-center justify-center font-black text-sm"
+              style={{ color: 'var(--menu-primary)' }}
             >
               {restaurantName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-semibold truncate text-sm tracking-wide" style={{ color: 'var(--menu-text)' }}>
-            {restaurantName}
-          </span>
         </Link>
+        {/* Espaço flex para empurrar ações para a direita */}
+        <div className="flex-1" />
 
         {/* Ações */}
         <div className="flex items-center gap-1">

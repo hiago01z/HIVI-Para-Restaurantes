@@ -97,12 +97,6 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
 
   if (!restaurant || !restaurant.is_active) notFound()
 
-  const { data: theme } = await supabase
-    .from('restaurant_themes')
-    .select('banner_url')
-    .eq('restaurant_id', restaurant.id)
-    .single()
-
   const [{ data: categories }, { data: featuredProducts }, { data: allProducts }] = await Promise.all([
     supabase
       .from('categories')
@@ -137,18 +131,8 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         allProducts={products}
       />
 
-      {/* Banner ou espaço do header */}
-      {theme?.banner_url ? (
-        <div className="relative h-44 w-full mt-14">
-          <Image src={theme.banner_url} alt={restaurant.name} fill className="object-cover" priority />
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--menu-bg) 100%)' }}
-          />
-        </div>
-      ) : (
-        <div className="h-14" />
-      )}
+      {/* Espaço do header fixo */}
+      <div className="h-14" />
 
       <div className="px-4">
 
@@ -188,27 +172,20 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {/* Identidade do restaurante */}
         <div className="flex flex-col items-center mb-6">
           {restaurant.logo_url ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={restaurant.logo_url}
               alt={restaurant.name}
-              width={48} height={48}
-              className="w-12 h-12 rounded-full object-cover mb-3 ring-2"
-              style={{ ringColor: 'rgba(128,128,128,0.2)' } as React.CSSProperties}
+              className="h-14 w-auto object-contain mb-3 max-w-[160px]"
             />
           ) : (
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-3"
-              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
+            <p
+              className="font-bold text-base tracking-tight mb-3"
+              style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}
             >
-              {restaurant.name.charAt(0).toUpperCase()}
-            </div>
+              {restaurant.name}
+            </p>
           )}
-          <p
-            className="font-bold text-base tracking-tight"
-            style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}
-          >
-            {restaurant.name}
-          </p>
         </div>
 
         {/* Links sociais */}

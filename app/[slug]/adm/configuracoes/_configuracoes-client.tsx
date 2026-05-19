@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
 import { Loader2, Upload, Download, Instagram, Phone, Check } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -94,13 +93,10 @@ export function ConfiguracoesClient({
   // Envia tema sempre que o usuário alterar qualquer cor/fonte
   useEffect(() => { sendThemeToIframe() }, [sendThemeToIframe])
 
-  // Logo & Banner
+  // Logo
   const [logoPreview, setLogoPreview] = useState<string | null>(restaurant.logo_url)
-  const [bannerPreview, setBannerPreview] = useState<string | null>(initialTheme.banner_url)
   const [logoLoading, setLogoLoading] = useState(false)
-  const [bannerLoading, setBannerLoading] = useState(false)
   const logoRef = useRef<HTMLInputElement>(null)
-  const bannerRef = useRef<HTMLInputElement>(null)
 
   // QR Code
   const menuUrl = typeof window !== 'undefined'
@@ -155,9 +151,12 @@ export function ConfiguracoesClient({
 
   async function uploadLogo(file: File) {
     setLogoLoading(true)
+    // Reseta o input para permitir re-selecionar o mesmo arquivo
+    if (logoRef.current) logoRef.current.value = ''
     try {
       const ext = file.name.split('.').pop()
-      const path = `${restaurant.id}/logo.${ext}`
+      // Inclui timestamp no nome para forçar cache-bust no browser
+      const path = `${restaurant.id}/logo-${Date.now()}.${ext}`
       const { error } = await supabase.storage
         .from('restaurant-images')
         .upload(path, file, { upsert: true })
@@ -167,23 +166,6 @@ export function ConfiguracoesClient({
       await supabase.from('restaurants').update({ logo_url: data.publicUrl }).eq('id', restaurant.id)
     } finally {
       setLogoLoading(false)
-    }
-  }
-
-  async function uploadBanner(file: File) {
-    setBannerLoading(true)
-    try {
-      const ext = file.name.split('.').pop()
-      const path = `${restaurant.id}/banner.${ext}`
-      const { error } = await supabase.storage
-        .from('restaurant-images')
-        .upload(path, file, { upsert: true })
-      if (error) return
-      const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
-      setBannerPreview(data.publicUrl)
-      setTheme((prev) => ({ ...prev, banner_url: data.publicUrl }))
-    } finally {
-      setBannerLoading(false)
     }
   }
 
@@ -244,67 +226,47 @@ export function ConfiguracoesClient({
         </div>
       </Section>
 
-      {/* ── Logo e Banner ── */}
-      <Section title="Logo e Banner">
-        <div className="grid grid-cols-2 gap-4">
-          {/* Logo */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
-            <div
-              onClick={() => logoRef.current?.click()}
-              className="adm-upload-area h-28"
-            >
-              {logoPreview ? (
-                <Image src={logoPreview} alt="logo" fill className="object-contain p-2" />
-              ) : (
-                <div className="text-center">
-                  {logoLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--adm-primary)' }} /> : (
-                    <>
-                      <Upload className="w-5 h-5 text-gray-300 mx-auto mb-1" />
-                      <p className="text-xs text-gray-400">Logo</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <input
-              ref={logoRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f) }}
+      {/* ── Logo ── */}
+      <Section title="Logo">
+        <p className="text-xs text-gray-400 mb-3">
+          Formatos aceitos: PNG, JPG, SVG, WEBP. Recomendado: fundo transparente (PNG).
+        </p>
+        <div
+          onClick={() => logoRef.current?.click()}
+          className="adm-upload-area h-36 cursor-pointer"
+        >
+          {logoLoading ? (
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--adm-primary)' }} />
+          ) : logoPreview ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={logoPreview}
+              alt="logo"
+              className="max-h-28 max-w-full object-contain"
             />
-          </div>
-
-          {/* Banner */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Banner do cardápio</p>
-            <div
-              onClick={() => bannerRef.current?.click()}
-              className="adm-upload-area h-28"
-            >
-              {bannerPreview ? (
-                <Image src={bannerPreview} alt="banner" fill className="object-cover" />
-              ) : (
-                <div className="text-center">
-                  {bannerLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--adm-primary)' }} /> : (
-                    <>
-                      <Upload className="w-5 h-5 text-gray-300 mx-auto mb-1" />
-                      <p className="text-xs text-gray-400">Banner</p>
-                    </>
-                  )}
-                </div>
-              )}
+          ) : (
+            <div className="text-center">
+              <Upload className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 font-medium">Clique para enviar o logo</p>
+              <p className="text-xs text-gray-300 mt-1">PNG com fundo transparente funciona melhor</p>
             </div>
-            <input
-              ref={bannerRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBanner(f) }}
-            />
-          </div>
+          )}
         </div>
+        {logoPreview && (
+          <button
+            onClick={() => { setLogoPreview(null); supabase.from('restaurants').update({ logo_url: null }).eq('id', restaurant.id) }}
+            className="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors"
+          >
+            Remover logo
+          </button>
+        )}
+        <input
+          ref={logoRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f) }}
+        />
       </Section>
 
       {/* ── Tema ── */}
