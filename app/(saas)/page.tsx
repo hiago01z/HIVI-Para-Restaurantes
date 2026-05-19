@@ -1,22 +1,13 @@
 import Link from 'next/link'
 import { QrCode, Smartphone, TrendingUp, Clock, ScanLine, UtensilsCrossed, CheckCircle2 } from 'lucide-react'
+import { SaasHeader } from '@/components/saas/saas-header'
+import { SaasFooter } from '@/components/saas/saas-footer'
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
-        <span className="text-3xl font-black tracking-tight text-gray-900">HIVI</span>
-        <div className="flex items-center gap-3">
-          <Link href="/entrar" className="px-5 py-2.5 text-base font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            Entrar
-          </Link>
-          <Link href="/criar-conta" className="px-5 py-2.5 text-base font-bold bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors">
-            Criar conta
-          </Link>
-        </div>
-      </header>
+      <SaasHeader />
 
       {/* Hero */}
       <section className="bg-gray-50 px-5 pt-14 pb-20 text-center">
@@ -275,21 +266,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 px-5 py-10">
-        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-gray-400 mb-5">
-          <Link href="#como-funciona" className="hover:text-gray-700 transition-colors">Como funciona</Link>
-          <Link href="#precos"        className="hover:text-gray-700 transition-colors">Preços</Link>
-          <Link href="#faq"           className="hover:text-gray-700 transition-colors">FAQ</Link>
-          <Link href="#"              className="hover:text-gray-700 transition-colors">Feedback</Link>
-          <Link href="/entrar"        className="hover:text-gray-700 transition-colors">Entrar</Link>
-          <Link href="/privacidade"   className="hover:text-gray-700 transition-colors">Privacidade</Link>
-          <Link href="/termos"        className="hover:text-gray-700 transition-colors">Termos</Link>
-        </nav>
-        <p className="text-center text-sm text-gray-400">
-          2026 HIVI Tecnologia — Todos os direitos reservados
-        </p>
-      </footer>
+      <SaasFooter />
 
     </div>
   )
