@@ -26,7 +26,7 @@ function CategoryCard({ cat, slug, large = false }: { cat: Category; slug: strin
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)' }}
       />
       <span
-        className="relative z-10 px-3 pb-3 font-black text-sm leading-tight w-full"
+        className="relative z-10 px-3 pb-3 font-bold text-base leading-snug tracking-wide w-full"
         style={{
           fontFamily: 'var(--menu-font)',
           color: 'var(--menu-text)',
@@ -149,7 +149,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {featured.length > 0 && (
           <section className="mb-6 mt-3">
             <h2
-              className="text-lg font-black mb-3"
+              className="text-xl font-bold mb-3 tracking-tight"
               style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-primary)' }}
             >
               Destaques
@@ -162,7 +162,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {cats.length > 0 && (
           <section className="mb-8">
             <h2
-              className="text-lg font-black mb-3"
+              className="text-xl font-bold mb-3 tracking-tight"
               style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-primary)' }}
             >
               Cardápio
@@ -175,8 +175,8 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {featured.length === 0 && cats.length === 0 && (
           <div className="mt-24 text-center">
             <div className="text-6xl mb-4">🍽️</div>
-            <p className="font-bold text-lg" style={{ color: 'var(--menu-text)' }}>{restaurant.name}</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--menu-text-muted)' }}>Cardápio sendo configurado...</p>
+            <p className="font-bold text-xl tracking-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>{restaurant.name}</p>
+            <p className="text-sm mt-2 font-medium" style={{ color: 'var(--menu-text-muted)' }}>Cardápio sendo configurado...</p>
           </div>
         )}
       </div>

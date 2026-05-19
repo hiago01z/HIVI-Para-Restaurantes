@@ -210,7 +210,7 @@ export function PratosClient({
     <div className="px-4 py-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-black text-gray-900">Pratos / Bebidas</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Pratos / Bebidas</h1>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-bold rounded-xl transition-all"
@@ -339,7 +339,7 @@ export function PratosClient({
           <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
             {/* Header do modal */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-              <h2 className="font-black text-gray-900 text-lg">
+              <h2 className="font-bold text-gray-900 text-lg tracking-tight">
                 {modal === 'create' ? 'Novo item' : 'Editar item'}
               </h2>
               <button onClick={closeModal} className="text-gray-400 hover:text-gray-700">

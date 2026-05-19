@@ -142,7 +142,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
-      <h1 className="text-xl font-black text-gray-900 mb-5">Pedidos de hoje</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-5">Pedidos de hoje</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
@@ -171,7 +171,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'color-mix(in srgb, var(--adm-primary) 15%, white)' }}>
             <Camera className="w-8 h-8" style={{ color: 'var(--adm-primary)' }} />
           </div>
-          <h2 className="text-lg font-black text-gray-900 mb-2">Escanear QR Code do cliente</h2>
+          <h2 className="text-xl font-bold tracking-tight text-gray-900 mb-2">Escanear QR Code do cliente</h2>
           <p className="text-gray-500 text-sm mb-6 leading-relaxed max-w-xs mx-auto">
             O cliente gera um QR code com o pedido. Escaneie para confirmar.
           </p>
@@ -287,7 +287,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
           <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-black text-gray-900 text-lg">Alterar status</h3>
+              <h3 className="font-bold text-gray-900 text-lg tracking-tight">Alterar status</h3>
               <button onClick={() => setEditingOrder(null)}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>

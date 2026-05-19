@@ -177,7 +177,7 @@ export function ConfiguracoesClient({
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-xl font-black text-gray-900">Configurações</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900">Configurações</h1>
 
       {/* ── Redes Sociais ── */}
       <Section title="Redes Sociais">
@@ -438,7 +438,7 @@ export function ConfiguracoesClient({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-      <h2 className="font-black text-gray-900 text-base mb-4">{title}</h2>
+      <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-widest mb-4">{title}</h2>
       {children}
     </div>
   )

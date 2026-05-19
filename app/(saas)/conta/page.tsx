@@ -28,7 +28,7 @@ export default async function ContaPage() {
 
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-black tracking-tight text-gray-900">
+        <Link href="/" className="font-display text-2xl font-bold italic tracking-tight text-gray-950">
           HIVI
         </Link>
         <div className="flex items-center gap-3">
@@ -45,7 +45,7 @@ export default async function ContaPage() {
 
         {/* Minhas lojas */}
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-black text-gray-900">Minhas lojas</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-gray-950">Minhas lojas</h1>
           <Link
             href="/criar-loja"
             className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 transition-colors"
@@ -60,7 +60,7 @@ export default async function ContaPage() {
             <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-7 h-7 text-orange-500" />
             </div>
-            <p className="font-bold text-gray-900 mb-1">Nenhuma loja ainda</p>
+            <p className="font-display font-semibold text-gray-900 mb-1">Nenhuma loja ainda</p>
             <p className="text-sm text-gray-500 mb-5">Crie sua primeira loja e comece a receber pedidos.</p>
             <Link
               href="/criar-loja"
@@ -91,7 +91,7 @@ export default async function ContaPage() {
         {/* Billing */}
         {temStripe && (
           <div className="mt-6 bg-white rounded-2xl p-5 shadow-sm">
-            <h2 className="font-black text-gray-900 mb-1">Assinatura</h2>
+            <h2 className="font-display font-semibold text-gray-900 mb-1">Assinatura</h2>
             <p className="text-sm text-gray-500 mb-4">Gerencie pagamentos, faturas e cancele pelo portal Stripe.</p>
             <ContaActions lojas={[]} showPortalOnly />
           </div>

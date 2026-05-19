@@ -60,7 +60,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
         {/* Preço — topo direito */}
         <div
-          className="absolute top-3 right-3 px-3 py-1 rounded-full font-black text-sm"
+          className="absolute top-3 right-3 px-3 py-1 rounded-full font-bold text-sm tracking-wide"
           style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
         >
           {formatPrice(product.price)}
@@ -101,11 +101,11 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
         {/* Infos + botões — rodapé */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="font-black text-xl leading-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
+          <p className="font-bold text-2xl leading-tight tracking-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
             {product.name}
           </p>
           {product.description && (
-            <p className="text-xs leading-relaxed line-clamp-2 mt-1 mb-3" style={{ color: 'var(--menu-text-muted)' }}>
+            <p className="text-[0.8125rem] leading-relaxed line-clamp-2 mt-1 mb-3" style={{ color: 'var(--menu-text-muted)' }}>
               {product.description}
             </p>
           )}
@@ -115,7 +115,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             {/* Pedir agora */}
             <button
               onClick={handleOrderNow}
-              className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
+              className="flex-1 py-2.5 rounded-xl font-semibold text-sm tracking-wide transition-opacity hover:opacity-90"
               style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
             >
               Pedir agora
@@ -124,7 +124,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             {/* Adicionar ao prato */}
             <button
               onClick={handleAddToCart}
-              className="flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 transition-all"
               style={{
                 background: added ? '#22c55e' : 'rgba(255,255,255,0.15)',
                 color: 'var(--menu-text)',

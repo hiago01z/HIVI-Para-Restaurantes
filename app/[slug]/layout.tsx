@@ -29,10 +29,19 @@ export default async function SlugLayout({
   const primary    = theme?.primary_color    ?? '#FF6B00'
   const secondary  = theme?.secondary_color  ?? '#1A0A00'
   const bg         = theme?.background_color ?? '#2C1A0E'
-  const font       = theme?.font_family      ?? 'serif'
-  const fontSize   = theme?.font_size_base   ?? '16px'
   const textColor  = theme?.text_color       ?? '#FFFFFF'
   const iconColor  = theme?.icon_color       ?? primary   // fallback = primary
+  const fontSize   = theme?.font_size_base   ?? '16px'
+
+  // Mapeia font_family genérica para web fonts carregadas no root layout
+  const rawFont    = theme?.font_family ?? 'serif'
+  const fontMap: Record<string, string> = {
+    'serif':      "'Playfair Display', Georgia, serif",
+    'sans-serif': "var(--font-sans, 'Inter', system-ui, sans-serif)",
+    'monospace':  "'Courier New', monospace",
+    'cursive':    "Georgia, 'Playfair Display', cursive",
+  }
+  const font = fontMap[rawFont] ?? rawFont
 
   const cssVars = [
     `--menu-primary: ${primary}`,

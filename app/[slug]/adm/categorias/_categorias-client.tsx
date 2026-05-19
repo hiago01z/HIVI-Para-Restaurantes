@@ -154,7 +154,7 @@ export function CategoriasClient({
     <div className="px-4 py-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-black text-gray-900">Categorias</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Categorias</h1>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-bold rounded-xl transition-all"
@@ -239,7 +239,7 @@ export function CategoriasClient({
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
           <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 pb-10 sm:pb-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-black text-gray-900 text-lg">
+              <h2 className="font-bold text-gray-900 text-lg tracking-tight">
                 {modal === 'create' ? 'Nova categoria' : 'Editar categoria'}
               </h2>
               <button onClick={closeModal}>

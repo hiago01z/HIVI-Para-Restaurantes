@@ -7,7 +7,7 @@ export default function EntrarPage() {
 
       {/* Header simples */}
       <header className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
-        <Link href="/" className="text-3xl font-black tracking-tight text-gray-900">
+        <Link href="/" className="font-display text-[1.75rem] font-bold italic tracking-tight text-gray-950">
           HIVI
         </Link>
         <Link href="/criar-conta" className="text-base font-medium text-orange-500 hover:text-orange-600 transition-colors">
@@ -19,10 +19,10 @@ export default function EntrarPage() {
       <main className="flex-1 flex items-center justify-center px-5 py-14">
         <div className="w-full max-w-sm">
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-black text-gray-900 mb-2">
+            <h1 className="font-display text-3xl font-bold text-gray-950 mb-2 tracking-tight">
               Entrar na HIVI
             </h1>
-            <p className="text-base text-gray-500">
+            <p className="text-[0.9375rem] text-gray-600">
               Acesse sua conta para gerenciar seus restaurantes.
             </p>
           </div>

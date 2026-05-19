@@ -9,13 +9,16 @@ export default function LandingPage() {
 
       <SaasHeader />
 
-      {/* Hero */}
+      {/* ── Hero ── */}
       <section className="bg-gray-50 px-5 pt-14 pb-20 text-center">
-        <h1 className="text-5xl font-black uppercase tracking-tight text-gray-900 mb-4 leading-tight">
-          Cardápio<br />Online
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 mb-4">
+          Cardápio digital para restaurantes
+        </p>
+        <h1 className="font-display text-[3.25rem] font-bold leading-[1.05] tracking-tight text-gray-950 mb-5">
+          Cardápio<br /><em>Online</em>
         </h1>
-        <p className="text-lg text-gray-500 mb-10 max-w-xs mx-auto leading-relaxed">
-          Cardápio digital com QR code nas mesas para o seu restaurante.
+        <p className="text-[1.0625rem] text-gray-600 mb-10 max-w-xs mx-auto leading-relaxed">
+          QR code nas mesas, pedidos em tempo real e painel completo para o seu restaurante.
         </p>
 
         {/* Mockup do app */}
@@ -23,29 +26,29 @@ export default function LandingPage() {
           <div className="rounded-2xl overflow-hidden">
             <div className="bg-[#2C1A0E] flex items-center gap-2 px-3 pt-3 pb-2">
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-black text-xs">B</span>
+                <span className="text-white font-bold text-xs font-display italic">B</span>
               </div>
               <div className="flex-1 h-7 bg-[#3D2110] rounded-full" />
               <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
               <div className="w-7 h-7 bg-[#3D2110] rounded-full" />
             </div>
             <div className="bg-[#2C1A0E] px-3 pb-1">
-              <p className="text-orange-400 font-bold text-lg mb-0.5" style={{ fontFamily: 'cursive' }}>Destaques</p>
-              <p className="text-gray-500 text-[10px] leading-tight mb-3">descrição, ingredientes, etc</p>
+              <p className="text-orange-400 font-display font-bold italic text-lg mb-0.5">Destaques</p>
+              <p className="text-gray-500 text-[10px] leading-tight mb-3">ingredientes, preços e mais</p>
               <div className="flex gap-2 mb-2">
                 <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-bold">Combos</span>
+                  <span className="text-orange-400 text-xs font-semibold">Combos</span>
                 </div>
                 <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-bold">Completo</span>
+                  <span className="text-orange-400 text-xs font-semibold">Completo</span>
                 </div>
               </div>
               <div className="flex gap-2 pb-4">
                 <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-bold">Bebidas</span>
+                  <span className="text-orange-400 text-xs font-semibold">Bebidas</span>
                 </div>
                 <div className="flex-1 h-16 bg-[#3D2110] rounded-xl flex items-end p-2">
-                  <span className="text-orange-400 text-xs font-bold">Especial</span>
+                  <span className="text-orange-400 text-xs font-semibold">Especial</span>
                 </div>
               </div>
             </div>
@@ -54,67 +57,47 @@ export default function LandingPage() {
 
         <Link
           href="/criar-conta"
-          className="inline-block px-10 py-4 bg-orange-500 text-white font-black rounded-2xl text-xl hover:bg-orange-600 transition-colors shadow-lg"
+          className="inline-block px-10 py-4 bg-orange-500 text-white font-semibold tracking-wide rounded-2xl text-lg hover:bg-orange-600 transition-colors shadow-lg"
         >
           Começar agora
         </Link>
-        <p className="text-sm text-gray-400 mt-3">Sem fidelidade • Cancele quando quiser</p>
+        <p className="text-sm text-gray-400 mt-3 font-medium">Sem fidelidade · Cancele quando quiser</p>
       </section>
 
-      {/* Informações importantes — QR Code nas mesas */}
+      {/* ── QR Code nas mesas ── */}
       <section className="px-5 py-16">
         <div className="max-w-sm mx-auto">
-          <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-2xl mx-auto mb-6">
-            <QrCode className="w-8 h-8 text-orange-500" />
+          <div className="flex items-center justify-center w-14 h-14 bg-orange-100 rounded-2xl mx-auto mb-6">
+            <QrCode className="w-7 h-7 text-orange-500" />
           </div>
-          <h2 className="text-3xl font-black text-gray-900 text-center mb-4 leading-tight">
+          <h2 className="font-display text-[2rem] font-bold text-gray-950 text-center mb-4 leading-tight">
             QR Code nas mesas
           </h2>
-          <p className="text-lg text-gray-600 text-center leading-relaxed mb-10">
+          <p className="text-[1.0625rem] text-gray-600 text-center leading-relaxed mb-10">
             Seu cliente escaneia o QR code da mesa, vê o cardápio no celular e faz o pedido — sem precisar chamar o garçom.
           </p>
 
           {/* Fluxo visual */}
-          <div className="space-y-5">
-            <div className="flex items-start gap-4 bg-gray-50 rounded-2xl p-5">
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <ScanLine className="w-6 h-6 text-white" />
+          <div className="space-y-4">
+            {[
+              { icon: ScanLine,       title: '1. Cliente escaneia',     desc: 'O QR code fica impresso na mesa ou em um suporte. Basta apontar a câmera do celular.' },
+              { icon: Smartphone,     title: '2. Navega pelo cardápio', desc: 'O cardápio abre direto no navegador, sem baixar nenhum aplicativo. Fotos, preços e categorias.' },
+              { icon: UtensilsCrossed,title: '3. Faz o pedido',         desc: 'Monta o carrinho e gera um QR code para o garçom confirmar. O pedido entra direto no painel.' },
+            ].map((item) => (
+              <div key={item.title} className="flex items-start gap-4 bg-gray-50 rounded-2xl p-5">
+                <div className="w-11 h-11 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-display font-semibold text-gray-900 text-base">{item.title}</p>
+                  <p className="text-gray-600 text-sm mt-1 leading-relaxed">{item.desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-gray-900 text-lg">1. Cliente escaneia</p>
-                <p className="text-gray-500 text-base mt-1 leading-relaxed">
-                  O QR code fica impresso na mesa ou em um suporte. Basta apontar a câmera do celular.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 bg-gray-50 rounded-2xl p-5">
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-lg">2. Navega pelo cardápio</p>
-                <p className="text-gray-500 text-base mt-1 leading-relaxed">
-                  O cardápio abre direto no navegador, sem baixar nenhum aplicativo. Fotos, preços e categorias organizadas.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 bg-gray-50 rounded-2xl p-5">
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <UtensilsCrossed className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-lg">3. Faz o pedido</p>
-                <p className="text-gray-500 text-base mt-1 leading-relaxed">
-                  Monta o carrinho e gera um QR code para o garçom confirmar. O pedido entra direto no painel do restaurante.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Destaques rápidos */}
-          <div className="mt-8 space-y-3">
+          <div className="mt-8 space-y-2.5">
             {[
               'Sem download de aplicativo',
               'Funciona em qualquer celular',
@@ -122,50 +105,50 @@ export default function LandingPage() {
               'Pedidos chegam em tempo real',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-orange-500 flex-shrink-0" />
-                <span className="text-gray-700 text-base font-medium">{item}</span>
+                <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                <span className="text-gray-700 text-[0.9375rem] font-medium">{item}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefícios */}
+      {/* ── Benefícios ── */}
       <section id="beneficios" className="px-5 py-16 bg-gray-50">
-        <h2 className="text-4xl font-black uppercase text-center text-gray-900 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 text-center mb-3">
+          Por que escolher a HIVI
+        </p>
+        <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
           Benefícios
         </h2>
-        <p className="text-center text-base text-gray-500 mb-10">
-          Vantagens de ter o cardápio online
-        </p>
-        <div className="space-y-4 max-w-sm mx-auto">
+        <div className="space-y-3 max-w-sm mx-auto">
           {[
-            { icon: QrCode,     title: 'QR Code nas mesas',   desc: 'Clientes fazem pedidos direto pelo celular, sem esperar o garçom.' },
-            { icon: Smartphone, title: 'Cardápio digital',    desc: 'Atualize preços e itens em tempo real, sem custo de impressão.' },
-            { icon: TrendingUp, title: 'Mais pedidos',        desc: 'Clientes pedem mais quando navegam sozinhos pelo cardápio.' },
-            { icon: Clock,      title: 'Atendimento rápido',  desc: 'Pedidos chegam direto para a equipe, sem erros de comunicação.' },
+            { icon: QrCode,     title: 'QR Code nas mesas',  desc: 'Clientes fazem pedidos direto pelo celular, sem esperar o garçom.' },
+            { icon: Smartphone, title: 'Cardápio digital',   desc: 'Atualize preços e itens em tempo real, sem custo de impressão.' },
+            { icon: TrendingUp, title: 'Mais pedidos',       desc: 'Clientes pedem mais quando navegam sozinhos pelo cardápio.' },
+            { icon: Clock,      title: 'Atendimento rápido', desc: 'Pedidos chegam direto para a equipe, sem erros de comunicação.' },
           ].map((b) => (
             <div key={b.title} className="bg-white rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <b.icon className="w-6 h-6 text-orange-500" />
+              <div className="w-11 h-11 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <b.icon className="w-5 h-5 text-orange-500" />
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-lg">{b.title}</p>
-                <p className="text-base text-gray-500 mt-1 leading-relaxed">{b.desc}</p>
+                <p className="font-display font-semibold text-gray-900 text-base">{b.title}</p>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{b.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Quem usa aprova */}
+      {/* ── Depoimentos ── */}
       <section id="depoimentos" className="px-5 py-16">
-        <h2 className="text-4xl font-black uppercase text-center text-gray-900 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 text-center mb-3">
+          Clientes satisfeitos
+        </p>
+        <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
           Quem usa aprova
         </h2>
-        <p className="text-center text-base text-gray-500 mb-10">
-          Avaliações de clientes da HIVI
-        </p>
         <div className="space-y-4 max-w-sm mx-auto">
           {[
             { name: 'Carlos Silva',  rest: 'Restaurante Silva', text: 'Depois do HIVI os pedidos aumentaram 30%. Os clientes adoram pedir pelo celular.' },
@@ -173,54 +156,64 @@ export default function LandingPage() {
             { name: 'João Oliveira', rest: 'Churrascaria JO',   text: 'Acabou com os erros de pedido. Hoje tudo chega certinho para a cozinha.' },
           ].map((t) => (
             <div key={t.name} className="bg-gray-50 border border-gray-100 rounded-2xl p-6">
-              <p className="text-gray-700 text-base leading-relaxed mb-4">&ldquo;{t.text}&rdquo;</p>
-              <p className="font-bold text-base text-gray-900">{t.name}</p>
-              <p className="text-sm text-orange-500 mt-0.5">{t.rest}</p>
+              <p className="font-display italic text-gray-800 text-[1.0625rem] leading-relaxed mb-4">
+                &ldquo;{t.text}&rdquo;
+              </p>
+              <p className="font-semibold text-sm text-gray-900">{t.name}</p>
+              <p className="text-xs text-orange-500 font-medium mt-0.5 uppercase tracking-wide">{t.rest}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Como funciona */}
+      {/* ── Como funciona ── */}
       <section id="como-funciona" className="px-5 py-16 bg-gray-50">
-        <h2 className="text-4xl font-black uppercase text-center text-gray-900 mb-12">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 text-center mb-3">
+          Em 3 passos
+        </p>
+        <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-12 leading-tight">
           Como funciona
         </h2>
-        <div className="space-y-10 max-w-sm mx-auto">
+        <div className="space-y-8 max-w-sm mx-auto">
           {[
             { step: '1', title: 'Crie sua conta',         desc: 'Acesse com o Google e escolha seu plano em menos de 2 minutos.' },
             { step: '2', title: 'Configure seu cardápio', desc: 'Adicione categorias, pratos, fotos e preços no painel administrativo.' },
             { step: '3', title: 'Publique e receba',      desc: 'Imprima o QR code, coloque nas mesas e comece a receber pedidos.' },
           ].map((s) => (
             <div key={s.step} className="flex items-start gap-5">
-              <div className="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center font-black text-2xl flex-shrink-0 shadow-md">
-                {s.step}
+              <div className="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <span className="font-display font-bold text-2xl italic">{s.step}</span>
               </div>
               <div className="pt-2">
-                <p className="font-black text-xl text-gray-900">{s.title}</p>
-                <p className="text-base text-gray-500 mt-2 leading-relaxed">{s.desc}</p>
+                <p className="font-display font-bold text-xl text-gray-950 leading-tight">{s.title}</p>
+                <p className="text-[0.9375rem] text-gray-600 mt-2 leading-relaxed">{s.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Preços */}
+      {/* ── Preços ── */}
       <section id="precos" className="px-5 py-16">
-        <h2 className="text-4xl font-black uppercase text-center text-gray-900 mb-10">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500 text-center mb-3">
+          Simples e transparente
+        </p>
+        <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
           Preços
         </h2>
         <div className="max-w-xs mx-auto">
           <div className="border-2 border-orange-500 rounded-3xl p-7 shadow-xl">
-            <p className="font-bold text-gray-600 text-lg text-center mb-1">Plano Básico</p>
+            <p className="font-display font-semibold text-gray-500 text-base text-center mb-1 italic">
+              Plano Básico
+            </p>
             <div className="text-center my-6">
               <div>
-                <span className="text-6xl font-black text-gray-900">R$&nbsp;59</span>
-                <span className="text-3xl font-black text-gray-900">,99</span>
+                <span className="font-display text-6xl font-bold text-gray-950">R$&nbsp;59</span>
+                <span className="font-display text-2xl font-bold text-gray-950">,99</span>
               </div>
-              <span className="text-base text-gray-400 mt-1 block">por mês</span>
+              <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
-            <ul className="text-base text-gray-600 space-y-3 mb-8">
+            <ul className="text-[0.9375rem] text-gray-700 space-y-2.5 mb-8">
               {[
                 'Cardápio digital público',
                 'Painel administrativo',
@@ -231,14 +224,14 @@ export default function LandingPage() {
                 'Suporte via WhatsApp',
               ].map((f) => (
                 <li key={f} className="flex items-center gap-3">
-                  <span className="text-orange-500 font-black text-lg flex-shrink-0">✓</span>
-                  {f}
+                  <span className="text-orange-500 font-bold text-base flex-shrink-0">✓</span>
+                  <span className="text-gray-700">{f}</span>
                 </li>
               ))}
             </ul>
             <Link
               href="/criar-conta"
-              className="block w-full py-4 bg-orange-500 text-white font-black rounded-2xl text-lg text-center hover:bg-orange-600 transition-colors"
+              className="block w-full py-3.5 bg-orange-500 text-white font-semibold tracking-wide rounded-2xl text-base text-center hover:bg-orange-600 transition-colors"
             >
               Contratar agora
             </Link>
@@ -246,12 +239,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* ── FAQ ── */}
       <section id="faq" className="px-5 py-16 bg-gray-50">
-        <h2 className="text-4xl font-black uppercase text-center text-gray-900 mb-10">
-          FAQ
+        <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
+          Perguntas frequentes
         </h2>
-        <div className="space-y-4 max-w-sm mx-auto">
+        <div className="space-y-3 max-w-sm mx-auto">
           {[
             { q: 'Preciso baixar um aplicativo?',        a: 'Não. O cardápio funciona direto no navegador do celular, sem nenhum download.' },
             { q: 'Posso cancelar quando quiser?',        a: 'Sim. Sem multa ou fidelidade mínima. Cancele quando precisar.' },
@@ -259,8 +252,8 @@ export default function LandingPage() {
             { q: 'E se eu tiver dúvidas?',               a: 'Suporte via WhatsApp disponível para todos os clientes.' },
           ].map((f) => (
             <div key={f.q} className="bg-white rounded-2xl p-5 shadow-sm">
-              <p className="font-bold text-gray-900 text-lg">{f.q}</p>
-              <p className="text-gray-500 text-base mt-2 leading-relaxed">{f.a}</p>
+              <p className="font-display font-semibold text-gray-900 text-base">{f.q}</p>
+              <p className="text-gray-600 text-sm mt-2 leading-relaxed">{f.a}</p>
             </div>
           ))}
         </div>

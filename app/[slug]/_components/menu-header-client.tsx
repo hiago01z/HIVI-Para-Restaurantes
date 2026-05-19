@@ -53,7 +53,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
               {restaurantName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-bold truncate text-sm" style={{ color: 'var(--menu-text)' }}>
+          <span className="font-semibold truncate text-sm tracking-wide" style={{ color: 'var(--menu-text)' }}>
             {restaurantName}
           </span>
         </Link>
@@ -134,7 +134,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
             style={{ background: 'var(--menu-bg)', borderLeft: '1px solid rgba(128,128,128,0.15)' }}
           >
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
-              <span className="font-bold text-lg" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
+              <span className="font-bold text-base tracking-tight" style={{ color: 'var(--menu-text)', fontFamily: 'var(--menu-font)' }}>
                 Categorias
               </span>
               <button onClick={() => setDrawerOpen(false)} style={{ color: 'var(--menu-text-muted)' }}>
@@ -147,7 +147,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
                   key={cat.id}
                   href={`/${slug}/categoria/${cat.id}`}
                   onClick={() => setDrawerOpen(false)}
-                  className="flex items-center px-5 py-3.5 font-medium transition-opacity hover:opacity-80"
+                  className="flex items-center px-5 py-3.5 font-medium text-[0.9375rem] tracking-wide transition-opacity hover:opacity-80"
                   style={{ color: 'var(--menu-text)' }}
                 >
                   {cat.name}
@@ -195,7 +195,7 @@ function SearchResultItem({
           style={{ background: 'var(--menu-card)' }}>🍽️</div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate" style={{ color: 'var(--menu-text)' }}>{product.name}</p>
+        <p className="font-semibold text-sm truncate tracking-tight" style={{ color: 'var(--menu-text)' }}>{product.name}</p>
         {product.description && (
           <p className="text-xs truncate mt-0.5" style={{ color: 'var(--menu-text-muted)' }}>{product.description}</p>
         )}

@@ -57,8 +57,8 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
               {restaurantName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-bold text-gray-900 text-sm truncate">{restaurantName}</span>
-          <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block">— ADM</span>
+          <span className="font-semibold text-gray-900 text-sm tracking-tight truncate">{restaurantName}</span>
+          <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block font-medium">— ADM</span>
         </Link>
 
         {/* Nav desktop */}
@@ -114,7 +114,7 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
           <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setDrawerOpen(false)} />
           <div className="fixed top-0 right-0 bottom-0 z-50 w-64 bg-white flex flex-col shadow-xl">
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-              <span className="font-black text-gray-900">Menu</span>
+              <span className="font-bold tracking-tight text-gray-900">Menu</span>
               <button onClick={() => setDrawerOpen(false)}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>
