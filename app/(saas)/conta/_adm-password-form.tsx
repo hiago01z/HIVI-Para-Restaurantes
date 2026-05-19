@@ -5,6 +5,7 @@ import { Lock, Eye, EyeOff, Check, Loader2 } from 'lucide-react'
 
 export function AdmPasswordForm({ restaurantId, hasPassword }: { restaurantId: string; hasPassword: boolean }) {
   const [open, setOpen] = useState(false)
+  const [localHasPassword, setLocalHasPassword] = useState(hasPassword)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -30,6 +31,7 @@ export function AdmPasswordForm({ restaurantId, hasPassword }: { restaurantId: s
         return
       }
       setSaved(true)
+      setLocalHasPassword(true)
       setPassword('')
       setConfirm('')
       setTimeout(() => { setSaved(false); setOpen(false) }, 2000)
@@ -43,20 +45,20 @@ export function AdmPasswordForm({ restaurantId, hasPassword }: { restaurantId: s
       <button
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1.5 py-2.5 rounded-xl text-sm font-medium w-full justify-center transition-colors border ${
-          hasPassword
+          localHasPassword
             ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
             : 'border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100'
         }`}
       >
         <Lock className="w-4 h-4" />
-        {hasPassword ? 'Alterar senha ADM' : 'Definir senha ADM'}
-        {!hasPassword && <span className="ml-1 text-xs bg-orange-200 text-orange-700 px-1.5 py-0.5 rounded-full">Pendente</span>}
+        {localHasPassword ? 'Alterar senha ADM' : 'Definir senha ADM'}
+        {!localHasPassword && <span className="ml-1 text-xs bg-orange-200 text-orange-700 px-1.5 py-0.5 rounded-full">Pendente</span>}
       </button>
 
       {open && (
         <form onSubmit={handleSubmit} className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
           <p className="text-xs text-gray-500">
-            {hasPassword ? 'Altere a senha usada para acessar o painel ADM.' : 'Defina a senha que será usada para acessar o painel ADM do seu restaurante.'}
+            {localHasPassword ? 'Altere a senha usada para acessar o painel ADM.' : 'Defina a senha que será usada para acessar o painel ADM do seu restaurante.'}
           </p>
           <div className="relative">
             <input
