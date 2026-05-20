@@ -60,6 +60,23 @@ export function PedidoClient({ slug, restaurantId }: Props) {
     name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '', notes: '',
   })
 
+  // ── Dados de entrega salvos (localStorage) ───────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hivi-delivery-info')
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<DeliveryForm>
+        setForm((prev) => ({
+          ...prev,
+          name:      parsed.name      ?? '',
+          address:   parsed.address   ?? '',
+          reference: parsed.reference ?? '',
+          phone:     parsed.phone     ?? '',
+        }))
+      }
+    } catch { /* ignore */ }
+  }, [])
+
   // ── Pedido ativo (localStorage) ──────────────────────────────────────────────
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
   const [activeOrderData, setActiveOrderData] = useState<{ order_number: number; status: string; total: number } | null>(null)
@@ -220,6 +237,15 @@ export function PedidoClient({ slug, restaurantId }: Props) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Erro ao criar pedido.')
+      // Salva dados pessoais para pré-preencher no próximo pedido
+      try {
+        localStorage.setItem('hivi-delivery-info', JSON.stringify({
+          name:      form.name,
+          address:   form.address,
+          reference: form.reference,
+          phone:     form.phone,
+        }))
+      } catch { /* ignore */ }
       // Persiste o pedido no localStorage para acesso após fechar o navegador
       try { localStorage.setItem(`hivi-active-order-${slug}`, data.orderId) } catch {}
       clearCart()
@@ -484,12 +510,24 @@ export function PedidoClient({ slug, restaurantId }: Props) {
             }}
           >
           <div className="p-6 pb-10">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-1">
               <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>Dados para entrega</h2>
               <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
+            {form.name && (
+              <p className="text-xs mb-5" style={{ color: 'var(--menu-text-muted)', opacity: 0.55 }}>
+                Preenchido com seu último pedido · <button
+                  type="button"
+                  className="underline underline-offset-2"
+                  onClick={() => setForm({ name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '', notes: '' })}
+                >
+                  limpar
+                </button>
+              </p>
+            )}
+            {!form.name && <div className="mb-6" />}
 
             <form onSubmit={handleDelivery} className="space-y-4">
               <DeliveryField
