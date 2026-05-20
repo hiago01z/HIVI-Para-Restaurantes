@@ -9,6 +9,19 @@
 ALTER TABLE qr_sessions
   ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE SET NULL;
 
+-- 1b. Habilita Realtime na tabela qr_sessions
+--     Necessário para o cliente receber a confirmação do garçom em tempo real.
+--     Sem isso, o modal "Pedido confirmado" nunca aparece.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'qr_sessions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE qr_sessions;
+  END IF;
+END $$;
+
 -- 2. Corrige política public_read_active: is_active = NULL = restaurante novo = ativo
 --    A política original (is_active = TRUE) bloqueava restaurantes com is_active = NULL,
 --    causando 404 no cardápio público de restaurantes recém-criados.

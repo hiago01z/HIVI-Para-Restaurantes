@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
@@ -75,11 +76,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
     }
 
-    // Salva order_id na sessão — o cliente escuta via Realtime e redireciona
-    await supabase
+    // Salva order_id e confirmed na sessão via service role.
+    // Usa service role (não a sessão do usuário) para garantir que o update
+    // sempre ocorra e dispare o evento Realtime para o cliente.
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+    const { error: sessionUpdateError } = await serviceSupabase
       .from('qr_sessions')
       .update({ confirmed: true, confirmed_at: new Date().toISOString(), order_id: order.id })
       .eq('id', session.id)
+
+    if (sessionUpdateError) {
+      console.error('[qrcode/confirm] Falha ao atualizar qr_session:', sessionUpdateError.message)
+      // Pedido já foi criado com sucesso — retorna 201 mesmo assim
+    }
 
     return NextResponse.json({ order }, { status: 201 })
   } catch {
