@@ -164,6 +164,11 @@ export function ConfiguracoesClient({
   const [logoLoading, setLogoLoading] = useState(false)
   const logoRef = useRef<HTMLInputElement>(null)
 
+  // Banner
+  const [bannerPreview, setBannerPreview] = useState<string | null>(initialTheme.banner_url)
+  const [bannerLoading, setBannerLoading] = useState(false)
+  const bannerRef = useRef<HTMLInputElement>(null)
+
   // QR Code
   const menuUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${restaurant.slug}`
@@ -280,6 +285,35 @@ export function ConfiguracoesClient({
     } finally {
       setLogoLoading(false)
     }
+  }
+
+  async function uploadBanner(file: File) {
+    setBannerLoading(true)
+    if (bannerRef.current) bannerRef.current.value = ''
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${restaurant.id}/banner-${Date.now()}.${ext}`
+      const { error } = await supabase.storage
+        .from('restaurant-images')
+        .upload(path, file, { upsert: true })
+      if (error) return
+      const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
+      setBannerPreview(data.publicUrl)
+      setTheme((prev) => ({ ...prev, banner_url: data.publicUrl }))
+      await supabase
+        .from('restaurant_themes')
+        .upsert({ restaurant_id: restaurant.id, banner_url: data.publicUrl }, { onConflict: 'restaurant_id' })
+    } finally {
+      setBannerLoading(false)
+    }
+  }
+
+  async function removeBanner() {
+    setBannerPreview(null)
+    setTheme((prev) => ({ ...prev, banner_url: null }))
+    await supabase
+      .from('restaurant_themes')
+      .upsert({ restaurant_id: restaurant.id, banner_url: null }, { onConflict: 'restaurant_id' })
   }
 
   function downloadQr() {
@@ -416,6 +450,52 @@ export function ConfiguracoesClient({
           accept="image/*"
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f) }}
+        />
+      </Section>
+
+      {/* ── Banner ── */}
+      <Section title="Banner do Cardápio">
+        <p className="text-xs text-gray-400 mb-3">
+          Imagem de destaque exibida no topo do cardápio. Recomendado: 1200×400 px (paisagem).
+        </p>
+        <div
+          onClick={() => bannerRef.current?.click()}
+          className="adm-upload-area cursor-pointer overflow-hidden"
+          style={{ height: bannerPreview ? '120px' : '100px', padding: 0 }}
+        >
+          {bannerLoading ? (
+            <div className="flex items-center justify-center w-full h-full">
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--adm-primary)' }} />
+            </div>
+          ) : bannerPreview ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={bannerPreview}
+              alt="banner"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <Upload className="w-6 h-6 text-gray-300 mb-2" />
+              <p className="text-sm text-gray-400 font-medium">Clique para enviar o banner</p>
+              <p className="text-xs text-gray-300 mt-1">Recomendado: 1200×400 px (paisagem)</p>
+            </div>
+          )}
+        </div>
+        {bannerPreview && (
+          <button
+            onClick={removeBanner}
+            className="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors"
+          >
+            Remover banner
+          </button>
+        )}
+        <input
+          ref={bannerRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBanner(f) }}
         />
       </Section>
 

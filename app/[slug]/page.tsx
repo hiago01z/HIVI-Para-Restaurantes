@@ -99,7 +99,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
   // is_active === false → cardápio pausado pelo dono
   if (!restaurant || restaurant.is_active === false) notFound()
 
-  const [{ data: categories }, { data: featuredProducts }, { data: allProducts }] = await Promise.all([
+  const [{ data: categories }, { data: featuredProducts }, { data: allProducts }, { data: themeData }] = await Promise.all([
     supabase
       .from('categories')
       .select('id, name, image_url, display_order')
@@ -116,11 +116,17 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
       .select('id, name, description, price, image_url, category_id')
       .eq('restaurant_id', restaurant.id)
       .eq('is_available', true),
+    supabase
+      .from('restaurant_themes')
+      .select('banner_url')
+      .eq('restaurant_id', restaurant.id)
+      .single(),
   ])
 
   const cats = categories ?? []
   const featured = featuredProducts ?? []
   const products = allProducts ?? []
+  const bannerUrl = themeData?.banner_url ?? null
 
   return (
     <div className="min-h-screen pb-24">
@@ -135,6 +141,23 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
 
       {/* Espaço do header fixo */}
       <div className="h-14" />
+
+      {/* Banner do restaurante */}
+      {bannerUrl && (
+        <div className="relative w-full" style={{ height: '180px' }}>
+          <Image
+            src={bannerUrl}
+            alt={restaurant.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, var(--menu-bg) 100%)' }}
+          />
+        </div>
+      )}
 
       <div className="px-4">
 
