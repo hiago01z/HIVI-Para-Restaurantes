@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { ConfiguracoesClient } from './_configuracoes-client'
+import { DEFAULT_DELIVERY_HOURS, type DeliveryHoursConfig } from '@/lib/delivery-hours'
 
 export default async function ConfiguracoesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -14,7 +15,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active, delivery_hours')
     .eq('slug', slug)
     .single()
 
@@ -47,6 +48,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
         is_active: activeData?.is_active ?? true,
+        delivery_hours: (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS,
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',

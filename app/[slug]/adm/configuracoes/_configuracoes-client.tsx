@@ -2,9 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle } from 'lucide-react'
+import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, Clock } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
+import {
+  type DeliveryHoursConfig,
+  type DaySchedule,
+  DEFAULT_DELIVERY_HOURS,
+  DAY_NAMES,
+} from '@/lib/delivery-hours'
 
 type Restaurant = {
   id: string
@@ -14,6 +20,7 @@ type Restaurant = {
   instagram_url: string | null
   whatsapp_number: string | null
   is_active: boolean
+  delivery_hours: DeliveryHoursConfig
 }
 
 type Theme = {
@@ -98,6 +105,45 @@ export function ConfiguracoesClient({
   // useRef garante que o cliente Supabase é criado apenas uma vez (novo objeto a cada render causaria re-renders desnecessários)
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
+
+  // Horário de entregas
+  const [deliveryHours, setDeliveryHours] = useState<DeliveryHoursConfig>(
+    restaurant.delivery_hours ?? DEFAULT_DELIVERY_HOURS
+  )
+  const [hoursSaving, setHoursSaving] = useState(false)
+  const [hoursSaved, setHoursSaved] = useState(false)
+  const [hoursError, setHoursError] = useState('')
+
+  async function saveDeliveryHours() {
+    setHoursSaving(true)
+    setHoursError('')
+    try {
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ delivery_hours: deliveryHours })
+        .eq('id', restaurant.id)
+      if (error) {
+        setHoursError('Erro ao salvar. Tente novamente.')
+      } else {
+        setHoursSaved(true)
+        setTimeout(() => setHoursSaved(false), 2000)
+      }
+    } catch {
+      setHoursError('Erro de conexão. Tente novamente.')
+    } finally {
+      setHoursSaving(false)
+    }
+  }
+
+  function updateDay(dayKey: string, patch: Partial<DaySchedule>) {
+    setDeliveryHours((prev) => ({
+      ...prev,
+      days: {
+        ...prev.days,
+        [dayKey]: { ...(prev.days[dayKey] ?? { open: true, from: '10:00', to: '22:00' }), ...patch },
+      },
+    }))
+  }
 
   // Status do restaurante
   const [isActive, setIsActive] = useState(restaurant.is_active)
@@ -466,6 +512,134 @@ export function ConfiguracoesClient({
             <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{socialError}</p>
           )}
           <SaveButton onClick={saveSocial} loading={socialSaving} saved={socialSaved} />
+        </div>
+      </Section>
+
+      {/* ── Horário de Entregas ── */}
+      <Section title="Horário de Entregas">
+        {/* Toggle principal */}
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <p className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+              <Clock className="w-4 h-4" style={{ color: 'var(--adm-primary)' }} />
+              Controle de horário
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Quando ativado, a opção de entrega fica bloqueada para clientes fora do horário.
+            </p>
+          </div>
+          <button
+            onClick={() => setDeliveryHours((p) => ({ ...p, enabled: !p.enabled }))}
+            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none"
+            style={{ background: deliveryHours.enabled ? 'var(--adm-primary)' : '#d1d5db' }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              style={{ transform: deliveryHours.enabled ? 'translateX(24px)' : 'translateX(0)' }}
+            />
+          </button>
+        </div>
+
+        {deliveryHours.enabled && (
+          <div className="space-y-4 pt-3 border-t border-gray-100">
+            {/* Modo: mesmo horário vs por dia */}
+            <div className="flex gap-3">
+              {[
+                { value: true,  label: 'Mesmo horário todos os dias' },
+                { value: false, label: 'Horários diferentes por dia' },
+              ].map((opt) => (
+                <button
+                  key={String(opt.value)}
+                  onClick={() => setDeliveryHours((p) => ({ ...p, sameForAll: opt.value }))}
+                  className="flex-1 py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all text-left"
+                  style={deliveryHours.sameForAll === opt.value ? {
+                    borderColor: 'var(--adm-primary)',
+                    color: 'var(--adm-primary)',
+                    background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                  } : { borderColor: '#e5e7eb', color: '#6b7280' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Modo: mesmo horário todos os dias */}
+            {deliveryHours.sameForAll && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 flex-shrink-0">Funciona das</span>
+                <input
+                  type="time"
+                  value={deliveryHours.allFrom}
+                  onChange={(e) => setDeliveryHours((p) => ({ ...p, allFrom: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+                />
+                <span className="text-sm text-gray-600">às</span>
+                <input
+                  type="time"
+                  value={deliveryHours.allTo}
+                  onChange={(e) => setDeliveryHours((p) => ({ ...p, allTo: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+                />
+              </div>
+            )}
+
+            {/* Modo: horários por dia */}
+            {!deliveryHours.sameForAll && (
+              <div className="space-y-2">
+                {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                  const key = String(d)
+                  const day = deliveryHours.days[key] ?? { open: true, from: '10:00', to: '22:00' }
+                  return (
+                    <div key={d} className="flex items-center gap-3">
+                      {/* Dia + toggle */}
+                      <button
+                        onClick={() => updateDay(key, { open: !day.open })}
+                        className="relative w-10 h-5 rounded-full transition-colors flex-shrink-0 focus:outline-none"
+                        style={{ background: day.open ? 'var(--adm-primary)' : '#d1d5db' }}
+                      >
+                        <span
+                          className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                          style={{ transform: day.open ? 'translateX(20px)' : 'translateX(0)' }}
+                        />
+                      </button>
+                      <span
+                        className="text-sm font-semibold w-8 flex-shrink-0"
+                        style={{ color: day.open ? '#111827' : '#9ca3af' }}
+                      >
+                        {DAY_NAMES[d]}
+                      </span>
+                      {day.open ? (
+                        <>
+                          <input
+                            type="time"
+                            value={day.from}
+                            onChange={(e) => updateDay(key, { from: e.target.value })}
+                            className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+                          />
+                          <span className="text-xs text-gray-400">às</span>
+                          <input
+                            type="time"
+                            value={day.to}
+                            onChange={(e) => updateDay(key, { to: e.target.value })}
+                            className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+                          />
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">fechado</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {hoursError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-3">{hoursError}</p>
+        )}
+        <div className="mt-4">
+          <SaveButton onClick={saveDeliveryHours} loading={hoursSaving} saved={hoursSaved} label="Salvar horários" />
         </div>
       </Section>
 

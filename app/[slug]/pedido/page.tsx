@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PedidoClient } from './_pedido-client'
+import { DEFAULT_DELIVERY_HOURS, type DeliveryHoursConfig } from '@/lib/delivery-hours'
 
 export default async function PedidoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -8,11 +9,20 @@ export default async function PedidoPage({ params }: { params: Promise<{ slug: s
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active')
+    .select('id, name, slug, is_active, delivery_hours')
     .eq('slug', slug)
     .single()
 
   if (!restaurant || !restaurant.is_active) notFound()
 
-  return <PedidoClient slug={slug} restaurantId={restaurant.id} />
+  const deliveryHours: DeliveryHoursConfig =
+    (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS
+
+  return (
+    <PedidoClient
+      slug={slug}
+      restaurantId={restaurant.id}
+      deliveryHours={deliveryHours}
+    />
+  )
 }

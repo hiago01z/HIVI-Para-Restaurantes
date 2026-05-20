@@ -4,14 +4,16 @@ import { useCart } from '@/contexts/cart-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2, CheckCircle2, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { createClient } from '@/lib/supabase/client'
+import { type DeliveryHoursConfig, checkDeliveryOpen } from '@/lib/delivery-hours'
 
 type Props = {
   slug: string
   restaurantId: string
+  deliveryHours: DeliveryHoursConfig
 }
 
 type DeliveryForm = {
@@ -44,7 +46,7 @@ const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled:        { label: 'Cancelado',              color: '#EF4444' },
 }
 
-export function PedidoClient({ slug, restaurantId }: Props) {
+export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
 
@@ -59,6 +61,17 @@ export function PedidoClient({ slug, restaurantId }: Props) {
   const [form, setForm] = useState<DeliveryForm>({
     name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '', notes: '',
   })
+
+  // ── Horário de funcionamento das entregas ────────────────────────────────────
+  const [deliveryStatus, setDeliveryStatus] = useState(() => checkDeliveryOpen(deliveryHours))
+
+  useEffect(() => {
+    // Recalcula a cada minuto (a hora pode mudar enquanto o cliente está na página)
+    const timer = setInterval(() => {
+      setDeliveryStatus(checkDeliveryOpen(deliveryHours))
+    }, 60_000)
+    return () => clearInterval(timer)
+  }, [deliveryHours])
 
   // ── Dados de entrega salvos (localStorage) ───────────────────────────────────
   useEffect(() => {
@@ -418,14 +431,49 @@ export function PedidoClient({ slug, restaurantId }: Props) {
               {qrLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
               {qrLoading ? 'Gerando...' : 'Gerar QR Code para a mesa'}
             </button>
-            <button
-              onClick={() => setModal('delivery')}
-              className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
-              style={{ background: 'var(--menu-card)', color: 'var(--menu-text)', border: '1px solid rgba(128,128,128,0.20)' }}
-            >
-              <Truck className="w-5 h-5" />
-              Pedir para entrega
-            </button>
+            {deliveryStatus.open ? (
+              <button
+                onClick={() => setModal('delivery')}
+                className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+                style={{ background: 'var(--menu-card)', color: 'var(--menu-text)', border: '1px solid rgba(128,128,128,0.20)' }}
+              >
+                <Truck className="w-5 h-5" />
+                Pedir para entrega
+              </button>
+            ) : (
+              <div className="space-y-2">
+                {/* Botão desabilitado */}
+                <button
+                  disabled
+                  className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base opacity-40 cursor-not-allowed"
+                  style={{ background: 'var(--menu-card)', color: 'var(--menu-text)', border: '1px solid rgba(128,128,128,0.20)' }}
+                >
+                  <Truck className="w-5 h-5" />
+                  Entrega fechada agora
+                </button>
+                {/* Card informativo de horário */}
+                <div
+                  className="rounded-2xl px-4 py-3 space-y-1.5"
+                  style={{ background: 'var(--menu-card)', border: '1px solid rgba(128,128,128,0.15)' }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--menu-primary)' }} />
+                    <span className="text-xs font-black" style={{ color: 'var(--menu-text)' }}>
+                      {deliveryStatus.closedMessage}
+                    </span>
+                  </div>
+                  {deliveryStatus.scheduleLines.length > 0 && (
+                    <div className="space-y-0.5 pt-1 border-t" style={{ borderColor: 'rgba(128,128,128,0.15)' }}>
+                      {deliveryStatus.scheduleLines.map((line) => (
+                        <p key={line} className="text-xs" style={{ color: 'var(--menu-text-muted)', opacity: 0.75 }}>
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
