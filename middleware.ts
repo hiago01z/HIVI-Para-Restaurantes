@@ -37,10 +37,9 @@ export async function middleware(request: NextRequest) {
   // ── Proteger rotas ADM (/[slug]/adm/**) ───────────────────
   const isAdmRoute = pathParts.length >= 2 && pathParts[1] === 'adm'
   const isAdmLogin = pathParts[2] === 'login'
-  const isAdmQr = pathParts[2] === 'qr'
   const isAdmApiLogin = url.pathname.startsWith('/api/adm/')
 
-  if (isAdmRoute && !isAdmLogin && !isAdmQr && !isAdmApiLogin) {
+  if (isAdmRoute && !isAdmLogin && !isAdmApiLogin) {
     const slug = pathParts[0]
     const cookieName = admCookieName(slug)
     const token = request.cookies.get(cookieName)?.value
