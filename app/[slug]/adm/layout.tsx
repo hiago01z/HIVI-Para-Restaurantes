@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
 import { AdmNav } from './_components/adm-nav'
@@ -42,7 +42,13 @@ export default async function AdmLayout({
   }
   // ────────────────────────────────────────────────────────────────────
 
-  const supabase = await createClient()
+  // Usa service role para bypassar RLS — o ADM deve ser acessível mesmo
+  // quando is_active=false (restaurante pausado), e staff sem sessão Supabase
+  // não teria permissão via políticas públicas.
+  const supabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const { data: restaurant } = await supabase
     .from('restaurants')
