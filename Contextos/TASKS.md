@@ -123,11 +123,11 @@
 - [x] **2026-05-20**: Tela de restaurante pausado — exibe página específica (não 404)
 - [x] **2026-05-20**: Download QR code da loja — funcional
 - [x] **2026-05-20**: Observações em pedidos — badge amarelo no ADM funcional
-- [ ] Som de novo pedido — fix deployado (botão 🔔 Som no header de pedidos), aguardando revalidação
+- [x] **2026-05-20**: Som de novo pedido — funcional (botão 🔔 Som ativo por padrão, volume +70%)
 
 ---
 
-## ✅ Projeto em produção — 2026-05-20
+## ✅ Projeto em produção — validação completa em 2026-05-20
 
 Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 
