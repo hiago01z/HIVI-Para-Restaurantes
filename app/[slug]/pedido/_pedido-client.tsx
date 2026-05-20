@@ -474,8 +474,16 @@ export function PedidoClient({ slug, restaurantId }: Props) {
 
       {/* Modal Entrega */}
       {modal === 'delivery' && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 mt-10" style={{ background: 'var(--menu-bg)', borderTop: '1px solid rgba(128,128,128,0.15)' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <div
+            className="w-full max-w-md rounded-t-3xl overflow-y-auto overscroll-contain"
+            style={{
+              background: 'var(--menu-bg)',
+              borderTop: '1px solid rgba(128,128,128,0.15)',
+              maxHeight: '92dvh',
+            }}
+          >
+          <div className="p-6 pb-10">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>Dados para entrega</h2>
               <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
@@ -609,6 +617,7 @@ export function PedidoClient({ slug, restaurantId }: Props) {
                 {deliveryLoading ? 'Enviando pedido...' : 'Confirmar entrega'}
               </button>
             </form>
+          </div>
           </div>
         </div>
       )}
