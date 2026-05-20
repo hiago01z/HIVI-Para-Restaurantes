@@ -36,16 +36,23 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
-    // Verificar que o restaurante existe e está ativo
+    // Verificar que o restaurante existe
+    // Não filtramos is_active aqui porque: (a) o cliente já passou pela página
+    // do cardápio (que bloqueia is_active===false) e (b) is_active pode ser null
+    // em restaurantes novos (tratamos null como ativo).
     const { data: restaurant } = await supabase
       .from('restaurants')
-      .select('id')
+      .select('id, is_active')
       .eq('id', restaurantId)
-      .eq('is_active', true)
       .single()
 
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
+    }
+
+    // Bloquear apenas se explicitamente pausado
+    if (restaurant.is_active === false) {
+      return NextResponse.json({ error: 'Cardápio pausado' }, { status: 403 })
     }
 
     const { data: session, error } = await supabase

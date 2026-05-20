@@ -95,7 +95,9 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
     .eq('slug', slug)
     .single()
 
-  if (!restaurant || !restaurant.is_active) notFound()
+  // is_active === null → cardápio novo, trata como ativo (null = não configurado ainda)
+  // is_active === false → cardápio pausado pelo dono
+  if (!restaurant || restaurant.is_active === false) notFound()
 
   const [{ data: categories }, { data: featuredProducts }, { data: allProducts }] = await Promise.all([
     supabase

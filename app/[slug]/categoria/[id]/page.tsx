@@ -32,7 +32,8 @@ export default async function CategoriaPage({
     .eq('id', category.restaurant_id)
     .single()
 
-  if (!restaurant || !restaurant.is_active || restaurant.slug !== slug) notFound()
+  // is_active === null → restaurante novo, trata como ativo
+  if (!restaurant || restaurant.is_active === false || restaurant.slug !== slug) notFound()
 
   const ascending = ordem === 'menor'
 

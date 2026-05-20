@@ -61,8 +61,9 @@ export default async function SlugLayout({
 
   if (!restaurant) notFound()
 
-  // Se o restaurante estiver pausado, verifica se é rota ADM (dono ainda precisa acessar)
-  if (!restaurant.is_active) {
+  // Se o restaurante estiver explicitamente pausado (is_active === false), mostra tela de pausa.
+  // is_active = null → restaurante novo, trata como ativo.
+  if (restaurant.is_active === false) {
     const hdrs = await headers()
     const pathname = hdrs.get('x-pathname') ?? ''
     const isAdmPath = pathname.split('/').filter(Boolean).includes('adm')
