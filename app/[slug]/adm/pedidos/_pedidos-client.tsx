@@ -151,7 +151,7 @@ export function PedidosClient({
       gain.connect(ctx.destination)
       osc.frequency.value = freq as number
       osc.type = 'sine'
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
+      gain.gain.setValueAtTime(0.68, ctx.currentTime + (start as number))
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
       osc.start(ctx.currentTime + (start as number))
       osc.stop(ctx.currentTime + (start as number) + (duration as number))
