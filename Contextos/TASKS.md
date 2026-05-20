@@ -86,6 +86,9 @@
 | 2026-05-20 | Feature: horário de funcionamento das entregas — migration 008 (coluna `delivery_hours` jsonb), `lib/delivery-hours.ts` (tipos + `checkDeliveryOpen()`), seção no ADM Configurações (toggle enable/disable, modo igual-para-todos ou por dia, inputs de time por dia), bloqueio do botão Entrega fora do horário com mensagem de abertura e exibição dos horários de funcionamento |
 | 2026-05-20 | Fix: migration 007 — colunas `name` e `adm_password_hash` em `restaurant_users`, `status_changed_by` em `orders`, constraint de role atualizada (5 cargos: owner/manager/cook/waiter/delivery) |
 | 2026-05-20 | Docs: README.md completamente reescrito com documentação profissional cobrindo todas as funcionalidades, stack, schema do banco, API reference, autenticação, variáveis de ambiente, migrations e deploy |
+| 2026-05-20 | Fix: filtros de período (Ontem/7 dias) não atualizavam pedidos — `key={periodo}` no PedidosClient força remount com dados frescos do servidor |
+| 2026-05-20 | Fix: badge Pago/Não Pago agora exibe nome do funcionário que alterou — migration 009 (coluna `payment_changed_by`), rota atualizada para usar `getAdmTokenPayload` |
+| 2026-05-20 | Fix: som de novo pedido — botão 🔔 Som no header de pedidos; clique ativa/desativa e toca beep de confirmação; resolve restrição de autoplay do browser |
 
 ---
 
@@ -110,6 +113,17 @@
 - [x] **2026-05-20**: Testar temas, membro de equipe, múltiplos cardápios
 - [x] **2026-05-20**: Testar checkout Stripe, cancelamento de assinatura, pausa e exclusão de cardápios
 - [x] **2026-05-20**: Notificação WhatsApp de novo pedido inclui observações (obs: ...) quando presentes
+- [x] **2026-05-20**: Upload de imagens (logo, banner, categorias, pratos com crop) — funcional
+- [x] **2026-05-20**: Responsividade mobile (375px) — funcional
+- [x] **2026-05-20**: "Gerenciar Assinatura" em /conta → Stripe Billing Portal — funcional
+- [x] **2026-05-20**: Pré-preenchimento de entrega (localStorage) — funcional
+- [x] **2026-05-20**: Horário de funcionamento das entregas — funcional
+- [x] **2026-05-20**: Badge Pago/Não Pago com nome do funcionário — funcional (Fix: migration 009 + payment_changed_by)
+- [x] **2026-05-20**: Filtros de período (Ontem / 7 dias) — funcional (Fix: key={periodo} no PedidosClient)
+- [x] **2026-05-20**: Tela de restaurante pausado — exibe página específica (não 404)
+- [x] **2026-05-20**: Download QR code da loja — funcional
+- [x] **2026-05-20**: Observações em pedidos — badge amarelo no ADM funcional
+- [ ] Som de novo pedido — fix deployado (botão 🔔 Som no header de pedidos), aguardando revalidação
 
 ---
 
