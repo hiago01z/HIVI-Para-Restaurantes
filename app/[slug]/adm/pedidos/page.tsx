@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PedidosClient } from './_pedidos-client'
+import { getAdmRestaurantId } from '@/lib/supabase/adm-restaurant'
 
 type Periodo = 'hoje' | 'ontem' | '7dias'
 
@@ -39,15 +40,12 @@ export default async function PedidosPage({
   const { slug } = await params
   const { periodo: periodoParam } = await searchParams
   const periodo: Periodo = (periodoParam as Periodo) ?? 'hoje'
+
+  const restaurantId = await getAdmRestaurantId(slug)
+  if (!restaurantId) notFound()
+
+  const restaurant = { id: restaurantId }
   const supabase = await createClient()
-
-  const { data: restaurant } = await supabase
-    .from('restaurants')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (!restaurant) notFound()
 
   const { start, end, isToday } = getDateRange(periodo)
 

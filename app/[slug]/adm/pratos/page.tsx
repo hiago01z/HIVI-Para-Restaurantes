@@ -1,18 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PratosClient } from './_pratos-client'
+import { getAdmRestaurantId } from '@/lib/supabase/adm-restaurant'
 
 export default async function PratosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const restaurantId = await getAdmRestaurantId(slug)
+  if (!restaurantId) notFound()
+
+  const restaurant = { id: restaurantId }
   const supabase = await createClient()
-
-  const { data: restaurant } = await supabase
-    .from('restaurants')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (!restaurant) notFound()
 
   const [{ data: products }, { data: categories }] = await Promise.all([
     supabase

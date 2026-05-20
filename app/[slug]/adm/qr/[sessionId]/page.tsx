@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { QrConfirmClient } from './_qr-confirm-client'
 
@@ -18,8 +19,13 @@ export default async function QrConfirmPage({
 
   if (!session) notFound()
 
-  // Verificar que o restaurante corresponde ao slug
-  const { data: restaurant } = await supabase
+  // Usa service role para verificar o slug do restaurante, independente de is_active.
+  // O QR code pode ser escaneado mesmo quando o restaurante está pausado.
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const { data: restaurant } = await serviceSupabase
     .from('restaurants')
     .select('id, name, slug')
     .eq('id', session.restaurant_id)

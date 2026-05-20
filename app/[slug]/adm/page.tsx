@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { DashboardClient } from './_components/dashboard-client'
+import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 
 export default async function AdmDashboardPage({
   params,
@@ -8,15 +9,10 @@ export default async function AdmDashboardPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const supabase = await createClient()
-
-  const { data: restaurant } = await supabase
-    .from('restaurants')
-    .select('id, name')
-    .eq('slug', slug)
-    .single()
-
+  const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
+
+  const supabase = await createClient()
 
   // Pedidos de hoje
   const todayStart = new Date()

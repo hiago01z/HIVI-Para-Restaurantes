@@ -1,25 +1,28 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { ConfiguracoesClient } from './_configuracoes-client'
 
 export default async function ConfiguracoesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
 
-  const { data: restaurant } = await supabase
+  // Usa service role para bypassar RLS — ADM deve funcionar mesmo quando pausado
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active')
     .eq('slug', slug)
     .single()
 
   if (!restaurant) notFound()
 
-  // is_active é buscado separadamente — a coluna pode não existir ainda (migração pendente)
-  const { data: activeData } = await supabase
-    .from('restaurants')
-    .select('is_active')
-    .eq('slug', slug)
-    .single() as unknown as { data: { is_active: boolean | null } | null }
+  // is_active disponível diretamente na query acima
+  const activeData = { is_active: restaurant.is_active as boolean | null }
+  const supabase = await createClient()
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
@@ -27,7 +30,9 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     .eq('restaurant_id', restaurant.id)
     .single()
 
-  const { data: staff } = await supabase
+  // Usa service role para restaurant_users — a policy pública restringe por user_id = auth.uid()
+  // então staff sem sessão Supabase veriam 0 membros
+  const { data: staff } = await serviceSupabase
     .from('restaurant_users')
     .select('id, role, user_id')
     .eq('restaurant_id', restaurant.id)
