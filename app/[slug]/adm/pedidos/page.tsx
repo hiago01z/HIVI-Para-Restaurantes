@@ -73,6 +73,7 @@ export default async function PedidosPage({
       change_for,
       notes,
       payment_status,
+      payment_changed_by,
       total,
       created_at,
       order_items (
@@ -89,6 +90,7 @@ export default async function PedidosPage({
 
   return (
     <PedidosClient
+      key={periodo}
       restaurantId={restaurantId}
       initialOrders={orders ?? []}
       isToday={isToday}

@@ -28,6 +28,7 @@ type Order = {
   change_for: number | null
   notes: string | null
   payment_status: 'paid' | 'unpaid'
+  payment_changed_by: string | null
   total: number
   created_at: string
   order_items: OrderItem[]
@@ -156,7 +157,7 @@ export function PedidosClient({
             .from('orders')
             .select(`
               id, order_number, type, status, status_changed_by, customer_name, customer_phone,
-              address, table_number, payment_method, change_for, notes, payment_status, total, created_at,
+              address, table_number, payment_method, change_for, notes, payment_status, payment_changed_by, total, created_at,
               order_items (id, product_name, product_price, quantity)
             `)
             .eq('id', payload.new.id)
@@ -227,7 +228,10 @@ export function PedidosClient({
       })
       if (res.ok) {
         setOrders((prev) =>
-          prev.map((o) => o.id === order.id ? { ...o, payment_status: next } : o)
+          prev.map((o) => o.id === order.id
+            ? { ...o, payment_status: next, payment_changed_by: memberName || null }
+            : o
+          )
         )
       }
     } catch {
@@ -369,20 +373,28 @@ export function PedidosClient({
                         </div>
 
                         {/* Status de pagamento */}
-                        <button
-                          onClick={() => handleTogglePayment(order)}
-                          disabled={paymentLoadingId === order.id}
-                          className="text-xs font-bold px-2.5 py-1 rounded-full transition-colors disabled:opacity-60"
-                          style={order.payment_status === 'paid'
-                            ? { background: '#dcfce7', color: '#15803d' }
-                            : { background: '#fee2e2', color: '#b91c1c' }
-                          }
-                        >
-                          {paymentLoadingId === order.id
-                            ? '...'
-                            : order.payment_status === 'paid' ? '✓ Pago' : '✗ Não pago'
-                          }
-                        </button>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <button
+                            onClick={() => handleTogglePayment(order)}
+                            disabled={paymentLoadingId === order.id}
+                            className="text-xs font-bold px-2.5 py-1 rounded-full transition-colors disabled:opacity-60"
+                            style={order.payment_status === 'paid'
+                              ? { background: '#dcfce7', color: '#15803d' }
+                              : { background: '#fee2e2', color: '#b91c1c' }
+                            }
+                          >
+                            {paymentLoadingId === order.id
+                              ? '...'
+                              : order.payment_status === 'paid' ? '✓ Pago' : '✗ Não pago'
+                            }
+                          </button>
+                          {order.payment_changed_by && (
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <UserCheck className="w-3 h-3" />
+                              {order.payment_changed_by}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 

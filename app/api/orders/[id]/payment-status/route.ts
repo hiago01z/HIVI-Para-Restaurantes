@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { cookies } from 'next/headers'
-import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
+import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 
 const schema = z.object({
   payment_status: z.enum(['paid', 'unpaid']),
@@ -39,19 +39,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
     }
 
-    // Verifica autenticação ADM via cookie
+    // Verifica autenticação ADM e extrai nome para audit trail
     const cookieStore = await cookies()
     const token = cookieStore.get(admCookieName(slug))?.value
-    const validAdm = token ? await verifyAdmToken(slug, token) : false
-    if (!validAdm) {
+    const admPayload = token ? await getAdmTokenPayload(slug, token) : null
+    if (!admPayload) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
     const { data: order, error } = await supabase
       .from('orders')
-      .update({ payment_status: parsed.data.payment_status })
+      .update({
+        payment_status: parsed.data.payment_status,
+        payment_changed_by: admPayload.name || null,
+      })
       .eq('id', id)
-      .select('id, payment_status')
+      .select('id, payment_status, payment_changed_by')
       .single()
 
     if (error || !order) {
