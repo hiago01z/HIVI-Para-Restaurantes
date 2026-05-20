@@ -8,11 +8,18 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number')
     .eq('slug', slug)
     .single()
 
   if (!restaurant) notFound()
+
+  // is_active é buscado separadamente — a coluna pode não existir ainda (migração pendente)
+  const { data: activeData } = await supabase
+    .from('restaurants')
+    .select('is_active')
+    .eq('slug', slug)
+    .single() as unknown as { data: { is_active: boolean | null } | null }
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
@@ -34,7 +41,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         logo_url: restaurant.logo_url,
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
-        is_active: restaurant.is_active ?? true,
+        is_active: activeData?.is_active ?? true,
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',

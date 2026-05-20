@@ -37,11 +37,12 @@ export async function POST(
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, adm_password_hash, is_active')
+    .select('id, adm_password_hash')
     .eq('slug', slug)
     .single()
 
-  if (!restaurant || !restaurant.is_active) {
+  // O admin pode sempre logar, mesmo se o cardápio estiver pausado (is_active=false)
+  if (!restaurant) {
     return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
   }
 

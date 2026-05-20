@@ -19,11 +19,11 @@ export default async function AdmLayout({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, logo_url, is_active')
+    .select('id, name, logo_url')
     .eq('slug', slug)
     .single()
 
-  // Restaurante não existe → 404. Se pausado, ainda permite acesso ADM (dono precisa reativar).
+  // Restaurante não existe → 404. Acesso ADM é sempre permitido independente do status do cardápio.
   if (!restaurant) notFound()
 
   // Buscar cor primária do restaurante para usar como accent no ADM
