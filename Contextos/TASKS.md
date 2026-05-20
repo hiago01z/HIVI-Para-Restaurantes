@@ -59,6 +59,14 @@
 | 2026-05-20 | Feature: upload e exibição de banner — UI de upload em configurações, exibição com gradiente no cardápio público |
 | 2026-05-20 | Feature: filtro de período em pedidos ADM (`?periodo=hoje|ontem|7dias`) — server-side com date range correto; Realtime desabilitado para períodos históricos |
 | 2026-05-20 | Feature: seletor de tamanho de fonte em configurações (Pequena/Normal/Grande → 14px/16px/18px) |
+| 2026-05-20 | Fix: ícones do dashboard flotando fora dos containers — padrão absolute sem relative fixado com color-mix() |
+| 2026-05-20 | Fix: bypass de auth em status route quando slug era falsy — agora retorna 404 em vez de pular verificação |
+| 2026-05-20 | Fix: integridade de dados no qrcode/confirm — order_items sem erro = cleanup do pedido órfão |
+| 2026-05-20 | Fix: catch block em handleInvite (funcionários) e feedback de erro em handleRemove |
+| 2026-05-20 | Fix: mensagem de estado vazio em pedidos reflete período selecionado (não sempre "hoje") |
+| 2026-05-20 | Security: open redirect em login form — valida que ?redirect= começa com / |
+| 2026-05-20 | Fix: catch blocks adicionados em adm-password-form e conta-actions (silently swallowing errors) |
+| 2026-05-20 | Security: PreviewListener valida origem do postMessage (same-origin only) |
 
 ---
 
