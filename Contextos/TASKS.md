@@ -67,6 +67,9 @@
 | 2026-05-20 | Security: open redirect em login form — valida que ?redirect= começa com / |
 | 2026-05-20 | Fix: catch blocks adicionados em adm-password-form e conta-actions (silently swallowing errors) |
 | 2026-05-20 | Security: PreviewListener valida origem do postMessage (same-origin only) |
+| 2026-05-20 | Security: open redirect //evil.com via ?next= no Google OAuth e auth callback corrigido |
+| 2026-05-20 | Fix: arquivos Dropbox "Cópia em conflito" em app/[slug]/adm/pedidos/ causando erros TypeScript — removidos |
+| 2026-05-20 | Fix: pedido órfão em /api/orders quando order_items insert falha — cleanup adicionado (igual ao qrcode/confirm) |
 
 ---
 
