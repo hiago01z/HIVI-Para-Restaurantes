@@ -79,7 +79,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
             {totalItems > 0 && (
               <span
                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full font-black text-xs flex items-center justify-center"
-                style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
+                style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
               >
                 {totalItems > 9 ? '9+' : totalItems}
               </span>
@@ -207,7 +207,7 @@ function SearchResultItem({
       </div>
       <button
         className="w-8 h-8 rounded-full flex items-center justify-center font-black flex-shrink-0 transition-colors"
-        style={{ background: added ? '#22c55e' : 'var(--menu-primary)', color: 'var(--menu-text)' }}
+        style={{ background: added ? '#22c55e' : 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
       >
         {added ? <Check className="w-4 h-4" /> : '+'}
       </button>
