@@ -71,7 +71,7 @@ Crie `.env.local` baseado em `.env.example`.
 | UltraMSG (Instance ID, Token) | ✅ Configurado |
 | Google OAuth | ✅ Configurado no painel Supabase |
 | Resend (API Key) | ⬜ Pendente |
-| `NEXT_PUBLIC_APP_URL` | ✅ Configurado (`https://hivi.vercel.app`) |
+| `NEXT_PUBLIC_APP_URL` | ✅ Configurado (`https://hivi-web.com`) |
 
 > **Guia completo de obtenção de cada chave (incluindo Google OAuth passo a passo):**
 > [`Contextos/SETUP_KEYS.md`](./Contextos/SETUP_KEYS.md)
