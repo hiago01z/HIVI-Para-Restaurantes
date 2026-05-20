@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
 
 type OrderItem = {
@@ -51,12 +52,29 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
+type Periodo = 'hoje' | 'ontem' | '7dias'
+
 type Props = {
   restaurantId: string
   initialOrders: Order[]
+  isToday: boolean
+  slug: string
+  activePeriodo: Periodo
 }
 
-export function PedidosClient({ restaurantId, initialOrders }: Props) {
+const PERIODO_FILTERS: { label: string; value: Periodo; href: (slug: string) => string }[] = [
+  { label: 'Hoje',   value: 'hoje',  href: (s) => `/${s}/adm/pedidos` },
+  { label: 'Ontem',  value: 'ontem', href: (s) => `/${s}/adm/pedidos?periodo=ontem` },
+  { label: '7 dias', value: '7dias', href: (s) => `/${s}/adm/pedidos?periodo=7dias` },
+]
+
+const PERIODO_LABEL: Record<Periodo, string> = {
+  'hoje':  'Pedidos de hoje',
+  'ontem': 'Pedidos de ontem',
+  '7dias': 'Pedidos dos últimos 7 dias',
+}
+
+export function PedidosClient({ restaurantId, initialOrders, isToday, slug, activePeriodo }: Props) {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>(initialOrders)
   const [tab, setTab] = useState<'delivery' | 'table' | 'qr'>('delivery')
@@ -95,8 +113,11 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
     }
   }
 
-  // Realtime: escuta novos pedidos e atualizações
+  // Realtime: escuta novos pedidos e atualizações — apenas quando vendo o dia atual
+  // (dados históricos são estáticos e não precisam de Realtime)
   useEffect(() => {
+    if (!isToday) return
+
     const channel = supabase
       .channel(`restaurant-orders-${restaurantId}`)
       .on(
@@ -142,7 +163,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
 
     return () => { supabase.removeChannel(channel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurantId])
+  }, [restaurantId, isToday])
 
   async function handleStatusChange() {
     if (!editingOrder || !newStatus) return
@@ -196,7 +217,27 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-5">Pedidos de hoje</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">{PERIODO_LABEL[activePeriodo]}</h1>
+
+      {/* Filtro de período */}
+      <div className="flex gap-1.5 mb-5">
+        {PERIODO_FILTERS.map((f) => {
+          const isActive = activePeriodo === f.value
+          return (
+            <Link
+              key={f.value}
+              href={f.href(slug)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+              style={isActive
+                ? { background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }
+                : { background: '#f3f4f6', color: '#6b7280' }
+              }
+            >
+              {f.label}
+            </Link>
+          )
+        })}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
