@@ -137,7 +137,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 Ver cardápio
               </Link>
               <Link
-                href={`/${loja.slug}/adm`}
+                href={`/${loja.slug}/adm/login`}
                 className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors"
               >
                 <LayoutDashboard className="w-4 h-4" />
