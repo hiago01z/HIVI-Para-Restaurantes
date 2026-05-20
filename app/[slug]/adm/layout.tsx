@@ -30,8 +30,14 @@ export default async function AdmLayout({
   if (isLoginPage) {
     // Já autenticado: vai direto para o painel
     if (valid) redirect(`/${slug}/adm/pedidos`)
-    // Não autenticado: renderiza só o formulário de login, sem nav ADM
-    return <>{children}</>
+    // Não autenticado: renderiza só o formulário de login, sem nav ADM.
+    // O wrapper fixed cobre o background do tema do restaurante (menu-root)
+    // e garante que a tela de login seja sempre visível.
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#111827', zIndex: 50, overflowY: 'auto' }}>
+        {children}
+      </div>
+    )
   }
 
   // Página protegida: não autenticado → manda para login
