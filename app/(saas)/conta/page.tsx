@@ -51,16 +51,18 @@ export default async function ContaPage({
   // Filtra restaurantes que já estão na lista de proprietário (evita duplicatas)
   const ownerIds = new Set(lojas.map((l) => l.id))
 
+  type RestaurantJoin = {
+    id: string; name: string; slug: string
+    is_active: boolean | null; stripe_customer_id: string | null
+  }
+
   const memberships = (memberEntries ?? [])
     .filter((m) => {
-      const rest = m.restaurants as { id: string } | null
+      const rest = m.restaurants as unknown as RestaurantJoin | null
       return rest && !ownerIds.has(rest.id)
     })
     .map((m) => {
-      const rest = m.restaurants as {
-        id: string; name: string; slug: string
-        is_active: boolean | null; stripe_customer_id: string | null
-      }
+      const rest = m.restaurants as unknown as RestaurantJoin
       return {
         id: rest.id,
         name: rest.name,
