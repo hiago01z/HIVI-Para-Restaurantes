@@ -100,7 +100,7 @@ export function LoginForm({ slug }: { slug: string }) {
 
         <p className="text-center text-xs text-gray-600 mt-8">
           Senha criada pelo dono em{' '}
-          <Link href="/conta" className="text-orange-500 hover:underline">hivi.vercel.app/conta</Link>
+          <Link href="/conta" className="text-orange-500 hover:underline">hivi-web.com/conta</Link>
         </p>
       </div>
     </div>

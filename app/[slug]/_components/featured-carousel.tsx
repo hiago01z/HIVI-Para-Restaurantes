@@ -99,7 +99,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
         {/* Preço — topo direito */}
         <div
           className="absolute top-3 right-3 px-3 py-1 rounded-full font-bold text-sm tracking-wide"
-          style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
+          style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
         >
           {formatPrice(product.price)}
         </div>
@@ -145,7 +145,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
             <button
               onClick={handleOrderNow}
               className="flex-1 py-2.5 rounded-xl font-semibold text-sm tracking-wide transition-opacity hover:opacity-90"
-              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text)' }}
+              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
             >
               Pedir agora
             </button>

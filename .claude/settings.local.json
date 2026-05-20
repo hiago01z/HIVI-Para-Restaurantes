@@ -16,7 +16,9 @@
       "Bash(git commit -m 'fix\\(menu\\): remove '\\\\''Destaques'\\\\'' heading above featured carousel *)",
       "Bash(git commit -m 'feat\\(menu\\): redesign footer with restaurant identity, social chips and HIVI credit *)",
       "Bash(git commit -m 'feat\\(adm\\): redesign theme preview as realistic phone mockup *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}, indent=2\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('dependencies',{}\\).get\\('jsqr','NOT FOUND'\\)\\)\")"
     ]
   }
 }
