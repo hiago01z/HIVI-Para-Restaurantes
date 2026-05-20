@@ -119,23 +119,50 @@ export function PedidosClient({
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
 
+  // AudioContext reutilizado — criado/desbloqueado no primeiro gesto do usuário
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  useEffect(() => {
+    function unlock() {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext()
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume()
+      }
+      document.removeEventListener('click', unlock)
+      document.removeEventListener('touchstart', unlock)
+    }
+    document.addEventListener('click', unlock)
+    document.addEventListener('touchstart', unlock)
+    return () => {
+      document.removeEventListener('click', unlock)
+      document.removeEventListener('touchstart', unlock)
+    }
+  }, [])
+
   function playNewOrderSound() {
     try {
-      const ctx = new AudioContext()
-      ;[[880, 0, 0.15], [1100, 0.18, 0.15]].forEach(([freq, start, duration]) => {
-        const osc  = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.frequency.value = freq as number
-        osc.type = 'sine'
-        gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
-        osc.start(ctx.currentTime + (start as number))
-        osc.stop(ctx.currentTime + (start as number) + (duration as number))
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext()
+      }
+      const ctx = audioCtxRef.current
+      ctx.resume().then(() => {
+        ;[[880, 0, 0.15], [1100, 0.18, 0.15]].forEach(([freq, start, duration]) => {
+          const osc  = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.connect(gain)
+          gain.connect(ctx.destination)
+          osc.frequency.value = freq as number
+          osc.type = 'sine'
+          gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
+          osc.start(ctx.currentTime + (start as number))
+          osc.stop(ctx.currentTime + (start as number) + (duration as number))
+        })
       })
     } catch {
-      // AudioContext pode ser bloqueado pelo browser até primeira interação
+      // ignore
     }
   }
 
