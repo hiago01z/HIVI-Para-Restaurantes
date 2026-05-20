@@ -94,22 +94,27 @@ export function ConfiguracoesClient({
   theme: Theme
   staffCount: number
 }) {
-  const supabase = createClient()
+  // useRef garante que o cliente Supabase é criado apenas uma vez (novo objeto a cada render causaria re-renders desnecessários)
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   // Status do restaurante
   const [isActive, setIsActive] = useState(restaurant.is_active)
   const [statusSaving, setStatusSaving] = useState(false)
+  const [statusError, setStatusError] = useState('')
 
   // Redes sociais
   const [instagram, setInstagram] = useState(restaurant.instagram_url ?? '')
   const [whatsapp, setWhatsapp] = useState(restaurant.whatsapp_number ?? '')
   const [socialSaving, setSocialSaving] = useState(false)
   const [socialSaved, setSocialSaved] = useState(false)
+  const [socialError, setSocialError] = useState('')
 
   // Tema
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [themeSaving, setThemeSaving] = useState(false)
   const [themeSaved, setThemeSaved] = useState(false)
+  const [themeError, setThemeError] = useState('')
 
   // Iframe da prévia
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -167,53 +172,82 @@ export function ConfiguracoesClient({
   async function toggleStatus() {
     const newValue = !isActive
     setStatusSaving(true)
-    await supabase
-      .from('restaurants')
-      .update({ is_active: newValue })
-      .eq('id', restaurant.id)
-    setIsActive(newValue)
-    setStatusSaving(false)
+    setStatusError('')
+    try {
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ is_active: newValue })
+        .eq('id', restaurant.id)
+      if (error) {
+        setStatusError('Erro ao alterar status. Tente novamente.')
+      } else {
+        setIsActive(newValue)
+      }
+    } catch {
+      setStatusError('Erro de conexão. Tente novamente.')
+    } finally {
+      setStatusSaving(false)
+    }
   }
 
   async function saveSocial() {
     setSocialSaving(true)
-    await supabase
-      .from('restaurants')
-      .update({
-        instagram_url: instagram.trim() || null,
-        whatsapp_number: whatsapp.trim() || null,
-      })
-      .eq('id', restaurant.id)
-    setSocialSaving(false)
-    setSocialSaved(true)
-    setTimeout(() => setSocialSaved(false), 2000)
+    setSocialError('')
+    try {
+      const { error } = await supabase
+        .from('restaurants')
+        .update({
+          instagram_url: instagram.trim() || null,
+          whatsapp_number: whatsapp.trim() || null,
+        })
+        .eq('id', restaurant.id)
+      if (error) {
+        setSocialError('Erro ao salvar. Tente novamente.')
+      } else {
+        setSocialSaved(true)
+        setTimeout(() => setSocialSaved(false), 2000)
+      }
+    } catch {
+      setSocialError('Erro de conexão. Tente novamente.')
+    } finally {
+      setSocialSaving(false)
+    }
   }
 
   async function saveTheme() {
     setThemeSaving(true)
-    // Upsert do tema
-    await supabase
-      .from('restaurant_themes')
-      .upsert({
-        restaurant_id:       restaurant.id,
-        primary_color:       theme.primary_color,
-        secondary_color:     theme.secondary_color,
-        background_color:    theme.background_color,
-        font_family:         theme.font_family,
-        banner_url:          theme.banner_url,
-        text_color:          theme.text_color,
-        icon_color:          theme.icon_color,
-        label_font:          theme.label_font,
-        label_color:         theme.label_color,
-        label_effect:        theme.label_effect,
-        label_stroke_color:  theme.label_stroke_color,
-        label_stroke_size:   theme.label_stroke_size,
-        label_offset_distance: theme.label_offset_distance,
-        label_offset_angle:  theme.label_offset_angle,
-      }, { onConflict: 'restaurant_id' })
-    setThemeSaving(false)
-    setThemeSaved(true)
-    setTimeout(() => setThemeSaved(false), 2000)
+    setThemeError('')
+    try {
+      const { error } = await supabase
+        .from('restaurant_themes')
+        .upsert({
+          restaurant_id:       restaurant.id,
+          primary_color:       theme.primary_color,
+          secondary_color:     theme.secondary_color,
+          background_color:    theme.background_color,
+          font_family:         theme.font_family,
+          banner_url:          theme.banner_url,
+          text_color:          theme.text_color,
+          icon_color:          theme.icon_color,
+          label_font:          theme.label_font,
+          label_color:         theme.label_color,
+          label_effect:        theme.label_effect,
+          label_stroke_color:  theme.label_stroke_color,
+          label_stroke_size:   theme.label_stroke_size,
+          label_offset_distance: theme.label_offset_distance,
+          label_offset_angle:  theme.label_offset_angle,
+        }, { onConflict: 'restaurant_id' })
+      if (error) {
+        setThemeError('Erro ao salvar tema. Tente novamente.')
+      } else {
+        setThemeSaved(true)
+        setTimeout(() => setThemeSaved(false), 2000)
+      }
+    } catch {
+      setThemeError('Erro de conexão. Tente novamente.')
+    } finally {
+      setThemeSaving(false)
+    }
   }
 
   function applyPreset(preset: typeof PRESET_THEMES[0]) {
@@ -302,6 +336,9 @@ export function ConfiguracoesClient({
             />
           </button>
         </div>
+        {statusError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-3">{statusError}</p>
+        )}
       </Section>
 
       {/* ── Redes Sociais ── */}
@@ -332,6 +369,9 @@ export function ConfiguracoesClient({
             />
             <p className="text-xs text-gray-400 mt-1">Formato: 55 + DDD + número. Ex: 5511999999999</p>
           </div>
+          {socialError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{socialError}</p>
+          )}
           <SaveButton onClick={saveSocial} loading={socialSaving} saved={socialSaved} />
         </div>
       </Section>
@@ -622,6 +662,9 @@ export function ConfiguracoesClient({
           </div>
         </div>
 
+        {themeError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-2">{themeError}</p>
+        )}
         <SaveButton onClick={saveTheme} loading={themeSaving} saved={themeSaved} label="Salvar aparência" />
       </Section>
 

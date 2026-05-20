@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { sendWhatsAppMessage } from '@/lib/ultramsg'
 
 const orderSchema = z.object({
   restaurantId: z.string().uuid(),
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({ restaurant_id: restaurantId, total, ...rest })
-      .select('id, order_number')
+      .select('id, order_number, type, customer_name, total')
       .single()
 
     if (orderError || !order) {
@@ -70,6 +71,23 @@ export async function POST(request: Request) {
 
     if (itemsError) {
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
+    }
+
+    // Notificar o restaurante via WhatsApp quando um novo pedido de entrega chegar
+    if (order.type === 'delivery') {
+      const { data: restaurant } = await supabase
+        .from('restaurants')
+        .select('name, whatsapp_number')
+        .eq('id', restaurantId)
+        .single()
+
+      if (restaurant?.whatsapp_number) {
+        const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        const customerName = (order.customer_name as string | null) ?? 'Cliente'
+        const message = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}\n\nAcesse o painel para ver os detalhes e confirmar.`
+        // Fire-and-forget: não bloqueia a resposta ao cliente
+        sendWhatsAppMessage(restaurant.whatsapp_number, message).catch(() => {})
+      }
     }
 
     return NextResponse.json({ orderId: order.id, orderNumber: order.order_number }, { status: 201 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -54,7 +54,8 @@ const STATUS_STEPS_TABLE    = ['pending', 'confirmed', 'preparing', 'ready', 'de
 
 export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props) {
   const [status, setStatus] = useState(initialOrder.status)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   function formatPrice(v: number) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -83,7 +84,8 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [initialOrder.id, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOrder.id])
 
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG['pending']
   const StatusIcon = config.icon

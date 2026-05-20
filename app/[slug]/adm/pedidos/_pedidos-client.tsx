@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -64,8 +64,14 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [newStatus, setNewStatus] = useState('')
   const [statusLoading, setStatusLoading] = useState(false)
+  const [statusError, setStatusError] = useState('')
 
-  const supabase = createClient()
+  // useRef garante que o cliente Supabase é criado apenas uma vez.
+  // Se fosse criado no corpo do componente (sem ref), cada render criaria um
+  // novo objeto → useEffect re-executaria a cada render → múltiplos canais
+  // Realtime abertos (memory leak).
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   // Som de notificação de novo pedido (Web Audio API — sem arquivo externo)
   function playNewOrderSound() {
@@ -135,11 +141,13 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [restaurantId, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId])
 
   async function handleStatusChange() {
     if (!editingOrder || !newStatus) return
     setStatusLoading(true)
+    setStatusError('')
     try {
       const res = await fetch(`/api/orders/${editingOrder.id}/status`, {
         method: 'PATCH',
@@ -151,7 +159,12 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
           prev.map((o) => o.id === editingOrder.id ? { ...o, status: newStatus } : o)
         )
         setEditingOrder(null)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setStatusError(data.error ?? 'Erro ao atualizar status. Tente novamente.')
       }
+    } catch {
+      setStatusError('Erro de conexão. Tente novamente.')
     } finally {
       setStatusLoading(false)
     }
@@ -317,11 +330,14 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
           <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-gray-900 text-lg tracking-tight">Alterar status</h3>
-              <button onClick={() => setEditingOrder(null)}>
+              <button onClick={() => { setEditingOrder(null); setStatusError('') }}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-4">Pedido #{editingOrder.order_number}</p>
+            {statusError && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-4">{statusError}</p>
+            )}
             <div className="space-y-2 mb-6">
               {STATUS_OPTIONS
                 .filter((s) => editingOrder.type === 'delivery' || s.value !== 'out_for_delivery')
