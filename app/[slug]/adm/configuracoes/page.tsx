@@ -8,7 +8,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active')
     .eq('slug', slug)
     .single()
 
@@ -34,6 +34,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         logo_url: restaurant.logo_url,
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
+        is_active: restaurant.is_active ?? true,
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',

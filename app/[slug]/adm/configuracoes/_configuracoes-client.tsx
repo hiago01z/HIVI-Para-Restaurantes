@@ -13,6 +13,7 @@ type Restaurant = {
   logo_url: string | null
   instagram_url: string | null
   whatsapp_number: string | null
+  is_active: boolean
 }
 
 type Theme = {
@@ -95,6 +96,10 @@ export function ConfiguracoesClient({
 }) {
   const supabase = createClient()
 
+  // Status do restaurante
+  const [isActive, setIsActive] = useState(restaurant.is_active)
+  const [statusSaving, setStatusSaving] = useState(false)
+
   // Redes sociais
   const [instagram, setInstagram] = useState(restaurant.instagram_url ?? '')
   const [whatsapp, setWhatsapp] = useState(restaurant.whatsapp_number ?? '')
@@ -158,6 +163,17 @@ export function ConfiguracoesClient({
   const menuUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${restaurant.slug}`
     : `https://hivi-web.com/${restaurant.slug}`
+
+  async function toggleStatus() {
+    const newValue = !isActive
+    setStatusSaving(true)
+    await supabase
+      .from('restaurants')
+      .update({ is_active: newValue })
+      .eq('id', restaurant.id)
+    setIsActive(newValue)
+    setStatusSaving(false)
+  }
 
   async function saveSocial() {
     setSocialSaving(true)
@@ -258,6 +274,35 @@ export function ConfiguracoesClient({
       {/* Carrega fontes decorativas para o preview inline do ADM */}
       <style>{`@import url('${GOOGLE_FONTS_URL}');`}</style>
       <h1 className="text-2xl font-bold tracking-tight text-gray-900">Configurações</h1>
+
+      {/* ── Status do restaurante ── */}
+      <Section title="Status do Cardápio">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              {isActive ? '🟢 Cardápio ativo' : '🔴 Cardápio pausado'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {isActive
+                ? 'Clientes conseguem acessar e fazer pedidos.'
+                : 'O cardápio está oculto. Clientes verão uma tela de pausa.'}
+            </p>
+          </div>
+          <button
+            onClick={toggleStatus}
+            disabled={statusSaving}
+            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none"
+            style={{
+              background: isActive ? 'var(--adm-primary)' : '#d1d5db',
+            }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              style={{ transform: isActive ? 'translateX(24px)' : 'translateX(0)' }}
+            />
+          </button>
+        </div>
+      </Section>
 
       {/* ── Redes Sociais ── */}
       <Section title="Redes Sociais">

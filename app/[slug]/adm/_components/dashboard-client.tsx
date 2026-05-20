@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingBag, Bike, LayoutDashboard, UtensilsCrossed, Tag, Settings } from 'lucide-react'
+import { ShoppingBag, Bike, LayoutDashboard, UtensilsCrossed, Tag, Settings, Users } from 'lucide-react'
 
 type Order = {
   id: string
@@ -59,10 +59,11 @@ export function DashboardClient({ slug, restaurantName, todayOrders, totalProduc
   const recent = todayOrders.slice(0, 8)
 
   const nav = [
-    { href: `/${slug}/adm/pedidos`,      icon: ShoppingBag,      label: 'Pedidos',       badge: active > 0 ? active : null },
-    { href: `/${slug}/adm/pratos`,        icon: UtensilsCrossed,  label: 'Pratos',        badge: null },
-    { href: `/${slug}/adm/categorias`,    icon: Tag,              label: 'Categorias',    badge: null },
-    { href: `/${slug}/adm/configuracoes`, icon: Settings,         label: 'Configurações', badge: null },
+    { href: `/${slug}/adm/pedidos`,        icon: ShoppingBag,      label: 'Pedidos',       badge: active > 0 ? active : null },
+    { href: `/${slug}/adm/pratos`,         icon: UtensilsCrossed,  label: 'Pratos',        badge: null },
+    { href: `/${slug}/adm/categorias`,     icon: Tag,              label: 'Categorias',    badge: null },
+    { href: `/${slug}/adm/funcionarios`,   icon: Users,            label: 'Equipe',        badge: null },
+    { href: `/${slug}/adm/configuracoes`,  icon: Settings,         label: 'Configurações', badge: null },
   ]
 
   return (
