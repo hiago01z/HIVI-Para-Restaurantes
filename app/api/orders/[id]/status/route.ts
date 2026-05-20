@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { cookies } from 'next/headers'
+import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
 
 const statusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']),
@@ -30,6 +32,28 @@ export async function PATCH(
 
     const supabase = await createClient()
 
+    // Busca o pedido para obter o slug do restaurante (necessário para verificar o ADM)
+    const { data: orderCheck } = await supabase
+      .from('orders')
+      .select('id, restaurant_id, restaurants(slug)')
+      .eq('id', id)
+      .single()
+
+    if (!orderCheck) {
+      return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 })
+    }
+
+    // Verifica autenticação ADM (token no cookie) — protege contra acesso não autorizado
+    const slug = (orderCheck.restaurants as unknown as { slug: string } | null)?.slug
+    if (slug) {
+      const cookieStore = await cookies()
+      const token = cookieStore.get(admCookieName(slug))?.value
+      const validAdm = token ? await verifyAdmToken(slug, token) : false
+      if (!validAdm) {
+        return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      }
+    }
+
     const { data: order, error } = await supabase
       .from('orders')
       .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
@@ -38,7 +62,7 @@ export async function PATCH(
       .single()
 
     if (error || !order) {
-      return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Erro ao atualizar pedido' }, { status: 500 })
     }
 
     // Disparar WhatsApp apenas para pedidos de entrega
