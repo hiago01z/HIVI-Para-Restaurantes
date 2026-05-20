@@ -8,15 +8,6 @@ const statusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']),
 })
 
-const ORDER_STATUS_MESSAGES: Record<string, string> = {
-  confirmed: '✅ Seu pedido foi confirmado! Em breve começaremos a preparar.',
-  preparing: '👨‍🍳 Seu pedido está sendo preparado com carinho!',
-  ready: '✅ Seu pedido está pronto!',
-  out_for_delivery: '🛵 Seu pedido saiu para entrega! Aguarde em breve.',
-  delivered: '😊 Pedido entregue! Obrigado pela preferência.',
-  cancelled: '❌ Infelizmente seu pedido foi cancelado. Entre em contato conosco.',
-}
-
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -59,28 +50,11 @@ export async function PATCH(
       .from('orders')
       .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .select('*, restaurants(name, whatsapp_number)')
+      .select('*')
       .single()
 
     if (error || !order) {
       return NextResponse.json({ error: 'Erro ao atualizar pedido' }, { status: 500 })
-    }
-
-    // Disparar WhatsApp apenas para pedidos de entrega (fire-and-forget — não bloqueia a resposta)
-    if (order.type === 'delivery' && order.customer_phone && ORDER_STATUS_MESSAGES[parsed.data.status]) {
-      const restaurantName = (order.restaurants as { name: string })?.name ?? 'Restaurante'
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-      const trackingUrl = `${appUrl}/${slug}/meu-pedido/${id}`
-      const message = `*${restaurantName}*\n\nPedido #${order.order_number}\n\n${ORDER_STATUS_MESSAGES[parsed.data.status]}\n\n📍 Acompanhe seu pedido:\n${trackingUrl}`
-
-      fetch(`${appUrl}/api/whatsapp/notify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
-        },
-        body: JSON.stringify({ phone: order.customer_phone, message }),
-      }).catch(() => {})
     }
 
     return NextResponse.json({ order })
