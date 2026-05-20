@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Bell, BellOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode, UserCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -119,48 +120,50 @@ export function PedidosClient({
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
 
-  // AudioContext reutilizado — criado/desbloqueado no primeiro gesto do usuário
+  // ── Som de notificação ─────────────────────────────────────────────────────
+  const [soundOn, setSoundOn] = useState(false)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
-  useEffect(() => {
-    function unlock() {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext()
-      }
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume()
-      }
-      document.removeEventListener('click', unlock)
-      document.removeEventListener('touchstart', unlock)
-    }
-    document.addEventListener('click', unlock)
-    document.addEventListener('touchstart', unlock)
-    return () => {
-      document.removeEventListener('click', unlock)
-      document.removeEventListener('touchstart', unlock)
-    }
-  }, [])
+  function playBeeps(ctx: AudioContext) {
+    ;[[880, 0, 0.15], [1100, 0.2, 0.15]].forEach(([freq, start, duration]) => {
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = freq as number
+      osc.type = 'sine'
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
+      osc.start(ctx.currentTime + (start as number))
+      osc.stop(ctx.currentTime + (start as number) + (duration as number))
+    })
+  }
 
-  function playNewOrderSound() {
+  function toggleSound() {
     try {
+      if (soundOn) {
+        setSoundOn(false)
+        return
+      }
+      // Cria/retoma o AudioContext durante um gesto do usuário (clique no botão)
       if (!audioCtxRef.current) {
         audioCtxRef.current = new AudioContext()
       }
       const ctx = audioCtxRef.current
       ctx.resume().then(() => {
-        ;[[880, 0, 0.15], [1100, 0.18, 0.15]].forEach(([freq, start, duration]) => {
-          const osc  = ctx.createOscillator()
-          const gain = ctx.createGain()
-          osc.connect(gain)
-          gain.connect(ctx.destination)
-          osc.frequency.value = freq as number
-          osc.type = 'sine'
-          gain.gain.setValueAtTime(0.4, ctx.currentTime + (start as number))
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (start as number) + (duration as number))
-          osc.start(ctx.currentTime + (start as number))
-          osc.stop(ctx.currentTime + (start as number) + (duration as number))
-        })
+        playBeeps(ctx)   // toca um beep de confirmação ao ativar
+        setSoundOn(true)
       })
+    } catch {
+      // ignore
+    }
+  }
+
+  function playNewOrderSound() {
+    if (!soundOn || !audioCtxRef.current) return
+    try {
+      const ctx = audioCtxRef.current
+      ctx.resume().then(() => playBeeps(ctx))
     } catch {
       // ignore
     }
@@ -294,7 +297,21 @@ export function PedidosClient({
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">{PERIODO_LABEL[activePeriodo]}</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{PERIODO_LABEL[activePeriodo]}</h1>
+        <button
+          onClick={toggleSound}
+          title={soundOn ? 'Desativar som de notificação' : 'Ativar som de notificação'}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+          style={soundOn
+            ? { background: 'color-mix(in srgb, var(--adm-primary) 12%, white)', color: 'var(--adm-primary)' }
+            : { background: '#f3f4f6', color: '#9ca3af' }
+          }
+        >
+          {soundOn ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+          {soundOn ? 'Som ativo' : 'Som'}
+        </button>
+      </div>
 
       {/* Filtro de período */}
       <div className="flex gap-1.5 mb-5">
