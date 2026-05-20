@@ -27,6 +27,8 @@ function getContrastColor(hex: string): string {
 export function PreviewListener() {
   useEffect(() => {
     function handler(e: MessageEvent) {
+      // Aceita apenas mensagens da mesma origem (proteção contra iframes maliciosos)
+      if (e.origin !== window.location.origin) return
       if (e.data?.type !== 'HIVI_THEME_PREVIEW') return
       const t = e.data.theme as {
         primary?: string
