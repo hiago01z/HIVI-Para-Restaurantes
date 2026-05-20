@@ -30,7 +30,6 @@ export function PedidoClient({ slug, restaurantId }: Props) {
   const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
   const [qrConfirmed, setQrConfirmed] = useState(false)
-  const [qrOrderId, setQrOrderId] = useState<string | null>(null)
   const [qrLoading, setQrLoading] = useState(false)
   const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [deliveryError, setDeliveryError] = useState('')
@@ -51,7 +50,6 @@ export function PedidoClient({ slug, restaurantId }: Props) {
         (payload) => {
           if (payload.new?.confirmed) {
             setQrConfirmed(true)
-            setQrOrderId(payload.new.order_id ?? null)
             // Após 2.5s: limpa carrinho e redireciona para acompanhamento
             setTimeout(() => {
               clearCart()
