@@ -44,7 +44,8 @@ export function PratosClient({
   initialProducts: Product[]
   categories: Category[]
 }) {
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editing, setEditing] = useState<Product | null>(null)

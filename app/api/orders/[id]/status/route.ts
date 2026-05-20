@@ -65,19 +65,19 @@ export async function PATCH(
       return NextResponse.json({ error: 'Erro ao atualizar pedido' }, { status: 500 })
     }
 
-    // Disparar WhatsApp apenas para pedidos de entrega
+    // Disparar WhatsApp apenas para pedidos de entrega (fire-and-forget — não bloqueia a resposta)
     if (order.type === 'delivery' && order.customer_phone && ORDER_STATUS_MESSAGES[parsed.data.status]) {
       const restaurantName = (order.restaurants as { name: string })?.name ?? 'Restaurante'
       const message = `*${restaurantName}*\n\nPedido #${order.order_number}\n\n${ORDER_STATUS_MESSAGES[parsed.data.status]}`
 
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/whatsapp/notify`, {
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/whatsapp/notify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
         },
         body: JSON.stringify({ phone: order.customer_phone, message }),
-      })
+      }).catch(() => {})
     }
 
     return NextResponse.json({ order })

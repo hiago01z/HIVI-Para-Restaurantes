@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { Plus, Pencil, Trash2, X, Loader2, ChevronUp, ChevronDown } from 'lucide-react'
@@ -20,7 +20,8 @@ export function CategoriasClient({
   restaurantId: string
   initialCategories: Category[]
 }) {
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editing, setEditing] = useState<Category | null>(null)
