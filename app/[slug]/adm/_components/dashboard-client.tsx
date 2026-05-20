@@ -109,13 +109,11 @@ export function DashboardClient({ slug, restaurantName, todayOrders, totalProduc
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'var(--adm-primary)', opacity: 0.12 }}
-            />
-            <Icon
-              className="w-5 h-5 absolute"
-              style={{ color: 'var(--adm-primary)', marginLeft: '10px' }}
-            />
-            <span className="font-semibold text-gray-800 text-sm flex-1 ml-7">{label}</span>
+              style={{ background: 'color-mix(in srgb, var(--adm-primary) 12%, white)' }}
+            >
+              <Icon className="w-5 h-5" style={{ color: 'var(--adm-primary)' }} />
+            </div>
+            <span className="font-semibold text-gray-800 text-sm flex-1">{label}</span>
             {badge !== null && (
               <span
                 className="w-5 h-5 rounded-full text-[11px] font-black flex items-center justify-center flex-shrink-0"
@@ -146,13 +144,14 @@ export function DashboardClient({ slug, restaurantName, todayOrders, totalProduc
               <li key={order.id} className="flex items-center gap-3 px-5 py-3">
                 <div
                   className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'var(--adm-primary)', opacity: 0.1 }}
-                />
-                {order.type === 'delivery'
-                  ? <Bike className="w-4 h-4 absolute ml-2" style={{ color: 'var(--adm-primary)' }} />
-                  : <LayoutDashboard className="w-4 h-4 absolute ml-2" style={{ color: 'var(--adm-primary)' }} />
-                }
-                <div className="flex-1 min-w-0 ml-6">
+                  style={{ background: 'color-mix(in srgb, var(--adm-primary) 10%, white)' }}
+                >
+                  {order.type === 'delivery'
+                    ? <Bike className="w-4 h-4" style={{ color: 'var(--adm-primary)' }} />
+                    : <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--adm-primary)' }} />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">
                     #{order.order_number} · {order.customer_name ?? 'Mesa'}
                   </p>

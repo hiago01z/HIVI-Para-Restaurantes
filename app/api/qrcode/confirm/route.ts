@@ -63,9 +63,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Erro ao criar pedido' }, { status: 500 })
     }
 
-    await supabase.from('order_items').insert(
+    const { error: itemsError } = await supabase.from('order_items').insert(
       orderData.items.map(item => ({ ...item, order_id: order.id }))
     )
+
+    if (itemsError) {
+      // Deletar o pedido órfão (sem itens) para evitar inconsistência
+      await supabase.from('orders').delete().eq('id', order.id)
+      return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
+    }
 
     // Salva order_id na sessão — o cliente escuta via Realtime e redireciona
     await supabase

@@ -52,6 +52,13 @@
 | 2026-05-19 | Fix: imagens de categorias exibidas corretamente no cardápio público (object-fit: cover + next/image fill) |
 | 2026-05-19 | Feature: componente `ImageCropPicker` — upload com drag-to-reposition, zoom via roda do mouse e botões −/+ (50%–300%), recorte canvas 800×800 JPEG ao salvar; integrado em Categorias e Pratos do ADM |
 | 2026-05-19 | Feature: sistema de restaurante template no webhook Stripe — copia categorias (imagem + ordem), pratos (com mapeamento de categoria) e tema ao criar novo restaurante (env `TEMPLATE_RESTAURANT_ID`) |
+| 2026-05-20 | Fix: `is_active === null` causava 404 para restaurantes novos — todas as verificações agora usam `=== false` |
+| 2026-05-20 | Fix: vazamento de memória Supabase — padrão `useRef(createClient())` aplicado em pedidos, pratos e categorias clients |
+| 2026-05-20 | Fix: notificação WhatsApp bloqueava resposta de status route — convertido para fire-and-forget com `.catch(() => {})` |
+| 2026-05-20 | Fix: feedback de erro em `handleDelete` de pratos e categorias (anteriormente silencioso) |
+| 2026-05-20 | Feature: upload e exibição de banner — UI de upload em configurações, exibição com gradiente no cardápio público |
+| 2026-05-20 | Feature: filtro de período em pedidos ADM (`?periodo=hoje|ontem|7dias`) — server-side com date range correto; Realtime desabilitado para períodos históricos |
+| 2026-05-20 | Feature: seletor de tamanho de fonte em configurações (Pequena/Normal/Grande → 14px/16px/18px) |
 
 ---
 

@@ -79,6 +79,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
 
       setInviteEmail('')
       setShowInvite(false)
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : 'Erro ao convidar. Tente novamente.')
     } finally {
       setInviteLoading(false)
     }
@@ -94,7 +96,11 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       })
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== memberId))
+      } else {
+        alert('Erro ao remover membro. Tente novamente.')
       }
+    } catch {
+      alert('Erro ao remover membro. Tente novamente.')
     } finally {
       setRemovingId(null)
     }

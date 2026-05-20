@@ -45,13 +45,14 @@ export async function PATCH(
 
     // Verifica autenticação ADM (token no cookie) — protege contra acesso não autorizado
     const slug = (orderCheck.restaurants as unknown as { slug: string } | null)?.slug
-    if (slug) {
-      const cookieStore = await cookies()
-      const token = cookieStore.get(admCookieName(slug))?.value
-      const validAdm = token ? await verifyAdmToken(slug, token) : false
-      if (!validAdm) {
-        return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-      }
+    if (!slug) {
+      return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
+    }
+    const cookieStore = await cookies()
+    const token = cookieStore.get(admCookieName(slug))?.value
+    const validAdm = token ? await verifyAdmToken(slug, token) : false
+    if (!validAdm) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
     const { data: order, error } = await supabase
