@@ -73,6 +73,7 @@
 | 2026-05-20 | Fix: migration 005 — colunas label_* em restaurant_themes ausentes nas migrations (label customization não persistia) |
 | 2026-05-20 | Fix: migration 005 — constraint de role em restaurant_users corrigida ('admin'/'waiter' → 'manager'/'staff') — invite de funcionários falhava silenciosamente |
 | 2026-05-20 | Fix: migration 006 — order_id em qr_sessions (coluna ausente quebrava fluxo QR de mesa), public_read_active policy corrigida para is_active IS NOT FALSE, políticas de escrita de categorias/produtos/temas corrigidas para role 'manager' |
+| 2026-05-20 | Fix: ADM layout e todas as páginas ADM usam service role para lookup do restaurante — garante acesso mesmo com is_active=false e para staff sem sessão Supabase |
 
 ---
 
