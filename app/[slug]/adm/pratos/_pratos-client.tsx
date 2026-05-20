@@ -153,7 +153,11 @@ export function PratosClient({
   async function handleDelete(product: Product) {
     if (!confirm(`Excluir "${product.name}"?`)) return
     const { error } = await supabase.from('products').delete().eq('id', product.id)
-    if (!error) setProducts((prev) => prev.filter((p) => p.id !== product.id))
+    if (!error) {
+      setProducts((prev) => prev.filter((p) => p.id !== product.id))
+    } else {
+      alert('Erro ao excluir o item. Tente novamente.')
+    }
   }
 
   async function toggleFeatured(product: Product) {

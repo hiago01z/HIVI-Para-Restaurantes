@@ -118,6 +118,8 @@ export function CategoriasClient({
     const { error } = await supabase.from('categories').delete().eq('id', cat.id)
     if (!error) {
       setCategories((prev) => prev.filter((c) => c.id !== cat.id))
+    } else {
+      alert('Erro ao excluir a categoria. Tente novamente.')
     }
   }
 
