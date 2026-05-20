@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyAdmPassword, createAdmToken, admCookieName, COOKIE_MAX_AGE } from '@/lib/adm-auth'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -12,6 +13,16 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
+
+  // Rate limit: 5 tentativas por IP por minuto por slug
+  const ip = getClientIp(request)
+  const allowed = rateLimit(`adm-login:${slug}:${ip}`, 5, 60_000)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Muitas tentativas. Aguarde 1 minuto e tente novamente.' },
+      { status: 429 }
+    )
+  }
 
   const body = await request.json()
   const parsed = schema.safeParse(body)
@@ -35,7 +46,7 @@ export async function POST(
   }
 
   if (!restaurant.adm_password_hash) {
-    return NextResponse.json({ error: 'Senha ADM não configurada. O dono deve defini-la em hivi.vercel.app/conta' }, { status: 403 })
+    return NextResponse.json({ error: 'Senha ADM não configurada. O dono deve defini-la em hivi-web.com/conta' }, { status: 403 })
   }
 
   const valid = await verifyAdmPassword(parsed.data.password, restaurant.adm_password_hash)
