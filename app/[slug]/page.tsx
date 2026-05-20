@@ -237,7 +237,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
             style={{ color: 'var(--menu-text-muted)', opacity: 0.5 }}
           >
             &copy; {new Date().getFullYear()} &nbsp;·&nbsp; Feito com{' '}
-            <span className="font-display italic">HIVI</span>
+            <span className="font-bold tracking-widest">HIVI</span>
             &nbsp;·&nbsp; Todos os direitos reservados
           </p>
         </div>
