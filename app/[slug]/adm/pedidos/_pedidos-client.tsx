@@ -271,7 +271,13 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
           {(tab === 'delivery' ? deliveryOrders : tableOrders).length === 0 ? (
             <div className="text-center py-16">
               <div className="text-4xl mb-3">📋</div>
-              <p className="text-gray-400 text-sm">Nenhum pedido de {tab === 'delivery' ? 'entrega' : 'mesa'} hoje.</p>
+              <p className="text-gray-400 text-sm">
+                {`Nenhum pedido de ${tab === 'delivery' ? 'entrega' : 'mesa'} ${
+                  activePeriodo === 'hoje' ? 'hoje' :
+                  activePeriodo === 'ontem' ? 'ontem' :
+                  'nos últimos 7 dias'
+                }.`}
+              </p>
             </div>
           ) : (
             (tab === 'delivery' ? deliveryOrders : tableOrders).map((order) => {
