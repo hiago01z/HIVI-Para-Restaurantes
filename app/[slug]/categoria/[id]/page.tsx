@@ -3,8 +3,8 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { AddToCartButton } from '../../_components/add-to-cart-button'
-import { CategorySortClient } from './_sort-client'
+import { MenuHeaderClient } from '../../_components/menu-header-client'
+import { CategoryProductCard } from './_product-card-client'
 
 export default async function CategoriaPage({
   params,
@@ -26,33 +26,58 @@ export default async function CategoriaPage({
 
   if (!category) notFound()
 
-  // Verificar se o restaurante corresponde ao slug
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, slug, is_active')
+    .select('id, slug, name, logo_url, is_active')
     .eq('id', category.restaurant_id)
     .single()
 
   if (!restaurant || !restaurant.is_active || restaurant.slug !== slug) notFound()
 
   const ascending = ordem === 'menor'
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, description, price, image_url')
-    .eq('category_id', id)
-    .eq('is_available', true)
-    .order('price', { ascending })
+
+  // Busca em paralelo: produtos da categoria + todas as categorias + todos os produtos (para header)
+  const [
+    { data: products },
+    { data: allCategories },
+    { data: allProducts },
+  ] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, name, description, price, image_url')
+      .eq('category_id', id)
+      .eq('is_available', true)
+      .order('price', { ascending }),
+    supabase
+      .from('categories')
+      .select('id, name')
+      .eq('restaurant_id', restaurant.id)
+      .order('display_order', { ascending: true }),
+    supabase
+      .from('products')
+      .select('id, name, description, price, image_url, category_id')
+      .eq('restaurant_id', restaurant.id)
+      .eq('is_available', true),
+  ])
 
   const pratos = products ?? []
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
 
   return (
     <div className="min-h-screen pb-24" style={{ color: 'var(--menu-text)' }}>
 
-      {/* Header com imagem da categoria */}
+      {/* Header fixo com busca + categorias + carrinho */}
+      <MenuHeaderClient
+        slug={slug}
+        restaurantName={restaurant.name}
+        logoUrl={restaurant.logo_url}
+        categories={allCategories ?? []}
+        allProducts={allProducts ?? []}
+      />
+
+      {/* Espaço do header fixo */}
+      <div className="h-14" />
+
+      {/* Hero com imagem da categoria */}
       <div className="relative h-52 w-full">
         {category.image_url ? (
           <Image
@@ -75,9 +100,9 @@ export default async function CategoriaPage({
         {/* Botão voltar */}
         <Link
           href={`/${slug}`}
-          className="absolute top-4 left-4 w-9 h-9 rounded-full flex items-center justify-center bg-black/40 text-white backdrop-blur-sm"
+          className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/40 text-white backdrop-blur-sm"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
         </Link>
 
         {/* Nome da categoria */}
@@ -99,8 +124,8 @@ export default async function CategoriaPage({
       </div>
 
       {/* Ordenação */}
-      <div className="px-4 mt-4 mb-6">
-        <CategorySortClient currentSort={ordem ?? 'maior'} slug={slug} id={id} />
+      <div className="px-4 mt-4 mb-4">
+        <CategorySortButtons currentSort={ordem ?? 'maior'} slug={slug} id={id} />
       </div>
 
       {/* Lista de produtos */}
@@ -112,40 +137,35 @@ export default async function CategoriaPage({
           </div>
         ) : (
           pratos.map((product) => (
-            <div
-              key={product.id}
-              className="flex gap-3 rounded-2xl p-3"
-              style={{ background: 'var(--menu-card)' }}
-            >
-              {product.image_url ? (
-                <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
-                  <Image src={product.image_url} alt={product.name} fill className="object-cover" />
-                </div>
-              ) : (
-                <div className="w-24 h-24 flex-shrink-0 rounded-xl flex items-center justify-center text-3xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                  🍽️
-                </div>
-              )}
-              <div className="flex-1 min-w-0 flex flex-col">
-                <p className="font-bold text-sm leading-tight" style={{ color: 'var(--menu-text)' }}>{product.name}</p>
-                {product.description && (
-                  <p className="text-xs mt-1 leading-relaxed line-clamp-3" style={{ color: 'var(--menu-text-muted)' }}>{product.description}</p>
-                )}
-                <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-                  <span className="font-black text-sm" style={{ color: 'var(--menu-primary)' }}>
-                    {formatPrice(product.price)}
-                  </span>
-                  <AddToCartButton
-                    product={product}
-                    label="Pedir"
-                    className="px-4 py-1.5 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
+            <CategoryProductCard key={product.id} product={product} slug={slug} />
           ))
         )}
       </div>
+    </div>
+  )
+}
+
+/** Botões de ordenação — server component simples usando searchParams */
+function CategorySortButtons({ currentSort, slug, id }: { currentSort: string; slug: string; id: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs self-center mr-1 font-medium" style={{ color: 'var(--menu-text-muted)' }}>Ordenar:</span>
+      {[
+        { value: 'maior', label: 'Maior preço' },
+        { value: 'menor', label: 'Menor preço' },
+      ].map((opt) => (
+        <Link
+          key={opt.value}
+          href={`/${slug}/categoria/${id}?ordem=${opt.value}`}
+          className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+          style={{
+            background: currentSort === opt.value ? 'var(--menu-primary)' : 'var(--menu-card)',
+            color: currentSort === opt.value ? 'var(--menu-text-on-primary)' : 'var(--menu-text-muted)',
+          }}
+        >
+          {opt.label}
+        </Link>
+      ))}
     </div>
   )
 }

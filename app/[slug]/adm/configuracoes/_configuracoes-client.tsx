@@ -34,11 +34,17 @@ type Theme = {
 }
 
 const LABEL_FONT_OPTIONS = [
-  { value: 'dancing-script', label: 'Script (Dancing)' },
-  { value: 'satisfy',        label: 'Satisfy' },
-  { value: 'pacifico',       label: 'Pacifico' },
-  { value: 'menu',           label: 'Mesma do menu' },
-  { value: 'system',         label: 'Sans-serif' },
+  { value: 'dancing-script',   label: 'Dancing Script' },
+  { value: 'satisfy',          label: 'Satisfy' },
+  { value: 'pacifico',         label: 'Pacifico' },
+  { value: 'lobster',          label: 'Lobster' },
+  { value: 'righteous',        label: 'Righteous' },
+  { value: 'bebas-neue',       label: 'Bebas Neue' },
+  { value: 'caveat',           label: 'Caveat' },
+  { value: 'permanent-marker', label: 'Permanent Marker' },
+  { value: 'yellowtail',       label: 'Yellowtail' },
+  { value: 'menu',             label: 'Mesma do menu' },
+  { value: 'system',           label: 'Sans-serif' },
 ]
 
 const LABEL_EFFECT_OPTIONS = [
@@ -48,12 +54,21 @@ const LABEL_EFFECT_OPTIONS = [
 ]
 
 const LABEL_FONT_MAP: Record<string, string> = {
-  'dancing-script': "'Dancing Script', cursive",
-  'satisfy':        "'Satisfy', cursive",
-  'pacifico':       "'Pacifico', cursive",
-  'menu':           'inherit',
-  'system':         'system-ui, sans-serif',
+  'dancing-script':   "'Dancing Script', cursive",
+  'satisfy':          "'Satisfy', cursive",
+  'pacifico':         "'Pacifico', cursive",
+  'lobster':          "'Lobster', cursive",
+  'righteous':        "'Righteous', sans-serif",
+  'bebas-neue':       "'Bebas Neue', sans-serif",
+  'caveat':           "'Caveat', cursive",
+  'permanent-marker': "'Permanent Marker', cursive",
+  'yellowtail':       "'Yellowtail', cursive",
+  'menu':             'inherit',
+  'system':           'system-ui, sans-serif',
 }
+
+// Google Fonts para o preview do ADM (as mesmas que o layout carrega)
+const GOOGLE_FONTS_URL = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Satisfy&family=Pacifico&family=Lobster&family=Righteous&family=Bebas+Neue&family=Caveat:wght@700&family=Permanent+Marker&family=Yellowtail&display=swap"
 
 const PRESET_THEMES = [
   { name: 'Rústico', primary: '#FF6B00', secondary: '#1A0A00', bg: '#2C1A0E', font: 'serif',      text: '#FFFFFF', icon: '#FF6B00' },
@@ -240,6 +255,8 @@ export function ConfiguracoesClient({
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+      {/* Carrega fontes decorativas para o preview inline do ADM */}
+      <style>{`@import url('${GOOGLE_FONTS_URL}');`}</style>
       <h1 className="text-2xl font-bold tracking-tight text-gray-900">Configurações</h1>
 
       {/* ── Redes Sociais ── */}

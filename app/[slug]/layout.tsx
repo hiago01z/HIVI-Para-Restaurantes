@@ -108,11 +108,17 @@ export default async function SlugLayout({
   const labelOffAngle   = (theme?.label_offset_angle   ?? -45) as number
 
   const LABEL_FONT_MAP: Record<string, string> = {
-    'dancing-script': "'Dancing Script', cursive",
-    'satisfy':        "'Satisfy', cursive",
-    'pacifico':       "'Pacifico', cursive",
-    'menu':           font,
-    'system':         "system-ui, sans-serif",
+    'dancing-script':   "'Dancing Script', cursive",
+    'satisfy':          "'Satisfy', cursive",
+    'pacifico':         "'Pacifico', cursive",
+    'lobster':          "'Lobster', cursive",
+    'righteous':        "'Righteous', sans-serif",
+    'bebas-neue':       "'Bebas Neue', sans-serif",
+    'caveat':           "'Caveat', cursive",
+    'permanent-marker': "'Permanent Marker', cursive",
+    'yellowtail':       "'Yellowtail', cursive",
+    'menu':             font,
+    'system':           "system-ui, sans-serif",
   }
   const labelFontValue  = LABEL_FONT_MAP[labelFontRaw] ?? font
   const labelTextShadow = computeLabelShadow(labelEffect, labelStrColor, labelStrSize, labelOffDist, labelOffAngle)
@@ -134,14 +140,14 @@ export default async function SlugLayout({
     `--label-text-shadow: ${labelTextShadow}`,
   ].join('; ')
 
-  // Carrega fontes cursivas do Google Fonts usadas em labels sobre imagens
-  const SCRIPT_FONTS = ['dancing-script', 'satisfy', 'pacifico']
-  const loadScriptFonts = SCRIPT_FONTS.includes(labelFontRaw)
+  // Sempre carrega o pacote completo de fontes decorativas (< 50 KB total, cacheadas pelo browser)
+  const SYSTEM_FONTS = ['menu', 'system']
+  const loadDecorativeFonts = !SYSTEM_FONTS.includes(labelFontRaw)
 
   return (
     <div id="menu-root" style={{ background: bg, fontFamily: font, fontSize, minHeight: '100vh', color: textColor }}>
-      {loadScriptFonts && (
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Satisfy&family=Pacifico&display=swap');`}</style>
+      {loadDecorativeFonts && (
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Satisfy&family=Pacifico&family=Lobster&family=Righteous&family=Bebas+Neue&family=Caveat:wght@700&family=Permanent+Marker&family=Yellowtail&display=swap');`}</style>
       )}
       <style>{`:root { ${cssVars} }`}</style>
       <PreviewListener />

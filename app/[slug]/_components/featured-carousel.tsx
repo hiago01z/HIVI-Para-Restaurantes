@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { UtensilsCrossed, Check } from 'lucide-react'
 import { useCart } from '@/contexts/cart-context'
@@ -39,12 +39,50 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     router.push(`/${slug}/pedido`)
   }
 
-  function prev() { setAdded(false); setCurrent((c) => (c - 1 + products.length) % products.length) }
-  function next() { setAdded(false); setCurrent((c) => (c + 1) % products.length) }
+  const touchStartX = useRef(0)
+  const autoTimer   = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const goNext = useCallback(() => {
+    setAdded(false)
+    setCurrent((c) => (c + 1) % products.length)
+  }, [products.length])
+
+  const goPrev = useCallback(() => {
+    setAdded(false)
+    setCurrent((c) => (c - 1 + products.length) % products.length)
+  }, [products.length])
+
+  // Auto-scroll a cada 4 s (pausa se só 1 item)
+  useEffect(() => {
+    if (products.length <= 1) return
+    autoTimer.current = setInterval(goNext, 4000)
+    return () => { if (autoTimer.current) clearInterval(autoTimer.current) }
+  }, [goNext, products.length])
+
+  function resetTimer() {
+    if (autoTimer.current) clearInterval(autoTimer.current)
+    if (products.length > 1) autoTimer.current = setInterval(goNext, 4000)
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) goNext(); else goPrev()
+      resetTimer()
+    }
+  }
 
   return (
     <div className="mb-5">
-      <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
+      <div
+        className="relative w-full aspect-square rounded-2xl overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
 
         {/* Foto */}
         {product.image_url ? (
@@ -81,22 +119,6 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
               />
             ))}
           </div>
-        )}
-
-        {/* Setas laterais */}
-        {products.length > 1 && (
-          <>
-            <button onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl"
-              style={{ background: 'rgba(0,0,0,0.45)', color: 'var(--menu-text)', backdropFilter: 'blur(4px)' }}>
-              ‹
-            </button>
-            <button onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl"
-              style={{ background: 'rgba(0,0,0,0.45)', color: 'var(--menu-text)', backdropFilter: 'blur(4px)' }}>
-              ›
-            </button>
-          </>
         )}
 
         {/* Infos + botões — rodapé */}
