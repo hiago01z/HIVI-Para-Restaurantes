@@ -7,7 +7,9 @@ import { Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 
 export function LoginForm({ slug }: { slug: string }) {
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? `/${slug}/adm/pedidos`
+  // Valida que o redirect é relativo (começa com /) para evitar open redirect
+  const redirectParam = searchParams.get('redirect') ?? ''
+  const redirect = redirectParam.startsWith('/') ? redirectParam : `/${slug}/adm/pedidos`
 
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)

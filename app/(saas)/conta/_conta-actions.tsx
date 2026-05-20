@@ -38,7 +38,11 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
         setLocalLojas((prev) =>
           prev.map((l) => l.id === loja.id ? { ...l, is_active: !loja.is_active } : l)
         )
+      } else {
+        alert('Erro ao alterar status do cardápio. Tente novamente.')
       }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
     } finally {
       setLoadingId(null)
     }
@@ -52,7 +56,11 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
       if (res.ok) {
         setLocalLojas((prev) => prev.filter((l) => l.id !== loja.id))
         router.refresh()
+      } else {
+        alert('Erro ao excluir o cardápio. Tente novamente.')
       }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
     } finally {
       setLoadingId(null)
     }
@@ -63,7 +71,13 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
     try {
       const res = await fetch('/api/stripe/portal', { method: 'POST' })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert(data.error ?? 'Erro ao abrir portal de pagamento. Tente novamente.')
+      }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
     } finally {
       setPortalLoading(false)
     }

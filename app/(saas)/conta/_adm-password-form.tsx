@@ -35,6 +35,8 @@ export function AdmPasswordForm({ restaurantId, hasPassword }: { restaurantId: s
       setPassword('')
       setConfirm('')
       setTimeout(() => { setSaved(false); setOpen(false) }, 2000)
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
     } finally {
       setLoading(false)
     }
