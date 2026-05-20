@@ -19,26 +19,6 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
   const [added, setAdded] = useState(false)
   const { addItem } = useCart()
   const router = useRouter()
-
-  if (products.length === 0) return null
-
-  const product = products[current]
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
-
-  function handleAddToCart() {
-    addItem({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1200)
-  }
-
-  function handleOrderNow() {
-    addItem({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })
-    router.push(`/${slug}/pedido`)
-  }
-
   const touchStartX = useRef(0)
   const autoTimer   = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -52,12 +32,21 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     setCurrent((c) => (c - 1 + products.length) % products.length)
   }, [products.length])
 
-  // Auto-scroll a cada 4 s (pausa se só 1 item)
+  // Auto-scroll a cada 4 s (desativado se só 1 item)
   useEffect(() => {
     if (products.length <= 1) return
     autoTimer.current = setInterval(goNext, 4000)
     return () => { if (autoTimer.current) clearInterval(autoTimer.current) }
   }, [goNext, products.length])
+
+  // ── Early return APÓS todos os hooks ──────────────────────────────────────
+  if (products.length === 0) return null
+
+  const product = products[current]
+
+  function formatPrice(v: number) {
+    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
 
   function resetTimer() {
     if (autoTimer.current) clearInterval(autoTimer.current)
@@ -74,6 +63,17 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
       if (diff > 0) goNext(); else goPrev()
       resetTimer()
     }
+  }
+
+  function handleAddToCart() {
+    addItem({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1200)
+  }
+
+  function handleOrderNow() {
+    addItem({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })
+    router.push(`/${slug}/pedido`)
   }
 
   return (
