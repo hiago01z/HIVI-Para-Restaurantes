@@ -70,6 +70,8 @@ export async function POST(request: Request) {
       )
 
     if (itemsError) {
+      // Limpar o pedido órfão antes de retornar erro
+      await supabase.from('orders').delete().eq('id', order.id)
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
     }
 
