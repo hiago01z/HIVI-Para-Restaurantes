@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -170,6 +170,21 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
     }
   }
 
+  // Memoiza o callback do QR scanner para evitar que a câmera reinicie a cada render
+  // (onDetect inline causaria nova referência → startScanLoop instável → camera reinit a cada UPDATE Realtime)
+  const handleQrDetect = useCallback((url: string) => {
+    try {
+      const parsed = new URL(url)
+      router.push(parsed.pathname)
+    } catch {
+      if (url.startsWith('/')) {
+        router.push(url)
+      } else {
+        router.push(`/${url}`)
+      }
+    }
+  }, [router])
+
   const deliveryOrders = orders.filter((o) => o.type === 'delivery')
   const tableOrders = orders.filter((o) => o.type === 'table')
 
@@ -206,22 +221,7 @@ export function PedidosClient({ restaurantId, initialOrders }: Props) {
 
       {/* Aba Ler QR Code — scanner real */}
       {tab === 'qr' && (
-        <QrScanner
-          onDetect={(url) => {
-            // Extrai o path de uma URL completa ou usa direto se já for path
-            try {
-              const parsed = new URL(url)
-              router.push(parsed.pathname)
-            } catch {
-              // Não é URL completa, pode ser path direto
-              if (url.startsWith('/')) {
-                router.push(url)
-              } else {
-                router.push(`/${url}`)
-              }
-            }
-          }}
-        />
+        <QrScanner onDetect={handleQrDetect} />
       )}
 
       {/* Lista de pedidos */}
