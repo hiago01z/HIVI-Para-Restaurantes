@@ -12,7 +12,7 @@ export async function POST(
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 0,
-    path: `/${slug}/adm`,
+    path: '/',
   })
   return response
 }

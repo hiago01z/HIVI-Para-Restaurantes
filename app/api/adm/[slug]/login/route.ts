@@ -63,7 +63,7 @@ export async function POST(
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: COOKIE_MAX_AGE,
-    path: `/${slug}/adm`,
+    path: '/',
   })
 
   return response
