@@ -7,15 +7,19 @@ export async function POST(
 ) {
   const { slug } = await params
   const cookieName = admCookieName(slug)
-  const cookieOpts = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    maxAge: 0,
-  }
+  const secure = process.env.NODE_ENV === 'production'
+  const secureFlag = secure ? '; Secure' : ''
+
   const response = NextResponse.json({ ok: true })
-  // Limpa o cookie em ambos os paths (path antigo e novo) para garantir logout completo
-  response.cookies.set(cookieName, '', { ...cookieOpts, path: '/' })
-  response.cookies.set(cookieName, '', { ...cookieOpts, path: `/${slug}/adm` })
+
+  // Usar headers.append para limpar o cookie nos dois paths sem sobrescrever
+  response.headers.append(
+    'Set-Cookie',
+    `${cookieName}=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${secureFlag}`
+  )
+  response.headers.append(
+    'Set-Cookie',
+    `${cookieName}=; Path=/${slug}/adm; HttpOnly; Max-Age=0; SameSite=Lax${secureFlag}`
+  )
   return response
 }

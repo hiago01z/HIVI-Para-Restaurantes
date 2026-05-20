@@ -52,6 +52,7 @@ export function PratosClient({
   const [form, setForm] = useState<Form>(EMPTY_FORM)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [search, setSearch] = useState('')
   const [pickerKey, setPickerKey] = useState(0)
@@ -156,7 +157,8 @@ export function PratosClient({
     if (!error) {
       setProducts((prev) => prev.filter((p) => p.id !== product.id))
     } else {
-      alert('Erro ao excluir o item. Tente novamente.')
+      setDeleteError('Erro ao excluir o item. Tente novamente.')
+      setTimeout(() => setDeleteError(''), 4000)
     }
   }
 
@@ -208,6 +210,13 @@ export function PratosClient({
           <Plus className="w-4 h-4" /> Novo item
         </button>
       </div>
+
+      {/* Erro de exclusão */}
+      {deleteError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+          {deleteError}
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex gap-2 mb-5 flex-wrap">

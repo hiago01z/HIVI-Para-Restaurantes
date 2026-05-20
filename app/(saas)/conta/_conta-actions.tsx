@@ -24,7 +24,14 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState('')
+  const [actionError, setActionError] = useState<Record<string, string>>({})
   const [localLojas, setLocalLojas] = useState<Loja[]>(lojas)
+
+  function setLojaError(id: string, msg: string) {
+    setActionError((prev) => ({ ...prev, [id]: msg }))
+    setTimeout(() => setActionError((prev) => { const n = { ...prev }; delete n[id]; return n }), 4000)
+  }
 
   async function handleToggle(loja: Loja) {
     setLoadingId(loja.id)
@@ -39,10 +46,10 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
           prev.map((l) => l.id === loja.id ? { ...l, is_active: !loja.is_active } : l)
         )
       } else {
-        alert('Erro ao alterar status do cardápio. Tente novamente.')
+        setLojaError(loja.id, 'Erro ao alterar status do cardápio. Tente novamente.')
       }
     } catch {
-      alert('Erro de conexão. Tente novamente.')
+      setLojaError(loja.id, 'Erro de conexão. Tente novamente.')
     } finally {
       setLoadingId(null)
     }
@@ -57,10 +64,10 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
         setLocalLojas((prev) => prev.filter((l) => l.id !== loja.id))
         router.refresh()
       } else {
-        alert('Erro ao excluir o cardápio. Tente novamente.')
+        setLojaError(loja.id + '-del', 'Erro ao excluir o cardápio. Tente novamente.')
       }
     } catch {
-      alert('Erro de conexão. Tente novamente.')
+      setLojaError(loja.id + '-del', 'Erro de conexão. Tente novamente.')
     } finally {
       setLoadingId(null)
     }
@@ -74,10 +81,12 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
       if (data.url) {
         window.location.href = data.url
       } else {
-        alert(data.error ?? 'Erro ao abrir portal de pagamento. Tente novamente.')
+        setPortalError(data.error ?? 'Erro ao abrir portal de pagamento. Tente novamente.')
+        setTimeout(() => setPortalError(''), 4000)
       }
     } catch {
-      alert('Erro de conexão. Tente novamente.')
+      setPortalError('Erro de conexão. Tente novamente.')
+      setTimeout(() => setPortalError(''), 4000)
     } finally {
       setPortalLoading(false)
     }
@@ -85,14 +94,19 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
 
   if (showPortalOnly) {
     return (
-      <button
-        onClick={openPortal}
-        disabled={portalLoading}
-        className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-      >
-        {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-        {portalLoading ? 'Abrindo...' : 'Portal de pagamento'}
-      </button>
+      <div>
+        <button
+          onClick={openPortal}
+          disabled={portalLoading}
+          className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        >
+          {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+          {portalLoading ? 'Abrindo...' : 'Portal de pagamento'}
+        </button>
+        {portalError && (
+          <p className="mt-2 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{portalError}</p>
+        )}
+      </div>
     )
   }
 
@@ -150,6 +164,13 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 Excluir cardápio
               </button>
             </div>
+
+            {/* Erro de ação */}
+            {(actionError[loja.id] || actionError[loja.id + '-del']) && (
+              <p className="mt-2 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">
+                {actionError[loja.id] ?? actionError[loja.id + '-del']}
+              </p>
+            )}
 
             {/* Senha ADM */}
             {AdmPasswordForm && (

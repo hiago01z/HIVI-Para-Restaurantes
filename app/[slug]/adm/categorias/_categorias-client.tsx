@@ -28,6 +28,7 @@ export function CategoriasClient({
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [pickerKey, setPickerKey] = useState(0)
   const cropPickerRef = useRef<ImageCropPickerHandle>(null)
 
@@ -119,7 +120,8 @@ export function CategoriasClient({
     if (!error) {
       setCategories((prev) => prev.filter((c) => c.id !== cat.id))
     } else {
-      alert('Erro ao excluir a categoria. Tente novamente.')
+      setDeleteError('Erro ao excluir a categoria. Tente novamente.')
+      setTimeout(() => setDeleteError(''), 4000)
     }
   }
 
@@ -156,6 +158,13 @@ export function CategoriasClient({
           <Plus className="w-4 h-4" /> Nova categoria
         </button>
       </div>
+
+      {/* Erro de exclusão */}
+      {deleteError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+          {deleteError}
+        </div>
+      )}
 
       <p className="text-sm text-gray-400 mb-5">
         A ordem aqui define a ordem no cardápio público. Use as setas para reordenar.

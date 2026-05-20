@@ -12,6 +12,7 @@ const sessionSchema = z.object({
     quantity: z.number().int().positive(),
   })).min(1),
   total: z.number().positive(),
+  notes: z.string().max(500).optional().nullable(),
 })
 
 export async function POST(request: Request) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
 
-    const { restaurantId, items, total } = parsed.data
+    const { restaurantId, items, total, notes } = parsed.data
 
     const supabase = await createClient()
 
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       .from('qr_sessions')
       .insert({
         restaurant_id: restaurantId,
-        order_data: { items, total },
+        order_data: { items, total, notes: notes ?? null },
       })
       .select('id')
       .single()

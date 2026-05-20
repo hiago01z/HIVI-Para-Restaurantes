@@ -21,6 +21,7 @@ type DeliveryForm = {
   phone: string
   payment: string
   change_for: string
+  notes: string
 }
 
 export function PedidoClient({ slug, restaurantId }: Props) {
@@ -31,10 +32,12 @@ export function PedidoClient({ slug, restaurantId }: Props) {
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
   const [qrConfirmed, setQrConfirmed] = useState(false)
   const [qrLoading, setQrLoading] = useState(false)
+  const [qrError, setQrError] = useState('')
+  const [qrNotes, setQrNotes] = useState('')
   const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [deliveryError, setDeliveryError] = useState('')
   const [form, setForm] = useState<DeliveryForm>({
-    name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '',
+    name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '', notes: '',
   })
 
   // Escuta a sessão QR em tempo real — quando o garçom confirmar, mostra sucesso e limpa o carrinho
@@ -87,14 +90,16 @@ export function PedidoClient({ slug, restaurantId }: Props) {
             quantity: i.quantity,
           })),
           total: totalPrice,
+          notes: qrNotes.trim() || null,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Erro')
       setQrSessionId(data.sessionId)
+      setQrError('')
       setModal('qr')
     } catch {
-      alert('Erro ao gerar QR Code. Tente novamente.')
+      setQrError('Erro ao gerar QR Code. Tente novamente.')
     } finally {
       setQrLoading(false)
     }
@@ -120,6 +125,7 @@ export function PedidoClient({ slug, restaurantId }: Props) {
           address: `${form.address}${form.reference ? ' — ' + form.reference : ''}`,
           payment_method: form.payment,
           change_for: form.payment === 'dinheiro' && form.change_for ? parseFloat(form.change_for) : null,
+          notes: form.notes.trim() || null,
           total: totalPrice,
           items: items.map((i) => ({
             product_id: i.id,
@@ -229,6 +235,18 @@ export function PedidoClient({ slug, restaurantId }: Props) {
 
           {/* Ações */}
           <div className="px-4 mt-6 space-y-3">
+            {/* Observações do pedido (para mesa via QR) */}
+            <DeliveryTextarea
+              label="Observações (opcional)"
+              value={qrNotes}
+              onChange={setQrNotes}
+              placeholder="Ex: sem cebola, bem passado, sem glúten..."
+            />
+            {qrError && (
+              <div className="rounded-2xl px-4 py-3 text-sm text-center" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
+                {qrError}
+              </div>
+            )}
             <button
               onClick={handleGerarQR}
               disabled={qrLoading}
@@ -355,6 +373,12 @@ export function PedidoClient({ slug, restaurantId }: Props) {
                 placeholder="(11) 99999-9999"
                 type="tel"
               />
+              <DeliveryTextarea
+                label="Observações"
+                value={form.notes}
+                onChange={(v) => setForm({ ...form, notes: v })}
+                placeholder="Ex: sem cebola, ponto da carne, etc."
+              />
 
               {/* Forma de pagamento */}
               <div>
@@ -445,6 +469,38 @@ function DeliveryField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
+        style={{
+          background: 'var(--menu-card)',
+          border: '1px solid rgba(128,128,128,0.20)',
+          color: 'var(--menu-text)',
+          // @ts-expect-error css variable
+          '--tw-ring-color': 'var(--menu-primary)',
+        }}
+      />
+    </div>
+  )
+}
+
+function DeliveryTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  return (
+    <div>
+      <label className="block text-sm mb-1.5" style={{ color: 'var(--menu-text-muted)' }}>{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={2}
+        className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 resize-none"
         style={{
           background: 'var(--menu-card)',
           border: '1px solid rgba(128,128,128,0.20)',

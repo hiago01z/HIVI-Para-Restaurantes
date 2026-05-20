@@ -25,6 +25,7 @@ type Order = {
   table_number: string | null
   payment_method: string | null
   change_for: number | null
+  notes: string | null
   total: number
   created_at: string
   order_items: OrderItem[]
@@ -134,7 +135,7 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
             .from('orders')
             .select(`
               id, order_number, type, status, customer_name, customer_phone,
-              address, table_number, payment_method, change_for, total, created_at,
+              address, table_number, payment_method, change_for, notes, total, created_at,
               order_items (id, product_name, product_price, quantity)
             `)
             .eq('id', payload.new.id)
@@ -333,6 +334,11 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
 
                     {order.type === 'table' && order.table_number && (
                       <p className="text-sm text-gray-600"><span className="font-medium">Mesa:</span> {order.table_number}</p>
+                    )}
+                    {order.notes && (
+                      <p className="text-xs text-gray-500 mt-1 italic bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-1.5">
+                        💬 {order.notes}
+                      </p>
                     )}
                   </div>
 

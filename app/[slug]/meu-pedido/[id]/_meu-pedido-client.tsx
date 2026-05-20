@@ -19,6 +19,7 @@ type Order = {
   type: string
   status: string
   customer_name: string | null
+  notes: string | null
   total: number
   created_at: string
   order_items: OrderItem[]
@@ -181,6 +182,14 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
             <span>{formatPrice(initialOrder.total)}</span>
           </div>
         </div>
+
+        {/* Observações */}
+        {initialOrder.notes && (
+          <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--menu-card)' }}>
+            <p className="text-xs mb-1" style={{ color: 'var(--menu-text-muted)' }}>Observações</p>
+            <p className="text-sm italic" style={{ color: 'var(--menu-text)' }}>{initialOrder.notes}</p>
+          </div>
+        )}
 
         {/* Info do cliente */}
         {initialOrder.customer_name && (

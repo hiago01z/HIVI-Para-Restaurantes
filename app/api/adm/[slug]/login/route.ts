@@ -57,24 +57,26 @@ export async function POST(
 
   const token = await createAdmToken(slug)
   const cookieName = admCookieName(slug)
+  const secure = process.env.NODE_ENV === 'production'
+  const secureFlag = secure ? '; Secure' : ''
 
   const response = NextResponse.json({ ok: true })
-  // Define o cookie válido em path '/'
-  response.cookies.set(cookieName, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: COOKIE_MAX_AGE,
-    path: '/',
-  })
-  // Expira o cookie antigo (que estava em path /${slug}/adm) para evitar conflito
-  response.cookies.set(cookieName, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: `/${slug}/adm`,
-  })
+
+  // Usar headers.append para que os dois Set-Cookie coexistam.
+  // response.cookies.set() usa um Map<name> internamente — chamar duas vezes
+  // com o mesmo nome sobrescreve o primeiro, então usamos a API de baixo nível.
+
+  // 1) Cookie válido em path '/' (sessão real)
+  response.headers.append(
+    'Set-Cookie',
+    `${cookieName}=${token}; Path=/; HttpOnly; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`
+  )
+  // 2) Expira cookie legado que podia estar em path '/${slug}/adm'
+  //    (versões anteriores setavam com path mais específico)
+  response.headers.append(
+    'Set-Cookie',
+    `${cookieName}=; Path=/${slug}/adm; HttpOnly; Max-Age=0; SameSite=Lax${secureFlag}`
+  )
 
   return response
 }

@@ -74,6 +74,12 @@
 | 2026-05-20 | Fix: migration 005 — constraint de role em restaurant_users corrigida ('admin'/'waiter' → 'manager'/'staff') — invite de funcionários falhava silenciosamente |
 | 2026-05-20 | Fix: migration 006 — order_id em qr_sessions (coluna ausente quebrava fluxo QR de mesa), public_read_active policy corrigida para is_active IS NOT FALSE, políticas de escrita de categorias/produtos/temas corrigidas para role 'manager' |
 | 2026-05-20 | Fix: ADM layout e todas as páginas ADM usam service role para lookup do restaurante — garante acesso mesmo com is_active=false e para staff sem sessão Supabase |
+| 2026-05-20 | Fix: login ADM não entrava — `response.cookies.set()` sobrescrevia cookie válido com cookie expirado (mesmo nome, paths diferentes). Fix: `response.headers.append('Set-Cookie', ...)` em login e logout routes |
+| 2026-05-20 | Feature: CSS vars aplicadas em todas as páginas públicas (categoria, pedido, meu-pedido, sort buttons, featured-carousel, product-card) — 4 temas agora renderizam corretamente |
+| 2026-05-20 | Feature: QR scanner real na aba "Ler QR Code" do ADM pedidos (jsQR + canvas, iOS/Android, fallback por foto) |
+| 2026-05-20 | Feature: banners de feedback pós-Stripe — sucesso em /conta?success=1 e cancelamento em /criar-loja?cancelled=1 |
+| 2026-05-20 | Fix: todas as chamadas alert() substituídas por estados de erro inline (pratos, categorias, funcionários, pedido, conta-actions) |
+| 2026-05-20 | Feature: campo "Observações" em pedidos de entrega e mesa (QR) — armazenado na coluna notes já existente; exibido no ADM com badge amarelo e na tela meu-pedido do cliente |
 
 ---
 
@@ -94,8 +100,8 @@
 - [x] Supabase: Site URL e Redirect URLs atualizados para hivi-web.com
 - [x] Stripe webhook atualizado para hivi-web.com/api/stripe/webhook
 - [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
-- [ ] **CRÍTICO**: Executar migration 005 no Supabase (SQL Editor): `supabase/migrations/005_label_columns_and_role_fix.sql` — sem isso, label customization não persiste e convite de funcionários falha
-- [ ] **CRÍTICO**: Executar migration 006 no Supabase (SQL Editor): `supabase/migrations/006_qr_session_order_id_and_rls_fixes.sql` — sem isso, fluxo QR code de mesa quebrado e cardápio de restaurantes novos retorna 404
+- [x] **EXECUTADO 2026-05-20**: Migration 005 — colunas label_* em restaurant_themes + constraint de role em restaurant_users
+- [x] **EXECUTADO 2026-05-20**: Migration 006 — order_id em qr_sessions + public_read_active policy (IS NOT FALSE) + políticas de escrita para role 'manager'
 
 ### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
@@ -103,6 +109,7 @@
 - [ ] Testar pedido de entrega + WhatsApp automático
 - [ ] Testar upload de imagens (logo, banner, categorias, pratos)
 - [ ] Responsividade mobile em todas as telas (375px — testes reais no dispositivo)
+- [x] Notificação WhatsApp de novo pedido inclui observações (obs: ...) quando presentes
 
 ---
 
@@ -113,6 +120,7 @@
 | 2026-05-19 | Callback OAuth apontava para /api/auth/callback em vez de /auth/callback | ✅ Corrigido |
 | 2026-05-19 | Webhook não inseria dono em restaurant_users → bloqueava acesso ao ADM | ✅ Corrigido |
 | 2026-05-19 | Migration SQL não havia sido executada → tabelas não existiam | ✅ Corrigido |
+| 2026-05-20 | Login ADM não entrava: `response.cookies.set()` chamado duas vezes com o mesmo nome sobrescreve (Map interno por nome) — cookie válido era descartado. Fix: `response.headers.append('Set-Cookie', …)` para que ambos os Set-Cookie coexistam. | ✅ Corrigido |
 
 ---
 

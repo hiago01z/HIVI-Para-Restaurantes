@@ -42,6 +42,7 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
   const [inviteError, setInviteError] = useState('')
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [removeError, setRemoveError] = useState('')
 
   async function handleInvite() {
     if (!inviteEmail) return
@@ -97,10 +98,12 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== memberId))
       } else {
-        alert('Erro ao remover membro. Tente novamente.')
+        setRemoveError('Erro ao remover membro. Tente novamente.')
+        setTimeout(() => setRemoveError(''), 4000)
       }
     } catch {
-      alert('Erro ao remover membro. Tente novamente.')
+      setRemoveError('Erro de conexão. Tente novamente.')
+      setTimeout(() => setRemoveError(''), 4000)
     } finally {
       setRemovingId(null)
     }
@@ -122,6 +125,13 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
           Convidar
         </button>
       </div>
+
+      {/* Erro ao remover membro */}
+      {removeError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+          {removeError}
+        </div>
+      )}
 
       {/* Formulário de convite */}
       {showInvite && (

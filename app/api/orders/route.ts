@@ -86,7 +86,8 @@ export async function POST(request: Request) {
       if (restaurant?.whatsapp_number) {
         const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         const customerName = (order.customer_name as string | null) ?? 'Cliente'
-        const message = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}\n\nAcesse o painel para ver os detalhes e confirmar.`
+        const notesLine = parsed.data.notes ? `\nObs: ${parsed.data.notes}` : ''
+        const message = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}${notesLine}\n\nAcesse o painel para ver os detalhes e confirmar.`
         // Fire-and-forget: não bloqueia a resposta ao cliente
         sendWhatsAppMessage(restaurant.whatsapp_number, message).catch(() => {})
       }

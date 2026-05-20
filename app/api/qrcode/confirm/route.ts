@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     const orderData = session.order_data as {
       items: Array<{ product_id: string; product_name: string; product_price: number; quantity: number }>
       total: number
+      notes?: string | null
     }
 
     const { data: order, error: orderError } = await supabase
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
         customer_name: parsed.data.customer_name,
         table_number: parsed.data.table_number,
         total: orderData.total,
+        notes: orderData.notes ?? null,
       })
       .select()
       .single()

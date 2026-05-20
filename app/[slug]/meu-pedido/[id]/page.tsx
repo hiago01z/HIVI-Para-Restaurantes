@@ -14,6 +14,7 @@ export default async function MeuPedidoPage({ params }: { params: Promise<{ slug
       type,
       status,
       customer_name,
+      notes,
       total,
       created_at,
       restaurant_id,
