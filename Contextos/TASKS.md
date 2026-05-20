@@ -70,6 +70,8 @@
 | 2026-05-20 | Security: open redirect //evil.com via ?next= no Google OAuth e auth callback corrigido |
 | 2026-05-20 | Fix: arquivos Dropbox "Cópia em conflito" em app/[slug]/adm/pedidos/ causando erros TypeScript — removidos |
 | 2026-05-20 | Fix: pedido órfão em /api/orders quando order_items insert falha — cleanup adicionado (igual ao qrcode/confirm) |
+| 2026-05-20 | Fix: migration 005 — colunas label_* em restaurant_themes ausentes nas migrations (label customization não persistia) |
+| 2026-05-20 | Fix: migration 005 — constraint de role em restaurant_users corrigida ('admin'/'waiter' → 'manager'/'staff') — invite de funcionários falhava silenciosamente |
 
 ---
 
@@ -90,6 +92,7 @@
 - [x] Supabase: Site URL e Redirect URLs atualizados para hivi-web.com
 - [x] Stripe webhook atualizado para hivi-web.com/api/stripe/webhook
 - [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
+- [ ] **CRÍTICO**: Executar migration 005 no Supabase (SQL Editor): `supabase/migrations/005_label_columns_and_role_fix.sql` — sem isso, label customization não persiste e convite de funcionários falha
 
 ### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
