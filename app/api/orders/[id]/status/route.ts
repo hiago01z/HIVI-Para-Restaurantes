@@ -69,9 +69,11 @@ export async function PATCH(
     // Disparar WhatsApp apenas para pedidos de entrega (fire-and-forget — não bloqueia a resposta)
     if (order.type === 'delivery' && order.customer_phone && ORDER_STATUS_MESSAGES[parsed.data.status]) {
       const restaurantName = (order.restaurants as { name: string })?.name ?? 'Restaurante'
-      const message = `*${restaurantName}*\n\nPedido #${order.order_number}\n\n${ORDER_STATUS_MESSAGES[parsed.data.status]}`
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+      const trackingUrl = `${appUrl}/${slug}/meu-pedido/${id}`
+      const message = `*${restaurantName}*\n\nPedido #${order.order_number}\n\n${ORDER_STATUS_MESSAGES[parsed.data.status]}\n\n📍 Acompanhe seu pedido:\n${trackingUrl}`
 
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/whatsapp/notify`, {
+      fetch(`${appUrl}/api/whatsapp/notify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

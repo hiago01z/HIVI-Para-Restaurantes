@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Upload, Download, Instagram, Phone, Check } from 'lucide-react'
+import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
 
@@ -110,6 +110,9 @@ export function ConfiguracoesClient({
   const [socialSaving, setSocialSaving] = useState(false)
   const [socialSaved, setSocialSaved] = useState(false)
   const [socialError, setSocialError] = useState('')
+  const [wppTestLoading, setWppTestLoading] = useState(false)
+  const [wppTestResult, setWppTestResult] = useState<'sent' | 'error' | null>(null)
+  const [wppTestError, setWppTestError] = useState('')
 
   // Tema
   const [theme, setTheme] = useState<Theme>(initialTheme)
@@ -217,6 +220,35 @@ export function ConfiguracoesClient({
       setSocialError('Erro de conexão. Tente novamente.')
     } finally {
       setSocialSaving(false)
+    }
+  }
+
+  async function handleTestWhatsApp() {
+    if (!whatsapp.trim()) {
+      setSocialError('Configure e salve o número de WhatsApp antes de testar.')
+      return
+    }
+    setWppTestLoading(true)
+    setWppTestResult(null)
+    setWppTestError('')
+    try {
+      const res = await fetch('/api/whatsapp/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: restaurant.slug, restaurantId: restaurant.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setWppTestResult('sent')
+      } else {
+        setWppTestResult('error')
+        setWppTestError(data.error ?? 'Falha ao enviar.')
+      }
+    } catch {
+      setWppTestResult('error')
+      setWppTestError('Erro de conexão.')
+    } finally {
+      setWppTestLoading(false)
     }
   }
 
@@ -404,6 +436,31 @@ export function ConfiguracoesClient({
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
             />
             <p className="text-xs text-gray-400 mt-1">Formato: 55 + DDD + número. Ex: 5511999999999</p>
+            {/* Botão de teste de notificação */}
+            <div className="flex items-center gap-3 mt-3 flex-wrap">
+              <button
+                type="button"
+                onClick={handleTestWhatsApp}
+                disabled={wppTestLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {wppTestLoading
+                  ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  : <Send className="w-4 h-4 text-green-500" />
+                }
+                Testar notificação
+              </button>
+              {wppTestResult === 'sent' && (
+                <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                  <Check className="w-3.5 h-3.5" /> Mensagem enviada para o número configurado!
+                </span>
+              )}
+              {wppTestResult === 'error' && (
+                <span className="flex items-center gap-1 text-xs text-red-500 font-medium">
+                  <AlertCircle className="w-3.5 h-3.5" /> {wppTestError}
+                </span>
+              )}
+            </div>
           </div>
           {socialError && (
             <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{socialError}</p>

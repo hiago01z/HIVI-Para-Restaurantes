@@ -75,21 +75,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
     }
 
-    // Notificar o restaurante via WhatsApp quando um novo pedido de entrega chegar
+    // Notificar restaurante + cliente via WhatsApp quando novo pedido de entrega chegar
     if (order.type === 'delivery') {
       const { data: restaurant } = await supabase
         .from('restaurants')
-        .select('name, whatsapp_number')
+        .select('name, whatsapp_number, slug')
         .eq('id', restaurantId)
         .single()
 
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+
+      // Notificação ao restaurante (aviso de novo pedido)
       if (restaurant?.whatsapp_number) {
         const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         const customerName = (order.customer_name as string | null) ?? 'Cliente'
         const notesLine = parsed.data.notes ? `\nObs: ${parsed.data.notes}` : ''
-        const message = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}${notesLine}\n\nAcesse o painel para ver os detalhes e confirmar.`
-        // Fire-and-forget: não bloqueia a resposta ao cliente
-        sendWhatsAppMessage(restaurant.whatsapp_number, message).catch(() => {})
+        const restaurantMsg = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}${notesLine}\n\nAcesse o painel para ver os detalhes e confirmar.`
+        sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg).catch(() => {})
+      }
+
+      // Notificação ao cliente com link de acompanhamento em tempo real
+      const customerPhone = parsed.data.customer_phone
+      if (customerPhone && restaurant?.slug) {
+        const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
+        const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        const itemsList = items.map((i) => `• ${i.quantity}x ${i.product_name}`).join('\n')
+        const clientMsg = `*${restaurant.name}*\n\n✅ Pedido #${order.order_number} recebido!\n\n${itemsList}\n\nTotal: ${totalFormatted}\n\n📍 Acompanhe seu pedido em tempo real:\n${trackingUrl}`
+        sendWhatsAppMessage(customerPhone, clientMsg).catch(() => {})
       }
     }
 
