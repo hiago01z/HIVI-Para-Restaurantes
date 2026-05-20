@@ -24,9 +24,10 @@ export default async function ContaPage({
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
-  const lojas = (restaurantes ?? []).map((l) => ({
+  // Não expõe adm_password_hash ao client — extrai-o antes do spread
+  const lojas = (restaurantes ?? []).map(({ adm_password_hash, ...l }) => ({
     ...l,
-    has_adm_password: !!l.adm_password_hash,
+    has_adm_password: !!adm_password_hash,
   }))
   const temStripe = lojas.some((l) => l.stripe_customer_id)
 
