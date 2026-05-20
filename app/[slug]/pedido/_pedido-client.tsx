@@ -53,10 +53,14 @@ export function PedidoClient({ slug, restaurantId }: Props) {
         (payload) => {
           if (payload.new?.confirmed) {
             setQrConfirmed(true)
+            const orderId = payload.new.order_id
+            // Persiste o pedido no localStorage para acesso após fechar o navegador
+            if (orderId) {
+              try { localStorage.setItem(`hivi-active-order-${slug}`, orderId) } catch {}
+            }
             // Após 2.5s: limpa carrinho e redireciona para acompanhamento
             setTimeout(() => {
               clearCart()
-              const orderId = payload.new.order_id
               if (orderId) {
                 router.push(`/${slug}/meu-pedido/${orderId}`)
               } else {
@@ -137,6 +141,8 @@ export function PedidoClient({ slug, restaurantId }: Props) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Erro ao criar pedido.')
+      // Persiste o pedido no localStorage para acesso após fechar o navegador
+      try { localStorage.setItem(`hivi-active-order-${slug}`, data.orderId) } catch {}
       clearCart()
       router.push(`/${slug}/meu-pedido/${data.orderId}`)
     } catch (err: unknown) {

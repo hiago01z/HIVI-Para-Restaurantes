@@ -52,11 +52,20 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; co
 
 const STATUS_STEPS_DELIVERY = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered']
 const STATUS_STEPS_TABLE    = ['pending', 'confirmed', 'preparing', 'ready', 'delivered']
+const TERMINAL_STATUSES     = ['delivered', 'cancelled']
 
 export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props) {
   const [status, setStatus] = useState(initialOrder.status)
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
+
+  // Limpa o localStorage quando o pedido já está finalizado ao abrir a página
+  useEffect(() => {
+    if (TERMINAL_STATUSES.includes(initialOrder.status)) {
+      try { localStorage.removeItem(`hivi-active-order-${slug}`) } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function formatPrice(v: number) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -76,7 +85,11 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
         },
         (payload) => {
           if (payload.new?.status) {
-            setStatus(payload.new.status as string)
+            const newStatus = payload.new.status as string
+            setStatus(newStatus)
+            if (TERMINAL_STATUSES.includes(newStatus)) {
+              try { localStorage.removeItem(`hivi-active-order-${slug}`) } catch {}
+            }
           }
         }
       )

@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { PreviewListener } from './_components/preview-listener'
 import { PausedPage } from './_components/paused-page'
+import { ActiveOrderBanner } from './_components/active-order-banner'
 import { getContrastColor, computeLabelShadow } from '@/lib/color-utils'
 
 export async function generateMetadata(
@@ -154,6 +155,7 @@ export default async function SlugLayout({
       <PreviewListener />
       <CartProvider slug={slug}>
         {children}
+        <ActiveOrderBanner slug={slug} />
       </CartProvider>
     </div>
   )
