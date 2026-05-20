@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   ShoppingBag, UtensilsCrossed, LayoutGrid, Settings, Users,
@@ -26,7 +26,6 @@ const navItems = [
 
 export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00' }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   async function handleSignout() {
