@@ -58,12 +58,21 @@ export async function POST(
   const cookieName = admCookieName(slug)
 
   const response = NextResponse.json({ ok: true })
+  // Define o cookie válido em path '/'
   response.cookies.set(cookieName, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
+  })
+  // Expira o cookie antigo (que estava em path /${slug}/adm) para evitar conflito
+  response.cookies.set(cookieName, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: `/${slug}/adm`,
   })
 
   return response

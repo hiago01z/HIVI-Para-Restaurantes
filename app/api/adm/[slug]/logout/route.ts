@@ -6,13 +6,16 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
-  const response = NextResponse.json({ ok: true })
-  response.cookies.set(admCookieName(slug), '', {
+  const cookieName = admCookieName(slug)
+  const cookieOpts = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     maxAge: 0,
-    path: '/',
-  })
+  }
+  const response = NextResponse.json({ ok: true })
+  // Limpa o cookie em ambos os paths (path antigo e novo) para garantir logout completo
+  response.cookies.set(cookieName, '', { ...cookieOpts, path: '/' })
+  response.cookies.set(cookieName, '', { ...cookieOpts, path: `/${slug}/adm` })
   return response
 }
