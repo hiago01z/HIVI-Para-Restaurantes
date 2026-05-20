@@ -23,7 +23,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
-    .select('primary_color, secondary_color, background_color, font_family, banner_url, text_color, icon_color, label_font, label_color, label_effect, label_stroke_color, label_stroke_size, label_offset_distance, label_offset_angle')
+    .select('primary_color, secondary_color, background_color, font_family, font_size_base, banner_url, text_color, icon_color, label_font, label_color, label_effect, label_stroke_color, label_stroke_size, label_offset_distance, label_offset_angle')
     .eq('restaurant_id', restaurant.id)
     .single()
 
@@ -48,6 +48,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         secondary_color:      theme?.secondary_color      ?? '#1A0A00',
         background_color:     theme?.background_color     ?? '#2C1A0E',
         font_family:          theme?.font_family          ?? 'serif',
+        font_size_base:       theme?.font_size_base       ?? '16px',
         banner_url:           theme?.banner_url           ?? null,
         text_color:           theme?.text_color           ?? '#FFFFFF',
         icon_color:           theme?.icon_color           ?? '#FF6B00',

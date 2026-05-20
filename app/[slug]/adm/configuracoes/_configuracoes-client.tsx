@@ -21,6 +21,7 @@ type Theme = {
   secondary_color: string
   background_color: string
   font_family: string
+  font_size_base: string
   banner_url: string | null
   text_color: string
   icon_color: string
@@ -231,6 +232,7 @@ export function ConfiguracoesClient({
           secondary_color:     theme.secondary_color,
           background_color:    theme.background_color,
           font_family:         theme.font_family,
+          font_size_base:      theme.font_size_base,
           banner_url:          theme.banner_url,
           text_color:          theme.text_color,
           icon_color:          theme.icon_color,
@@ -565,6 +567,32 @@ export function ConfiguracoesClient({
               <option key={f.value} value={f.value}>{f.label}</option>
             ))}
           </select>
+        </div>
+
+        {/* Tamanho da fonte */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Tamanho da fonte</label>
+          <div className="flex gap-2">
+            {[
+              { value: '14px', label: 'Pequena' },
+              { value: '16px', label: 'Normal' },
+              { value: '18px', label: 'Grande' },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTheme((t) => ({ ...t, font_size_base: opt.value }))}
+                className="flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                style={theme.font_size_base === opt.value ? {
+                  borderColor: 'var(--adm-primary)',
+                  color: 'var(--adm-primary)',
+                  background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── Texto sobre imagens ── */}
