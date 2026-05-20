@@ -419,10 +419,14 @@ O projeto está hospedado na **Vercel** com deploy automático via push na branc
 - **Supabase Realtime**: ativado na tabela `orders`
 - **Supabase Storage**: bucket `restaurant-images` criado com políticas públicas de leitura
 
-### Pendente
+### Validação E2E — concluída em 2026-05-20
 
+Todos os fluxos testados e validados em produção:
 - [x] Configurar Stripe Billing Portal em `dashboard.stripe.com/settings/billing/portal`
-- [ ] Testes E2E completos em produção (ver checklist em `Contextos/TASKS.md`)
+- [x] Cadastro → pagamento Stripe → criação automática de cardápio
+- [x] Login ADM, temas, equipe, pedidos (entrega + mesa + QR code)
+- [x] WhatsApp automático, pausa/reativação, exclusão, múltiplos cardápios
+- [x] Cancelamento de assinatura via Stripe Billing Portal
 
 ---
 

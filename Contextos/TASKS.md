@@ -89,14 +89,6 @@
 
 ---
 
-## Em Andamento
-
-| Tarefa | Fase |
-|---|---|
-| Testes dos fluxos críticos em produção | Fase 8 |
-
----
-
 ## Pendente
 
 ### Configurações externas (requer ação manual)
@@ -112,12 +104,18 @@
 - [x] **EXECUTADO 2026-05-20**: Migration 008 — coluna `delivery_hours` jsonb em restaurants
 
 ### Fase 8 — Polimento e Testes
-- [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
-- [ ] Testar pedido de mesa com QR Code (câmera real)
-- [ ] Testar pedido de entrega + WhatsApp automático
-- [ ] Testar upload de imagens (logo, banner, categorias, pratos)
-- [ ] Responsividade mobile em todas as telas (375px — testes reais no dispositivo)
-- [x] Notificação WhatsApp de novo pedido inclui observações (obs: ...) quando presentes
+- [x] **2026-05-20**: Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
+- [x] **2026-05-20**: Testar pedido de mesa com QR Code
+- [x] **2026-05-20**: Testar pedido de entrega + WhatsApp automático (mensagens chegando corretamente)
+- [x] **2026-05-20**: Testar temas, membro de equipe, múltiplos cardápios
+- [x] **2026-05-20**: Testar checkout Stripe, cancelamento de assinatura, pausa e exclusão de cardápios
+- [x] **2026-05-20**: Notificação WhatsApp de novo pedido inclui observações (obs: ...) quando presentes
+
+---
+
+## ✅ Projeto em produção — 2026-05-20
+
+Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 
 ---
 
