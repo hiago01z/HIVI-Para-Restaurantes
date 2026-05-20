@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
-import { sendWhatsAppMessage } from '@/lib/ultramsg'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -28,6 +27,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
+    // Verifica variáveis de ambiente
+    const instanceId = process.env.ULTRAMSG_INSTANCE_ID
+    const apiToken = process.env.ULTRAMSG_TOKEN
+    if (!instanceId || !apiToken) {
+      return NextResponse.json(
+        { error: 'Credenciais UltraMsg não configuradas no servidor (ULTRAMSG_INSTANCE_ID / ULTRAMSG_TOKEN).' },
+        { status: 500 }
+      )
+    }
+
     // Busca o número de WhatsApp do restaurante
     const supabase = await createClient()
     const { data: restaurant } = await supabase
@@ -49,17 +58,34 @@ export async function POST(request: Request) {
       `Você receberá mensagens assim quando chegar um novo pedido de entrega para *${restaurant.name}*.\n\n` +
       `_Mensagem de teste enviada pelo painel HIVI._`
 
-    const sent = await sendWhatsAppMessage(restaurant.whatsapp_number, message)
+    // Chama o UltraMsg diretamente para capturar o erro exato
+    const umRes = await fetch(
+      `https://api.ultramsg.com/${instanceId}/messages/chat`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          token: apiToken,
+          to: restaurant.whatsapp_number,
+          body: message,
+        }),
+      }
+    )
 
-    if (!sent) {
+    const umData = await umRes.json().catch(() => ({}))
+
+    if (!umRes.ok || umData?.error) {
+      const detail = umData?.error ?? umData?.message ?? `HTTP ${umRes.status}`
       return NextResponse.json(
-        { error: 'Falha ao enviar. Verifique as credenciais UltraMsg (ULTRAMSG_INSTANCE_ID e ULTRAMSG_TOKEN).' },
+        { error: `UltraMsg: ${detail}` },
         { status: 500 }
       )
     }
 
     return NextResponse.json({ sent: true })
-  } catch {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido'
+    return NextResponse.json({ error: `Erro interno: ${message}` }, { status: 500 })
   }
 }
+
