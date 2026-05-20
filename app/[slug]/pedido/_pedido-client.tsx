@@ -514,7 +514,7 @@ export function PedidoClient({ slug, restaurantId }: Props) {
                       const d = phoneDigitsOnly(e.target.value)
                       setForm({ ...form, phone: formatPhoneDisplay(d) })
                     }}
-                    placeholder="(95) 98415-0835"
+                    placeholder="(11) 99999-9999"
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
                     style={{
                       background: 'var(--menu-card)',
