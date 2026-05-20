@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -34,24 +33,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // ── Proteger rotas ADM (/[slug]/adm/**) ───────────────────
-  const isAdmRoute = pathParts.length >= 2 && pathParts[1] === 'adm'
-  const isAdmLogin = pathParts[2] === 'login'
-  const isAdmApiLogin = url.pathname.startsWith('/api/adm/')
-
-  if (isAdmRoute && !isAdmLogin && !isAdmApiLogin) {
-    const slug = pathParts[0]
-    const cookieName = admCookieName(slug)
-    const token = request.cookies.get(cookieName)?.value
-
-    const valid = token ? await verifyAdmToken(slug, token) : false
-
-    if (!valid) {
-      const loginUrl = new URL(`/${slug}/adm/login`, request.url)
-      loginUrl.searchParams.set('redirect', url.pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-  }
+  // Nota: a proteção das rotas ADM (/[slug]/adm/**) é feita no layout.tsx
+  // (Node.js runtime), não aqui no middleware (Edge Runtime), para garantir
+  // que o mesmo runtime seja usado na criação e verificação do token HMAC.
 
   // Injeta pathname nos headers para que layouts server-side possam lê-lo
   supabaseResponse.headers.set('x-pathname', url.pathname)

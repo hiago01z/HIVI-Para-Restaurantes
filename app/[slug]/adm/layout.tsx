@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { cookies, headers } from 'next/headers'
 import { AdmNav } from './_components/adm-nav'
 import { getContrastColor } from '@/lib/color-utils'
+import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
 
 // Força busca no servidor a cada navegação — impede que o Next.js
 // sirva páginas ADM do cache client-side após logout.
@@ -15,6 +17,24 @@ export default async function AdmLayout({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+
+  // ── Proteção ADM (Node.js runtime — mesmo runtime que o login API) ──
+  // Fica aqui e não no middleware para garantir que o HMAC usa o mesmo
+  // process.env.SUPABASE_SERVICE_ROLE_KEY tanto na criação quanto na
+  // verificação do token.
+  const pathname = (await headers()).get('x-pathname') ?? ''
+  const isLoginPage = pathname.endsWith('/adm/login')
+
+  if (!isLoginPage) {
+    const cookieStore = await cookies()
+    const token = cookieStore.get(admCookieName(slug))?.value
+    const valid = token ? await verifyAdmToken(slug, token) : false
+    if (!valid) {
+      redirect(`/${slug}/adm/login?redirect=${encodeURIComponent(pathname || `/${slug}/adm/pedidos`)}`)
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────
+
   const supabase = await createClient()
 
   const { data: restaurant } = await supabase
