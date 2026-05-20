@@ -72,7 +72,10 @@ export async function PATCH(
 
       await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/whatsapp/notify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
+        },
         body: JSON.stringify({ phone: order.customer_phone, message }),
       })
     }
