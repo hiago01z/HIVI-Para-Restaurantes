@@ -121,7 +121,10 @@ export function PedidosClient({
   const supabase = supabaseRef.current
 
   // ── Som de notificação ─────────────────────────────────────────────────────
+  // soundOnRef é lido dentro de callbacks do Realtime (closures antigas).
+  // useState controla apenas o visual do botão.
   const [soundOn, setSoundOn] = useState(false)
+  const soundOnRef  = useRef(false)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
   function playBeeps(ctx: AudioContext) {
@@ -141,17 +144,18 @@ export function PedidosClient({
 
   function toggleSound() {
     try {
-      if (soundOn) {
+      if (soundOnRef.current) {
+        soundOnRef.current = false
         setSoundOn(false)
         return
       }
-      // Cria/retoma o AudioContext durante um gesto do usuário (clique no botão)
       if (!audioCtxRef.current) {
         audioCtxRef.current = new AudioContext()
       }
       const ctx = audioCtxRef.current
       ctx.resume().then(() => {
-        playBeeps(ctx)   // toca um beep de confirmação ao ativar
+        playBeeps(ctx)          // beep de confirmação ao ativar
+        soundOnRef.current = true
         setSoundOn(true)
       })
     } catch {
@@ -160,10 +164,10 @@ export function PedidosClient({
   }
 
   function playNewOrderSound() {
-    if (!soundOn || !audioCtxRef.current) return
+    // Usa ref — não sofre de stale closure nas callbacks do Realtime
+    if (!soundOnRef.current || !audioCtxRef.current) return
     try {
-      const ctx = audioCtxRef.current
-      ctx.resume().then(() => playBeeps(ctx))
+      audioCtxRef.current.resume().then(() => playBeeps(audioCtxRef.current!))
     } catch {
       // ignore
     }
