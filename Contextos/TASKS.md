@@ -105,7 +105,7 @@
 - [x] Domínio hivi-web.com conectado na Vercel
 - [x] Supabase: Site URL e Redirect URLs atualizados para hivi-web.com
 - [x] Stripe webhook atualizado para hivi-web.com/api/stripe/webhook
-- [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
+- [x] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal — cancelamento no fim do período, troca de plano desativada, retorno para /conta
 - [x] **EXECUTADO 2026-05-20**: Migration 005 — colunas label_* em restaurant_themes + constraint de role em restaurant_users
 - [x] **EXECUTADO 2026-05-20**: Migration 006 — order_id em qr_sessions + public_read_active policy (IS NOT FALSE) + políticas de escrita para role 'manager'
 - [x] **EXECUTADO 2026-05-20**: Migration 007 — name + adm_password_hash em restaurant_users, status_changed_by em orders, constraint de role atualizada ('owner'|'manager'|'cook'|'waiter'|'delivery')

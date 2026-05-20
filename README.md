@@ -421,7 +421,7 @@ O projeto está hospedado na **Vercel** com deploy automático via push na branc
 
 ### Pendente
 
-- [ ] Configurar Stripe Billing Portal em `dashboard.stripe.com/settings/billing/portal`
+- [x] Configurar Stripe Billing Portal em `dashboard.stripe.com/settings/billing/portal`
 - [ ] Testes E2E completos em produção (ver checklist em `Contextos/TASKS.md`)
 
 ---
