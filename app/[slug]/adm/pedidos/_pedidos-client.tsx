@@ -123,9 +123,25 @@ export function PedidosClient({
   // ── Som de notificação ─────────────────────────────────────────────────────
   // soundOnRef é lido dentro de callbacks do Realtime (closures antigas).
   // useState controla apenas o visual do botão.
-  const [soundOn, setSoundOn] = useState(false)
-  const soundOnRef  = useRef(false)
+  const [soundOn, setSoundOn] = useState(true)
+  const soundOnRef  = useRef(true)
   const audioCtxRef = useRef<AudioContext | null>(null)
+
+  // Desbloqueia o AudioContext no primeiro gesto do usuário na página
+  useEffect(() => {
+    function unlock() {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext()
+      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume()
+      document.removeEventListener('click',      unlock)
+      document.removeEventListener('touchstart', unlock)
+    }
+    document.addEventListener('click',      unlock)
+    document.addEventListener('touchstart', unlock)
+    return () => {
+      document.removeEventListener('click',      unlock)
+      document.removeEventListener('touchstart', unlock)
+    }
+  }, [])
 
   function playBeeps(ctx: AudioContext) {
     ;[[880, 0, 0.15], [1100, 0.2, 0.15]].forEach(([freq, start, duration]) => {
