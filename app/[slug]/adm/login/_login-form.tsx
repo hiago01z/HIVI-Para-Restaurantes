@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 
 export function LoginForm({ slug }: { slug: string }) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? `/${slug}/adm/pedidos`
 
@@ -32,14 +31,16 @@ export function LoginForm({ slug }: { slug: string }) {
 
       if (!res.ok) {
         setErro(data.error ?? 'Senha incorreta')
+        setLoading(false)   // só reseta no erro — no sucesso o botão fica em "Verificando..."
         return
       }
 
-      router.push(redirect)
-      router.refresh()
+      // Hard redirect: garante que o cookie httpOnly vai junto no próximo request
+      // e limpa qualquer cache do router que pudesse servir páginas antigas.
+      // loading permanece true até a página descarregar — feedback correto para o usuário.
+      window.location.href = redirect
     } catch {
       setErro('Erro de conexão. Tente novamente.')
-    } finally {
       setLoading(false)
     }
   }
