@@ -57,9 +57,10 @@ export async function POST(request: Request) {
       orderData.items.map(item => ({ ...item, order_id: order.id }))
     )
 
+    // Salva order_id na sessão — o cliente escuta via Realtime e redireciona
     await supabase
       .from('qr_sessions')
-      .update({ confirmed: true, confirmed_at: new Date().toISOString() })
+      .update({ confirmed: true, confirmed_at: new Date().toISOString(), order_id: order.id })
       .eq('id', session.id)
 
     return NextResponse.json({ order }, { status: 201 })

@@ -4,9 +4,10 @@ import { useCart } from '@/contexts/cart-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import { createClient } from '@/lib/supabase/client'
 
 type Props = {
   slug: string
@@ -26,14 +27,48 @@ export function PedidoClient({ slug, restaurantId }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
 
-  const [modal, setModal] = useState<null | 'qr' | 'delivery'>( null)
+  const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
+  const [qrConfirmed, setQrConfirmed] = useState(false)
+  const [qrOrderId, setQrOrderId] = useState<string | null>(null)
   const [qrLoading, setQrLoading] = useState(false)
   const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [deliveryError, setDeliveryError] = useState('')
   const [form, setForm] = useState<DeliveryForm>({
     name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '',
   })
+
+  // Escuta a sessão QR em tempo real — quando o garçom confirmar, mostra sucesso e limpa o carrinho
+  useEffect(() => {
+    if (!qrSessionId) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`qr-session-${qrSessionId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'qr_sessions', filter: `id=eq.${qrSessionId}` },
+        (payload) => {
+          if (payload.new?.confirmed) {
+            setQrConfirmed(true)
+            setQrOrderId(payload.new.order_id ?? null)
+            // Após 2.5s: limpa carrinho e redireciona para acompanhamento
+            setTimeout(() => {
+              clearCart()
+              const orderId = payload.new.order_id
+              if (orderId) {
+                router.push(`/${slug}/meu-pedido/${orderId}`)
+              } else {
+                router.push(`/${slug}`)
+              }
+            }, 2500)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [qrSessionId, slug, clearCart, router])
 
   function formatPrice(v: number) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -221,32 +256,66 @@ export function PedidoClient({ slug, restaurantId }: Props) {
       {modal === 'qr' && qrSessionId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="w-full max-w-md rounded-t-3xl p-6 pb-10" style={{ background: 'var(--menu-bg)', borderTop: '1px solid rgba(128,128,128,0.15)' }}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>QR Code do pedido</h2>
-              <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-sm mb-6 text-center" style={{ color: 'var(--menu-text-muted)' }}>Mostre este QR code ao garçom para confirmar seu pedido</p>
-            <div className="flex justify-center mb-6">
-              <div className="bg-white p-4 rounded-2xl">
-                <QRCodeSVG value={qrUrl} size={200} />
-              </div>
-            </div>
-            <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
-              <p className="text-xs mb-2" style={{ color: 'var(--menu-text-muted)' }}>Itens do pedido</p>
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm py-1" style={{ color: 'var(--menu-text-muted)' }}>
-                  <span>{item.quantity}x {item.name}</span>
-                  <span>{formatPrice(item.price * item.quantity)}</span>
+
+            {/* ── Estado: Confirmado pelo garçom ── */}
+            {qrConfirmed ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+                  style={{ background: '#22c55e20', border: '2px solid #22c55e' }}
+                >
+                  <CheckCircle2 className="w-10 h-10 text-green-500" />
                 </div>
-              ))}
-              <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
-                <span>Total</span>
-                <span>{formatPrice(totalPrice)}</span>
+                <h2 className="text-2xl font-black mb-2" style={{ color: 'var(--menu-text)' }}>
+                  Pedido confirmado! 🎉
+                </h2>
+                <p className="text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                  Seu pedido foi registrado. Redirecionando para o acompanhamento...
+                </p>
+                <div className="mt-5 flex gap-1">
+                  {[0,1,2].map((i) => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-green-400"
+                      style={{ animation: `bounce 1s ${i * 0.2}s infinite` }}
+                    />
+                  ))}
+                </div>
+                <style>{`@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }`}</style>
               </div>
-            </div>
-            <p className="text-xs text-center mt-4" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Válido por 15 minutos</p>
+            ) : (
+              /* ── Estado: Aguardando escaneamento ── */
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>QR Code do pedido</h2>
+                  <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-sm mb-6 text-center" style={{ color: 'var(--menu-text-muted)' }}>
+                  Mostre este QR code ao garçom para confirmar seu pedido
+                </p>
+                <div className="flex justify-center mb-6">
+                  <div className="bg-white p-4 rounded-2xl">
+                    <QRCodeSVG value={qrUrl} size={200} />
+                  </div>
+                </div>
+                <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
+                  <p className="text-xs mb-2" style={{ color: 'var(--menu-text-muted)' }}>Itens do pedido</p>
+                  {items.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm py-1" style={{ color: 'var(--menu-text-muted)' }}>
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>{formatPrice(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                  <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
+                    <span>Total</span>
+                    <span>{formatPrice(totalPrice)}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-center mt-4" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Válido por 15 minutos</p>
+              </>
+            )}
           </div>
         </div>
       )}
