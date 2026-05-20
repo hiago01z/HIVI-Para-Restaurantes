@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation'
 import { AdmNav } from './_components/adm-nav'
 import { getContrastColor } from '@/lib/color-utils'
 
+// Força busca no servidor a cada navegação — impede que o Next.js
+// sirva páginas ADM do cache client-side após logout.
+export const dynamic = 'force-dynamic'
+
 export default async function AdmLayout({
   children,
   params,

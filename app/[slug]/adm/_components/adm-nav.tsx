@@ -31,8 +31,10 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
 
   async function handleSignout() {
     await fetch(`/api/adm/${slug}/logout`, { method: 'POST' })
-    router.push(`/${slug}/adm/login`)
-    router.refresh()
+    // Hard redirect para limpar o cache client-side do Next.js router.
+    // router.push() não invalida páginas já cacheadas — o usuário poderia
+    // continuar navegando no ADM sem revalidar o cookie.
+    window.location.href = `/${slug}/adm/login`
   }
 
   function isActive(href: string) {
