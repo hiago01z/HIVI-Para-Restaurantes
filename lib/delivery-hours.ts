@@ -90,8 +90,8 @@ export function checkDeliveryOpen(cfg: DeliveryHoursConfig): {
       return { open: true, closedMessage: '', scheduleLines }
     }
     const msg = cur < cfg.allFrom
-      ? `Fecha: abre às ${cfg.allFrom}`
-      : `Fecha: abre amanhã às ${cfg.allFrom}`
+      ? `Abre hoje às ${cfg.allFrom}`
+      : `Abre amanhã às ${cfg.allFrom}`
     return { open: false, closedMessage: msg, scheduleLines }
   }
 
