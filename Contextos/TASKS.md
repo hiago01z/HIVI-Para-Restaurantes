@@ -72,6 +72,7 @@
 | 2026-05-20 | Fix: pedido órfão em /api/orders quando order_items insert falha — cleanup adicionado (igual ao qrcode/confirm) |
 | 2026-05-20 | Fix: migration 005 — colunas label_* em restaurant_themes ausentes nas migrations (label customization não persistia) |
 | 2026-05-20 | Fix: migration 005 — constraint de role em restaurant_users corrigida ('admin'/'waiter' → 'manager'/'staff') — invite de funcionários falhava silenciosamente |
+| 2026-05-20 | Fix: migration 006 — order_id em qr_sessions (coluna ausente quebrava fluxo QR de mesa), public_read_active policy corrigida para is_active IS NOT FALSE, políticas de escrita de categorias/produtos/temas corrigidas para role 'manager' |
 
 ---
 
@@ -93,6 +94,7 @@
 - [x] Stripe webhook atualizado para hivi-web.com/api/stripe/webhook
 - [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
 - [ ] **CRÍTICO**: Executar migration 005 no Supabase (SQL Editor): `supabase/migrations/005_label_columns_and_role_fix.sql` — sem isso, label customization não persiste e convite de funcionários falha
+- [ ] **CRÍTICO**: Executar migration 006 no Supabase (SQL Editor): `supabase/migrations/006_qr_session_order_id_and_rls_fixes.sql` — sem isso, fluxo QR code de mesa quebrado e cardápio de restaurantes novos retorna 404
 
 ### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
