@@ -25,13 +25,20 @@ export default async function AdmLayout({
   const pathname = (await headers()).get('x-pathname') ?? ''
   const isLoginPage = pathname.endsWith('/adm/login')
 
-  if (!isLoginPage) {
-    const cookieStore = await cookies()
-    const token = cookieStore.get(admCookieName(slug))?.value
-    const valid = token ? await verifyAdmToken(slug, token) : false
-    if (!valid) {
-      redirect(`/${slug}/adm/login?redirect=${encodeURIComponent(pathname || `/${slug}/adm/pedidos`)}`)
-    }
+  const cookieStore = await cookies()
+  const token = cookieStore.get(admCookieName(slug))?.value
+  const valid = token ? await verifyAdmToken(slug, token) : false
+
+  if (isLoginPage) {
+    // Já autenticado: vai direto para o painel (sem mostrar login de novo)
+    if (valid) redirect(`/${slug}/adm/pedidos`)
+    // Não autenticado: renderiza só o formulário de login, sem nav ADM
+    return <>{children}</>
+  }
+
+  // Página protegida: não autenticado → manda para login
+  if (!valid) {
+    redirect(`/${slug}/adm/login?redirect=${encodeURIComponent(pathname || `/${slug}/adm/pedidos`)}`)
   }
   // ────────────────────────────────────────────────────────────────────
 
