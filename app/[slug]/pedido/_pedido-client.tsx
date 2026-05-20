@@ -24,6 +24,16 @@ type DeliveryForm = {
   notes: string
 }
 
+const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
+  pending:          { label: 'Aguardando confirmação', color: '#F59E0B' },
+  confirmed:        { label: 'Confirmado',             color: '#3B82F6' },
+  preparing:        { label: 'Sendo preparado',        color: '#8B5CF6' },
+  ready:            { label: 'Pronto!',                color: '#10B981' },
+  out_for_delivery: { label: 'Saiu para entrega',      color: '#F97316' },
+  delivered:        { label: 'Entregue ✓',             color: '#22C55E' },
+  cancelled:        { label: 'Cancelado',              color: '#EF4444' },
+}
+
 export function PedidoClient({ slug, restaurantId }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
@@ -39,6 +49,64 @@ export function PedidoClient({ slug, restaurantId }: Props) {
   const [form, setForm] = useState<DeliveryForm>({
     name: '', address: '', reference: '', phone: '', payment: 'dinheiro', change_for: '', notes: '',
   })
+
+  // ── Pedido ativo (localStorage) ──────────────────────────────────────────────
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
+  const [activeOrderData, setActiveOrderData] = useState<{ order_number: number; status: string; total: number } | null>(null)
+
+  // Lê o orderId salvo no localStorage ao montar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`hivi-active-order-${slug}`)
+      if (saved) setActiveOrderId(saved)
+    } catch { /* ignore */ }
+  }, [slug])
+
+  // Busca os dados do pedido e escuta atualizações em tempo real
+  useEffect(() => {
+    if (!activeOrderId) return
+    const supabase = createClient()
+    let subscribed = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any = null
+
+    supabase
+      .from('orders')
+      .select('order_number, status, total')
+      .eq('id', activeOrderId)
+      .single()
+      .then(({ data, error }) => {
+        if (!subscribed) return
+        if (error || !data) {
+          try { localStorage.removeItem(`hivi-active-order-${slug}`) } catch {}
+          setActiveOrderId(null)
+          return
+        }
+        setActiveOrderData(data)
+        if (['delivered', 'cancelled'].includes(data.status)) {
+          try { localStorage.removeItem(`hivi-active-order-${slug}`) } catch {}
+        }
+        channel = supabase
+          .channel(`pedido-track-${activeOrderId}`)
+          .on('postgres_changes', {
+            event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${activeOrderId}`,
+          }, (payload) => {
+            if (payload.new?.status) {
+              const newStatus = payload.new.status as string
+              setActiveOrderData((prev) => prev ? { ...prev, status: newStatus } : prev)
+              if (['delivered', 'cancelled'].includes(newStatus)) {
+                try { localStorage.removeItem(`hivi-active-order-${slug}`) } catch {}
+              }
+            }
+          })
+          .subscribe()
+      })
+
+    return () => {
+      subscribed = false
+      if (channel) supabase.removeChannel(channel)
+    }
+  }, [activeOrderId, slug])
 
   // Escuta a sessão QR em tempo real — quando o garçom confirmar, mostra sucesso e limpa o carrinho
   useEffect(() => {
@@ -155,6 +223,13 @@ export function PedidoClient({ slug, restaurantId }: Props) {
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/${slug}/adm/qr/${qrSessionId}`
     : ''
 
+  const aoStatus = activeOrderData
+    ? (ORDER_STATUS_MAP[activeOrderData.status] ?? { label: activeOrderData.status, color: '#6B7280' })
+    : null
+  const aoIsTerminal = activeOrderData
+    ? ['delivered', 'cancelled'].includes(activeOrderData.status)
+    : false
+
   return (
     <div className="min-h-screen pb-24" style={{ color: 'var(--menu-text)' }}>
 
@@ -168,6 +243,50 @@ export function PedidoClient({ slug, restaurantId }: Props) {
           <span className="text-sm" style={{ color: 'var(--menu-text-muted)' }}>{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
         )}
       </div>
+
+      {/* Seção: pedido em andamento */}
+      {activeOrderData && aoStatus && activeOrderId && (
+        <div className="px-4 mt-4">
+          <p className="text-xs uppercase tracking-widest font-black mb-2 px-1" style={{ color: 'var(--menu-text-muted)' }}>
+            Pedido em andamento
+          </p>
+          <Link
+            href={`/${slug}/meu-pedido/${activeOrderId}`}
+            className="flex items-center gap-3 rounded-2xl px-4 py-4"
+            style={{ background: 'var(--menu-card)' }}
+          >
+            {/* Indicador de status com pulse */}
+            <span className="relative flex-shrink-0 w-3 h-3">
+              {!aoIsTerminal && (
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                  style={{ background: aoStatus.color }}
+                />
+              )}
+              <span
+                className="relative inline-flex rounded-full w-3 h-3"
+                style={{ background: aoStatus.color }}
+              />
+            </span>
+
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold" style={{ color: 'var(--menu-text-muted)' }}>
+                Pedido #{activeOrderData.order_number} · {formatPrice(activeOrderData.total)}
+              </p>
+              <p className="text-sm font-black" style={{ color: aoStatus.color }}>
+                {aoStatus.label}
+              </p>
+            </div>
+
+            <span
+              className="text-xs font-black px-3 py-1.5 rounded-xl flex-shrink-0"
+              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
+            >
+              Ver detalhes
+            </span>
+          </Link>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
