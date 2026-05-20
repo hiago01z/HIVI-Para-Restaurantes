@@ -63,6 +63,7 @@ export default async function PedidosPage({
       payment_method,
       change_for,
       notes,
+      payment_status,
       total,
       created_at,
       order_items (

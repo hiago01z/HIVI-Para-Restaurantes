@@ -26,6 +26,7 @@ type Order = {
   payment_method: string | null
   change_for: number | null
   notes: string | null
+  payment_status: 'paid' | 'unpaid'
   total: number
   created_at: string
   order_items: OrderItem[]
@@ -84,6 +85,7 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
   const [newStatus, setNewStatus] = useState('')
   const [statusLoading, setStatusLoading] = useState(false)
   const [statusError, setStatusError] = useState('')
+  const [paymentLoadingId, setPaymentLoadingId] = useState<string | null>(null)
 
   // useRef garante que o cliente Supabase é criado apenas uma vez.
   // Se fosse criado no corpo do componente (sem ref), cada render criaria um
@@ -135,7 +137,7 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
             .from('orders')
             .select(`
               id, order_number, type, status, customer_name, customer_phone,
-              address, table_number, payment_method, change_for, notes, total, created_at,
+              address, table_number, payment_method, change_for, notes, payment_status, total, created_at,
               order_items (id, product_name, product_price, quantity)
             `)
             .eq('id', payload.new.id)
@@ -189,6 +191,27 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
       setStatusError('Erro de conexão. Tente novamente.')
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  async function handleTogglePayment(order: Order) {
+    const next = order.payment_status === 'paid' ? 'unpaid' : 'paid'
+    setPaymentLoadingId(order.id)
+    try {
+      const res = await fetch(`/api/orders/${order.id}/payment-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_status: next }),
+      })
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => o.id === order.id ? { ...o, payment_status: next } : o)
+        )
+      }
+    } catch {
+      // falha silenciosa — o badge volta ao estado anterior naturalmente
+    } finally {
+      setPaymentLoadingId(null)
     }
   }
 
@@ -301,15 +324,33 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
                         </div>
                         <span className="text-xs text-gray-400">{formatTime(order.created_at)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${sc.color}`}>
-                          {sc.label}
-                        </span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        {/* Status do pedido */}
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${sc.color}`}>
+                            {sc.label}
+                          </span>
+                          <button
+                            onClick={() => { setEditingOrder(order); setNewStatus(order.status) }}
+                            className="w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        {/* Status de pagamento — clique para alternar */}
                         <button
-                          onClick={() => { setEditingOrder(order); setNewStatus(order.status) }}
-                          className="w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                          onClick={() => handleTogglePayment(order)}
+                          disabled={paymentLoadingId === order.id}
+                          className="text-xs font-bold px-2.5 py-1 rounded-full transition-colors disabled:opacity-60"
+                          style={order.payment_status === 'paid'
+                            ? { background: '#dcfce7', color: '#15803d' }
+                            : { background: '#fee2e2', color: '#b91c1c' }
+                          }
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          {paymentLoadingId === order.id
+                            ? '...'
+                            : order.payment_status === 'paid' ? '✓ Pago' : '✗ Não pago'
+                          }
                         </button>
                       </div>
                     </div>
