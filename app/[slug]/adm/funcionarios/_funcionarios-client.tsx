@@ -1,17 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { UserPlus, Trash2, Loader2, Users, Crown, ShieldCheck, User } from 'lucide-react'
+import { UserPlus, Trash2, Loader2, Users, Crown, ShieldCheck, ChefHat, Bike, HandPlatter } from 'lucide-react'
 import Image from 'next/image'
 
 type Member = {
   id: string
   user_id: string
   role: string
+  name: string | null        // nome definido pelo dono
   created_at: string
   email: string
-  name: string | null
+  auth_name: string | null   // nome vindo do Supabase Auth (Google etc.)
   avatar_url: string | null
+  has_adm_password: boolean
 }
 
 type Props = {
@@ -19,14 +21,48 @@ type Props = {
   initialMembers: Member[]
 }
 
+type InviteRole = 'manager' | 'cook' | 'waiter' | 'delivery'
+
 const ROLE_OPTIONS = [
-  { value: 'owner',   label: 'Dono',       icon: Crown,       color: 'text-orange-500 bg-orange-50' },
-  { value: 'manager', label: 'Gerente',     icon: ShieldCheck, color: 'text-blue-600 bg-blue-50' },
-  { value: 'staff',   label: 'Funcionário', icon: User,        color: 'text-gray-600 bg-gray-100' },
+  {
+    value: 'owner',
+    label: 'Dono',
+    icon: Crown,
+    color: 'text-orange-500 bg-orange-50',
+    desc: '',
+  },
+  {
+    value: 'manager',
+    label: 'Gerente',
+    icon: ShieldCheck,
+    color: 'text-blue-600 bg-blue-50',
+    desc: 'Acesso completo — exceto pausar/excluir o cardápio.',
+  },
+  {
+    value: 'cook',
+    label: 'Cozinheiro',
+    icon: ChefHat,
+    color: 'text-purple-600 bg-purple-50',
+    desc: 'Pedidos de mesa e entrega. Pode avançar status até "Pronto".',
+  },
+  {
+    value: 'waiter',
+    label: 'Garçom',
+    icon: HandPlatter,
+    color: 'text-green-600 bg-green-50',
+    desc: 'Pedidos de mesa e leitura de QR Code. Pode confirmar pedidos.',
+  },
+  {
+    value: 'delivery',
+    label: 'Entregador',
+    icon: Bike,
+    color: 'text-yellow-600 bg-yellow-50',
+    desc: 'Apenas pedidos de entrega. Pode marcar como saiu/entregue.',
+  },
 ]
 
 function getRoleConfig(role: string) {
-  return ROLE_OPTIONS.find((r) => r.value === role) ?? ROLE_OPTIONS[2]
+  return ROLE_OPTIONS.find((r) => r.value === role) ?? ROLE_OPTIONS[ROLE_OPTIONS.length - 1]
 }
 
 function formatDate(dateStr: string) {
@@ -37,7 +73,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'manager' | 'staff'>('staff')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteRole, setInviteRole] = useState<InviteRole>('delivery')
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState('')
   const [inviteSuccess, setInviteSuccess] = useState('')
@@ -54,7 +91,7 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       const res = await fetch(`/api/adm/${slug}/funcionarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        body: JSON.stringify({ email: inviteEmail, name: inviteName || null, role: inviteRole }),
       })
       const data = await res.json()
 
@@ -79,6 +116,7 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       }
 
       setInviteEmail('')
+      setInviteName('')
       setShowInvite(false)
     } catch (err: unknown) {
       setInviteError(err instanceof Error ? err.message : 'Erro ao convidar. Tente novamente.')
@@ -109,6 +147,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
     }
   }
 
+  const inviteRoleOptions = ROLE_OPTIONS.filter((r) => r.value !== 'owner') as typeof ROLE_OPTIONS
+
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
@@ -126,7 +166,6 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
         </button>
       </div>
 
-      {/* Erro ao remover membro */}
       {removeError && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
           {removeError}
@@ -140,6 +179,17 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
 
           <div className="space-y-3 mb-4">
             <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome de exibição</label>
+              <input
+                type="text"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Ex: Lucas Silva"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+              />
+              <p className="text-xs text-gray-400 mt-1">Aparece em &ldquo;Alterado por&rdquo; nas atualizações de status.</p>
+            </div>
+            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">E-mail</label>
               <input
                 type="email"
@@ -151,29 +201,34 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Cargo</label>
-              <div className="flex gap-2">
-                {ROLE_OPTIONS.filter((r) => r.value !== 'owner').map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => setInviteRole(r.value as 'manager' | 'staff')}
-                    className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      inviteRole === r.value ? '' : 'border-gray-100 text-gray-500'
-                    }`}
-                    style={inviteRole === r.value ? {
-                      borderColor: 'var(--adm-primary)',
-                      color: 'var(--adm-primary)',
-                      background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
-                    } : undefined}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2">
+                {inviteRoleOptions.map((r) => {
+                  const Icon = r.icon
+                  const selected = inviteRole === r.value
+                  return (
+                    <button
+                      key={r.value}
+                      onClick={() => setInviteRole(r.value as InviteRole)}
+                      className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all text-left`}
+                      style={selected ? {
+                        borderColor: 'var(--adm-primary)',
+                        color: 'var(--adm-primary)',
+                        background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                      } : { borderColor: '#f3f4f6', color: '#6b7280' }}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {r.label}
+                    </button>
+                  )
+                })}
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                {inviteRole === 'manager'
-                  ? 'Gerentes podem acessar o painel e gerenciar pedidos, pratos e categorias.'
-                  : 'Funcionários podem acessar o painel e gerenciar pedidos.'}
-              </p>
+              {/* Descrição do cargo selecionado */}
+              {(() => {
+                const rc = inviteRoleOptions.find((r) => r.value === inviteRole)
+                return rc?.desc ? (
+                  <p className="text-xs text-gray-400 mt-2">{rc.desc}</p>
+                ) : null
+              })()}
             </div>
           </div>
 
@@ -201,7 +256,6 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
         </div>
       )}
 
-      {/* Mensagem de sucesso */}
       {inviteSuccess && (
         <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 mb-4 text-sm text-green-700">
           {inviteSuccess}
@@ -222,6 +276,9 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
           {members.map((member) => {
             const rc = getRoleConfig(member.role)
             const Icon = rc.icon
+            // Prioridade: nome definido pelo dono → nome do auth → email
+            const displayName = member.name ?? member.auth_name ?? member.email
+
             return (
               <div
                 key={member.id}
@@ -231,7 +288,7 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
                 {member.avatar_url ? (
                   <Image
                     src={member.avatar_url}
-                    alt={member.name ?? member.email}
+                    alt={displayName}
                     width={44}
                     height={44}
                     className="w-11 h-11 rounded-full object-cover flex-shrink-0"
@@ -241,17 +298,22 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
                     className="w-11 h-11 rounded-full flex items-center justify-center font-black text-base flex-shrink-0"
                     style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
                   >
-                    {(member.name ?? member.email).charAt(0).toUpperCase()}
+                    {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  {member.name && (
-                    <p className="font-semibold text-gray-900 text-sm truncate">{member.name}</p>
-                  )}
+                  <p className="font-semibold text-gray-900 text-sm truncate">{displayName}</p>
                   <p className="text-xs text-gray-400 truncate">{member.email}</p>
-                  <p className="text-xs text-gray-300 mt-0.5">Desde {formatDate(member.created_at)}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-gray-300">Desde {formatDate(member.created_at)}</p>
+                    {member.has_adm_password ? (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">senha ✓</span>
+                    ) : (
+                      <span className="text-xs text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full">sem senha</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Badge de cargo */}

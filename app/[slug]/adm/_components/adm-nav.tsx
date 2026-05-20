@@ -8,15 +8,16 @@ import {
   X, Menu, LogOut, ExternalLink,
 } from 'lucide-react'
 
-type Props = {
-  slug: string
-  restaurantName: string
-  logoUrl?: string | null
-  primaryColor?: string
-  role?: string
+// Cargos que podem acessar cada página do ADM
+const PAGE_ROLES: Record<string, string[]> = {
+  pedidos:      ['owner', 'manager', 'cook', 'waiter', 'delivery'],
+  categorias:   ['owner', 'manager'],
+  pratos:       ['owner', 'manager'],
+  funcionarios: ['owner', 'manager'],
+  configuracoes:['owner', 'manager'],
 }
 
-const navItems = [
+const ALL_NAV_ITEMS = [
   { href: 'pedidos',       label: 'Pedidos',        icon: ShoppingBag },
   { href: 'categorias',    label: 'Categorias',      icon: LayoutGrid },
   { href: 'pratos',        label: 'Pratos/Bebidas',  icon: UtensilsCrossed },
@@ -24,15 +25,49 @@ const navItems = [
   { href: 'configuracoes', label: 'Configurações',   icon: Settings },
 ]
 
-export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00' }: Props) {
+const ROLE_LABEL: Record<string, string> = {
+  owner:    'Dono',
+  manager:  'Gerente',
+  cook:     'Cozinheiro',
+  waiter:   'Garçom',
+  delivery: 'Entregador',
+}
+
+const ROLE_COLOR: Record<string, string> = {
+  owner:    'bg-orange-100 text-orange-700',
+  manager:  'bg-blue-100 text-blue-700',
+  cook:     'bg-purple-100 text-purple-700',
+  waiter:   'bg-green-100 text-green-700',
+  delivery: 'bg-yellow-100 text-yellow-700',
+}
+
+type Props = {
+  slug: string
+  restaurantName: string
+  logoUrl?: string | null
+  primaryColor?: string
+  memberRole?: string
+  memberName?: string
+}
+
+export function AdmNav({
+  slug,
+  restaurantName,
+  logoUrl,
+  primaryColor = '#FF6B00',
+  memberRole = 'owner',
+  memberName,
+}: Props) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
+  // Filtra itens de nav que o cargo atual pode acessar
+  const navItems = ALL_NAV_ITEMS.filter(
+    (item) => (PAGE_ROLES[item.href] ?? []).includes(memberRole)
+  )
+
   async function handleSignout() {
     await fetch(`/api/adm/${slug}/logout`, { method: 'POST' })
-    // Hard redirect para limpar o cache client-side do Next.js router.
-    // router.push() não invalida páginas já cacheadas — o usuário poderia
-    // continuar navegando no ADM sem revalidar o cookie.
     window.location.href = `/${slug}/adm/login`
   }
 
@@ -40,12 +75,15 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
     return pathname.includes(`/${slug}/adm/${href}`)
   }
 
+  const roleLabel = ROLE_LABEL[memberRole] ?? memberRole
+  const roleColor = ROLE_COLOR[memberRole] ?? 'bg-gray-100 text-gray-600'
+
   return (
     <>
       {/* Top bar fixa */}
       <nav className="fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3 shadow-sm">
 
-        {/* Logo/Nome */}
+        {/* Logo/Nome + badge de cargo */}
         <Link href={`/${slug}/adm/pedidos`} className="flex items-center gap-2 flex-1 min-w-0">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -59,7 +97,10 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
             </div>
           )}
           <span className="font-semibold text-gray-900 text-sm tracking-tight truncate">{restaurantName}</span>
-          <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block font-medium">— ADM</span>
+          {/* Badge de cargo — visível só em sm+ para não travar o layout */}
+          <span className={`hidden sm:inline-flex text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${roleColor}`}>
+            {roleLabel}
+          </span>
         </Link>
 
         {/* Nav desktop */}
@@ -115,7 +156,16 @@ export function AdmNav({ slug, restaurantName, logoUrl, primaryColor = '#FF6B00'
           <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setDrawerOpen(false)} />
           <div className="fixed top-0 right-0 bottom-0 z-50 w-64 bg-white flex flex-col shadow-xl">
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-              <span className="font-bold tracking-tight text-gray-900">Menu</span>
+              <div>
+                <span className="font-bold tracking-tight text-gray-900 block">Menu</span>
+                {/* Nome + cargo no drawer mobile */}
+                {memberName && (
+                  <span className="text-xs text-gray-500">{memberName}</span>
+                )}
+                <span className={`inline-flex text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 ${roleColor}`}>
+                  {roleLabel}
+                </span>
+              </div>
               <button onClick={() => setDrawerOpen(false)}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>

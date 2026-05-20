@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { PedidosClient } from './_pedidos-client'
 import { getAdmRestaurantId } from '@/lib/supabase/adm-restaurant'
+import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 
 type Periodo = 'hoje' | 'ontem' | '7dias'
 
@@ -44,7 +46,13 @@ export default async function PedidosPage({
   const restaurantId = await getAdmRestaurantId(slug)
   if (!restaurantId) notFound()
 
-  const restaurant = { id: restaurantId }
+  // Extrai cargo do token ADM para filtros de RBAC no cliente
+  const cookieStore = await cookies()
+  const token = cookieStore.get(admCookieName(slug))?.value
+  const payload = token ? await getAdmTokenPayload(slug, token) : null
+  const memberRole = payload?.role ?? 'owner'
+  const memberName = payload?.name ?? ''
+
   const supabase = await createClient()
 
   const { start, end, isToday } = getDateRange(periodo)
@@ -56,6 +64,7 @@ export default async function PedidosPage({
       order_number,
       type,
       status,
+      status_changed_by,
       customer_name,
       customer_phone,
       address,
@@ -73,18 +82,20 @@ export default async function PedidosPage({
         quantity
       )
     `)
-    .eq('restaurant_id', restaurant.id)
+    .eq('restaurant_id', restaurantId)
     .gte('created_at', start.toISOString())
     .lte('created_at', end.toISOString())
     .order('created_at', { ascending: false })
 
   return (
     <PedidosClient
-      restaurantId={restaurant.id}
+      restaurantId={restaurantId}
       initialOrders={orders ?? []}
       isToday={isToday}
       slug={slug}
       activePeriodo={periodo}
+      memberRole={memberRole}
+      memberName={memberName}
     />
   )
 }

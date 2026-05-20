@@ -83,33 +83,65 @@ export function admCookieName(slug: string): string {
   return `hivi_adm_${slug.replace(/-/g, '_')}`
 }
 
-export async function createAdmToken(slug: string): Promise<string> {
-  const ts = Date.now().toString()
-  const payload = `${slug}|${ts}`
-  const sig = await hmacSign(payload)
-  // safe base64url
-  return btoa(`${payload}|${sig}`).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+// ── Token ADM com payload completo (role + nome + memberId) ──
+//
+// Formato: base64url(JSON payload) + "." + hmacHex
+// O payload carrega { slug, role, name, memberId, ts } para que
+// o servidor possa aplicar restrições de RBAC sem precisar de
+// uma consulta extra ao banco a cada request.
+
+export interface AdmTokenPayload {
+  slug: string
+  role: string      // 'owner' | 'manager' | 'cook' | 'waiter' | 'delivery'
+  name: string      // nome do membro (para "Alterado por …")
+  memberId: string  // restaurant_users.id
+  ts: number        // timestamp de criação (ms)
+}
+
+export async function createAdmToken(
+  slug: string,
+  role: string,
+  name: string,
+  memberId: string
+): Promise<string> {
+  const ts = Date.now()
+  const payload: AdmTokenPayload = { slug, role, name, memberId, ts }
+  const payloadStr = JSON.stringify(payload)
+  // base64url (sem padding)
+  const payloadB64 = btoa(payloadStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  const sig = await hmacSign(payloadStr)
+  return `${payloadB64}.${sig}`
+}
+
+export async function getAdmTokenPayload(
+  slug: string,
+  token: string
+): Promise<AdmTokenPayload | null> {
+  try {
+    const dotIdx = token.lastIndexOf('.')
+    // Token legado (formato antigo sem ".") — inválido, força novo login
+    if (dotIdx === -1) return null
+
+    const payloadB64 = token.slice(0, dotIdx)
+    const sig = token.slice(dotIdx + 1)
+
+    // Restaura base64url → base64 padrão
+    const payloadStr = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
+    const valid = await hmacVerify(payloadStr, sig)
+    if (!valid) return null
+
+    const payload = JSON.parse(payloadStr) as AdmTokenPayload
+    if (payload.slug !== slug) return null
+    if (Date.now() - payload.ts > COOKIE_MAX_AGE * 1000) return null
+
+    return payload
+  } catch {
+    return null
+  }
 }
 
 export async function verifyAdmToken(slug: string, token: string): Promise<boolean> {
-  try {
-    const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'))
-    const firstPipe = decoded.indexOf('|')
-    const secondPipe = decoded.indexOf('|', firstPipe + 1)
-    if (firstPipe === -1 || secondPipe === -1) return false
-
-    const tokenSlug = decoded.slice(0, firstPipe)
-    const ts = decoded.slice(firstPipe + 1, secondPipe)
-    const sig = decoded.slice(secondPipe + 1)
-
-    if (tokenSlug !== slug) return false
-    if (Date.now() - parseInt(ts) > COOKIE_MAX_AGE * 1000) return false
-
-    const payload = `${tokenSlug}|${ts}`
-    return await hmacVerify(payload, sig)
-  } catch {
-    return false
-  }
+  return (await getAdmTokenPayload(slug, token)) !== null
 }
 
 export { COOKIE_MAX_AGE }

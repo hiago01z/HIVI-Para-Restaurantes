@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { cookies } from 'next/headers'
-import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
+import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 
 const statusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']),
@@ -34,21 +34,29 @@ export async function PATCH(
       return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 })
     }
 
-    // Verifica autenticação ADM (token no cookie) — protege contra acesso não autorizado
+    // Verifica autenticação ADM e extrai payload (role + nome)
     const slug = (orderCheck.restaurants as unknown as { slug: string } | null)?.slug
     if (!slug) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
     }
     const cookieStore = await cookies()
     const token = cookieStore.get(admCookieName(slug))?.value
-    const validAdm = token ? await verifyAdmToken(slug, token) : false
-    if (!validAdm) {
+    const admPayload = token ? await getAdmTokenPayload(slug, token) : null
+
+    if (!admPayload) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
+    // Grava nome do responsável pela alteração (audit trail "Alterado por")
+    const statusChangedBy = admPayload.name || null
+
     const { data: order, error } = await supabase
       .from('orders')
-      .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
+      .update({
+        status: parsed.data.status,
+        status_changed_by: statusChangedBy,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select('*')
       .single()

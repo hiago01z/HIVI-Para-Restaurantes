@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { ContaActions } from './_conta-actions'
 import { AdmPasswordForm } from './_adm-password-form'
+import { MemberPasswordForm } from './_member-password-form'
 import { SuccessBanner } from './_success-banner'
 
 export default async function ContaPage({
@@ -18,18 +20,58 @@ export default async function ContaPage({
 
   const { success } = await searchParams
 
+  // ── Restaurantes onde o usuário é DONO ───────────────────────
   const { data: restaurantes } = await supabase
     .from('restaurants')
     .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
-  // Não expõe adm_password_hash ao client — extrai-o antes do spread
+  // Não expõe adm_password_hash ao client — extrai-o antes
   const lojas = (restaurantes ?? []).map(({ adm_password_hash, ...l }) => ({
     ...l,
     has_adm_password: !!adm_password_hash,
+    role: 'owner' as string,
   }))
   const temStripe = lojas.some((l) => l.stripe_customer_id)
+
+  // ── Restaurantes onde o usuário é MEMBRO (não dono) ──────────
+  // Usa service role para bypassar RLS (restaurant_users sem policy de leitura pública)
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: memberEntries } = await serviceClient
+    .from('restaurant_users')
+    .select('id, role, adm_password_hash, restaurants(id, name, slug, is_active, stripe_customer_id)')
+    .eq('user_id', user.id)
+    .neq('role', 'owner')
+
+  // Filtra restaurantes que já estão na lista de proprietário (evita duplicatas)
+  const ownerIds = new Set(lojas.map((l) => l.id))
+
+  const memberships = (memberEntries ?? [])
+    .filter((m) => {
+      const rest = m.restaurants as { id: string } | null
+      return rest && !ownerIds.has(rest.id)
+    })
+    .map((m) => {
+      const rest = m.restaurants as {
+        id: string; name: string; slug: string
+        is_active: boolean | null; stripe_customer_id: string | null
+      }
+      return {
+        id: rest.id,
+        name: rest.name,
+        slug: rest.slug,
+        is_active: rest.is_active ?? true,
+        stripe_customer_id: rest.stripe_customer_id,
+        has_adm_password: !!m.adm_password_hash,
+        role: m.role,
+        memberEntryId: m.id,
+      }
+    })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,7 +96,7 @@ export default async function ContaPage({
         {/* Banner de sucesso após pagamento */}
         {success === '1' && <SuccessBanner />}
 
-        {/* Minhas lojas */}
+        {/* ── Meus cardápios (proprietário) ── */}
         <div className="flex items-center justify-between mb-5">
           <h1 className="font-display text-2xl font-bold tracking-tight text-gray-950">Meus cardápios</h1>
           <Link
@@ -66,7 +108,7 @@ export default async function ContaPage({
           </Link>
         </div>
 
-        {lojas.length === 0 ? (
+        {lojas.length === 0 && memberships.length === 0 ? (
           <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
             <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-7 h-7 text-orange-500" />
@@ -82,20 +124,78 @@ export default async function ContaPage({
           </div>
         ) : (
           <div className="space-y-4">
-            <ContaActions lojas={lojas} AdmPasswordForm={AdmPasswordForm} />
+            {/* Cardápios como dono */}
+            {lojas.length > 0 && (
+              <ContaActions lojas={lojas} AdmPasswordForm={AdmPasswordForm} />
+            )}
 
-            {/* Adicionar mais */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-dashed border-gray-200 text-center">
-              <p className="text-sm text-gray-500 mb-3">Quer adicionar mais um cardápio?</p>
-              <Link
-                href="/criar-loja"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Adicionar cardápio
-              </Link>
-              <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por cardápio adicional</p>
-            </div>
+            {/* Cardápios como membro da equipe */}
+            {memberships.map((m) => (
+              <div key={m.id} className="bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <p className="font-bold text-gray-900">{m.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '')}/{m.slug}</p>
+                  </div>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${ROLE_BADGE[m.role] ?? 'bg-gray-100 text-gray-500'}`}>
+                    {ROLE_LABEL[m.role] ?? m.role}
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-400 mb-4">
+                  Você foi adicionado como <strong>{ROLE_LABEL[m.role] ?? m.role}</strong> neste cardápio.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <Link
+                    href={`/${m.slug}`}
+                    target="_blank"
+                    className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Ver cardápio
+                  </Link>
+                  <Link
+                    href={`/${m.slug}/adm/login`}
+                    className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors"
+                  >
+                    Painel ADM
+                  </Link>
+                  {/* Pausar/Excluir: desabilitados para não-donos */}
+                  <button
+                    disabled
+                    title="Apenas o dono pode pausar o cardápio"
+                    className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-100 rounded-xl text-sm font-medium text-gray-300 cursor-not-allowed"
+                  >
+                    Pausar cardápio
+                  </button>
+                  <button
+                    disabled
+                    title="Apenas o dono pode excluir o cardápio"
+                    className="flex items-center justify-center gap-1.5 py-2.5 border border-gray-100 rounded-xl text-sm font-medium text-gray-300 cursor-not-allowed"
+                  >
+                    Excluir cardápio
+                  </button>
+                </div>
+
+                {/* Senha ADM do membro */}
+                <MemberPasswordForm slug={m.slug} hasPassword={m.has_adm_password} />
+              </div>
+            ))}
+
+            {/* Adicionar mais (só para donos) */}
+            {lojas.length > 0 && (
+              <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-dashed border-gray-200 text-center">
+                <p className="text-sm text-gray-500 mb-3">Quer adicionar mais um cardápio?</p>
+                <Link
+                  href="/criar-loja"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Adicionar cardápio
+                </Link>
+                <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por cardápio adicional</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -124,4 +224,22 @@ export default async function ContaPage({
       </footer>
     </div>
   )
+}
+
+// ── Helpers para labels/badges de cargo ──────────────────────
+
+const ROLE_LABEL: Record<string, string> = {
+  owner:    'Dono',
+  manager:  'Gerente',
+  cook:     'Cozinheiro',
+  waiter:   'Garçom',
+  delivery: 'Entregador',
+}
+
+const ROLE_BADGE: Record<string, string> = {
+  owner:    'bg-orange-100 text-orange-700',
+  manager:  'bg-blue-100 text-blue-700',
+  cook:     'bg-purple-100 text-purple-700',
+  waiter:   'bg-green-100 text-green-700',
+  delivery: 'bg-yellow-100 text-yellow-700',
 }

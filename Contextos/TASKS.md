@@ -80,6 +80,7 @@
 | 2026-05-20 | Feature: banners de feedback pós-Stripe — sucesso em /conta?success=1 e cancelamento em /criar-loja?cancelled=1 |
 | 2026-05-20 | Fix: todas as chamadas alert() substituídas por estados de erro inline (pratos, categorias, funcionários, pedido, conta-actions) |
 | 2026-05-20 | Feature: campo "Observações" em pedidos de entrega e mesa (QR) — armazenado na coluna notes já existente; exibido no ADM com badge amarelo e na tela meu-pedido do cliente |
+| 2026-05-20 | Feature: RBAC completo — 5 cargos (Dono/Gerente/Cozinheiro/Garçom/Entregador), senhas ADM individuais por membro, tabs e status filtrados por cargo, "Alterado por [nome]" no audit trail, membros vêem seus cardápios em /conta com badge de cargo e botões desabilitados apropriadamente |
 
 ---
 
@@ -102,6 +103,7 @@
 - [ ] Configurar Stripe Billing Portal em dashboard.stripe.com/settings/billing/portal
 - [x] **EXECUTADO 2026-05-20**: Migration 005 — colunas label_* em restaurant_themes + constraint de role em restaurant_users
 - [x] **EXECUTADO 2026-05-20**: Migration 006 — order_id em qr_sessions + public_read_active policy (IS NOT FALSE) + políticas de escrita para role 'manager'
+- [ ] **EXECUTAR**: Migration 007 — name + adm_password_hash em restaurant_users, status_changed_by em orders, constraint de role atualizada ('owner'|'manager'|'cook'|'waiter'|'delivery')
 
 ### Fase 8 — Polimento e Testes
 - [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público

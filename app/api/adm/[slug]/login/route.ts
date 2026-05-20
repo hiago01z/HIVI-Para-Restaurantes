@@ -5,6 +5,7 @@ import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const schema = z.object({
+  email: z.string().email(),
   password: z.string().min(1),
 })
 
@@ -27,7 +28,7 @@ export async function POST(
   const body = await request.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Senha inválida' }, { status: 400 })
+    return NextResponse.json({ error: 'E-mail ou senha inválidos' }, { status: 400 })
   }
 
   const supabase = createClient(
@@ -35,27 +36,67 @@ export async function POST(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // 1. Busca o restaurante pelo slug
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, adm_password_hash')
+    .select('id, adm_password_hash, owner_id')
     .eq('slug', slug)
     .single()
 
-  // O admin pode sempre logar, mesmo se o cardápio estiver pausado (is_active=false)
   if (!restaurant) {
     return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
   }
 
-  if (!restaurant.adm_password_hash) {
-    return NextResponse.json({ error: 'Senha ADM não configurada. O dono deve defini-la em hivi-web.com/conta' }, { status: 403 })
+  // 2. Localiza o usuário pelo e-mail via Admin API
+  const { data: usersData } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const authUser = usersData?.users?.find((u) => u.email === parsed.data.email)
+
+  if (!authUser) {
+    return NextResponse.json({ error: 'E-mail não encontrado' }, { status: 401 })
   }
 
-  const valid = await verifyAdmPassword(parsed.data.password, restaurant.adm_password_hash)
+  // 3. Busca o vínculo na equipe do restaurante
+  const { data: member } = await supabase
+    .from('restaurant_users')
+    .select('id, role, name, adm_password_hash')
+    .eq('restaurant_id', restaurant.id)
+    .eq('user_id', authUser.id)
+    .single()
+
+  if (!member) {
+    return NextResponse.json({ error: 'Você não é membro desta equipe' }, { status: 403 })
+  }
+
+  // 4. Determina qual hash verificar
+  //    Membros não-dono: restaurant_users.adm_password_hash (senha individual)
+  //    Dono: restaurant_users.adm_password_hash (se existir) ou restaurants.adm_password_hash (legado)
+  let passwordHash: string | null = member.adm_password_hash ?? null
+
+  if (!passwordHash && restaurant.owner_id === authUser.id) {
+    // Dono ainda usa a senha legada definida em /conta
+    passwordHash = restaurant.adm_password_hash ?? null
+  }
+
+  if (!passwordHash) {
+    return NextResponse.json(
+      { error: 'Senha ADM não configurada. Acesse hivi-web.com/conta para criar sua senha.' },
+      { status: 403 }
+    )
+  }
+
+  const valid = await verifyAdmPassword(parsed.data.password, passwordHash)
   if (!valid) {
     return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 })
   }
 
-  const token = await createAdmToken(slug)
+  // 5. Monta nome de exibição para o token
+  const displayName =
+    member.name ??
+    authUser.user_metadata?.full_name ??
+    authUser.user_metadata?.name ??
+    parsed.data.email.split('@')[0]
+
+  const token = await createAdmToken(slug, member.role, displayName, member.id)
   const cookieName = admCookieName(slug)
   const secure = process.env.NODE_ENV === 'production'
   const secureFlag = secure ? '; Secure' : ''
@@ -72,7 +113,6 @@ export async function POST(
     `${cookieName}=${token}; Path=/; HttpOnly; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`
   )
   // 2) Expira cookie legado que podia estar em path '/${slug}/adm'
-  //    (versões anteriores setavam com path mais específico)
   response.headers.append(
     'Set-Cookie',
     `${cookieName}=; Path=/${slug}/adm; HttpOnly; Max-Age=0; SameSite=Lax${secureFlag}`

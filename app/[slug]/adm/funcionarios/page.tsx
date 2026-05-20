@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
 import { FuncionariosClient } from './_funcionarios-client'
-import { redirect } from 'next/navigation'
 
 export default async function FuncionariosPage({
   params,
@@ -33,11 +32,11 @@ export default async function FuncionariosPage({
 
   const { data: members } = await supabase
     .from('restaurant_users')
-    .select('id, role, created_at, user_id')
+    .select('id, role, name, adm_password_hash, created_at, user_id')
     .eq('restaurant_id', restaurant.id)
     .order('created_at', { ascending: true })
 
-  // Enriquecer com dados do usuário Supabase Auth
+  // Enriquecer com dados do Supabase Auth (email, avatar, nome Google)
   const enriched = await Promise.all(
     (members ?? []).map(async (m) => {
       const { data: { user } } = await supabase.auth.admin.getUserById(m.user_id)
@@ -45,10 +44,12 @@ export default async function FuncionariosPage({
         id: m.id,
         user_id: m.user_id,
         role: m.role,
+        name: m.name ?? null,
+        auth_name: (user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null) as string | null,
         created_at: m.created_at,
         email: user?.email ?? '—',
-        name: (user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null) as string | null,
         avatar_url: (user?.user_metadata?.avatar_url ?? null) as string | null,
+        has_adm_password: !!m.adm_password_hash,
       }
     })
   )

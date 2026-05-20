@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode } from 'lucide-react'
+import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode, UserCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
@@ -19,6 +19,7 @@ type Order = {
   order_number: number
   type: 'table' | 'delivery'
   status: string
+  status_changed_by: string | null
   customer_name: string | null
   customer_phone: string | null
   address: string | null
@@ -32,6 +33,8 @@ type Order = {
   order_items: OrderItem[]
 }
 
+// ── Status disponíveis e quais cargos podem selecionar cada um ──
+
 const STATUS_OPTIONS = [
   { value: 'pending',          label: 'Aguardando',       color: 'bg-yellow-100 text-yellow-800' },
   { value: 'confirmed',        label: 'Confirmado',        color: 'bg-blue-100 text-blue-800' },
@@ -41,6 +44,24 @@ const STATUS_OPTIONS = [
   { value: 'delivered',        label: 'Entregue',          color: 'bg-gray-100 text-gray-800' },
   { value: 'cancelled',        label: 'Cancelado',         color: 'bg-red-100 text-red-800' },
 ]
+
+// Quais status cada cargo pode SELECIONAR no modal
+const STATUS_ALLOWED: Record<string, string[]> = {
+  owner:    ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
+  manager:  ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
+  cook:     ['pending', 'confirmed', 'preparing', 'ready', 'cancelled'],
+  waiter:   ['pending', 'confirmed'],
+  delivery: ['out_for_delivery', 'delivered', 'cancelled'],
+}
+
+// Quais abas cada cargo pode ver
+const TAB_ALLOWED: Record<string, string[]> = {
+  owner:    ['delivery', 'table', 'qr'],
+  manager:  ['delivery', 'table', 'qr'],
+  cook:     ['delivery', 'table'],
+  waiter:   ['table', 'qr'],
+  delivery: ['delivery'],
+}
 
 function getStatusConfig(status: string) {
   return STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0]
@@ -62,6 +83,8 @@ type Props = {
   isToday: boolean
   slug: string
   activePeriodo: Periodo
+  memberRole: string
+  memberName: string
 }
 
 const PERIODO_FILTERS: { label: string; value: Periodo; href: (slug: string) => string }[] = [
@@ -76,10 +99,15 @@ const PERIODO_LABEL: Record<Periodo, string> = {
   '7dias': 'Pedidos dos últimos 7 dias',
 }
 
-export function PedidosClient({ restaurantId, initialOrders, isToday, slug, activePeriodo }: Props) {
+export function PedidosClient({
+  restaurantId, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
+}: Props) {
   const router = useRouter()
+  const allowedTabs = TAB_ALLOWED[memberRole] ?? ['delivery', 'table', 'qr']
+  const allowedStatuses = STATUS_ALLOWED[memberRole] ?? STATUS_OPTIONS.map((s) => s.value)
+
   const [orders, setOrders] = useState<Order[]>(initialOrders)
-  const [tab, setTab] = useState<'delivery' | 'table' | 'qr'>('delivery')
+  const [tab, setTab] = useState<string>(allowedTabs[0] ?? 'delivery')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [newStatus, setNewStatus] = useState('')
@@ -87,18 +115,12 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
   const [statusError, setStatusError] = useState('')
   const [paymentLoadingId, setPaymentLoadingId] = useState<string | null>(null)
 
-  // useRef garante que o cliente Supabase é criado apenas uma vez.
-  // Se fosse criado no corpo do componente (sem ref), cada render criaria um
-  // novo objeto → useEffect re-executaria a cada render → múltiplos canais
-  // Realtime abertos (memory leak).
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
 
-  // Som de notificação de novo pedido (Web Audio API — sem arquivo externo)
   function playNewOrderSound() {
     try {
       const ctx = new AudioContext()
-      // Dois beeps: agudo + médio
       ;[[880, 0, 0.15], [1100, 0.18, 0.15]].forEach(([freq, start, duration]) => {
         const osc  = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -112,12 +134,10 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
         osc.stop(ctx.currentTime + (start as number) + (duration as number))
       })
     } catch {
-      // AudioContext pode ser bloqueado pelo browser até primeira interação do usuário
+      // AudioContext pode ser bloqueado pelo browser até primeira interação
     }
   }
 
-  // Realtime: escuta novos pedidos e atualizações — apenas quando vendo o dia atual
-  // (dados históricos são estáticos e não precisam de Realtime)
   useEffect(() => {
     if (!isToday) return
 
@@ -132,11 +152,10 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
           filter: `restaurant_id=eq.${restaurantId}`,
         },
         async (payload) => {
-          // Buscar o pedido completo com itens
           const { data } = await supabase
             .from('orders')
             .select(`
-              id, order_number, type, status, customer_name, customer_phone,
+              id, order_number, type, status, status_changed_by, customer_name, customer_phone,
               address, table_number, payment_method, change_for, notes, payment_status, total, created_at,
               order_items (id, product_name, product_price, quantity)
             `)
@@ -180,7 +199,10 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
       })
       if (res.ok) {
         setOrders((prev) =>
-          prev.map((o) => o.id === editingOrder.id ? { ...o, status: newStatus } : o)
+          prev.map((o) => o.id === editingOrder.id
+            ? { ...o, status: newStatus, status_changed_by: memberName || null }
+            : o
+          )
         )
         setEditingOrder(null)
       } else {
@@ -215,8 +237,6 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
     }
   }
 
-  // Memoiza o callback do QR scanner para evitar que a câmera reinicie a cada render
-  // (onDetect inline causaria nova referência → startScanLoop instável → camera reinit a cada UPDATE Realtime)
   const handleQrDetect = useCallback((url: string) => {
     try {
       const parsed = new URL(url)
@@ -233,11 +253,13 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
   const deliveryOrders = orders.filter((o) => o.type === 'delivery')
   const tableOrders = orders.filter((o) => o.type === 'table')
 
-  const tabs = [
-    { key: 'delivery', label: 'Entrega', count: deliveryOrders.filter((o) => !['delivered', 'cancelled'].includes(o.status)).length },
-    { key: 'table',    label: 'Mesa',    count: tableOrders.filter((o) => !['delivered', 'cancelled'].includes(o.status)).length },
-    { key: 'qr',       label: 'Ler QR Code', count: 0 },
+  const ALL_TABS = [
+    { key: 'delivery', label: 'Entrega',      count: deliveryOrders.filter((o) => !['delivered', 'cancelled'].includes(o.status)).length },
+    { key: 'table',    label: 'Mesa',          count: tableOrders.filter((o) => !['delivered', 'cancelled'].includes(o.status)).length },
+    { key: 'qr',       label: 'Ler QR Code',   count: 0 },
   ]
+
+  const tabs = ALL_TABS.filter((t) => allowedTabs.includes(t.key))
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
@@ -263,12 +285,12 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
         })}
       </div>
 
-      {/* Tabs */}
+      {/* Tabs (filtradas por cargo) */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key as typeof tab)}
+            onClick={() => setTab(t.key)}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
               tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -284,7 +306,7 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
         ))}
       </div>
 
-      {/* Aba Ler QR Code — scanner real */}
+      {/* Aba Ler QR Code */}
       {tab === 'qr' && (
         <QrScanner onDetect={handleQrDetect} />
       )}
@@ -310,34 +332,43 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
 
               return (
                 <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  {/* Header do card */}
                   <div className="px-4 pt-4 pb-3">
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-black text-gray-900 text-base">
-                            #{order.order_number}
-                          </span>
+                          <span className="font-black text-gray-900 text-base">#{order.order_number}</span>
                           {order.customer_name && (
                             <span className="text-gray-600 text-sm">— {order.customer_name}</span>
                           )}
                         </div>
                         <span className="text-xs text-gray-400">{formatTime(order.created_at)}</span>
                       </div>
+
                       <div className="flex flex-col items-end gap-1.5">
-                        {/* Status do pedido */}
+                        {/* Status + botão editar */}
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${sc.color}`}>
-                            {sc.label}
-                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${sc.color}`}>
+                              {sc.label}
+                            </span>
+                            {/* "Alterado por" — audit trail */}
+                            {order.status_changed_by && (
+                              <span className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                                <UserCheck className="w-3 h-3" />
+                                {order.status_changed_by}
+                              </span>
+                            )}
+                          </div>
                           <button
                             onClick={() => { setEditingOrder(order); setNewStatus(order.status) }}
                             className="w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                            title="Alterar status"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        {/* Status de pagamento — clique para alternar */}
+
+                        {/* Status de pagamento */}
                         <button
                           onClick={() => handleTogglePayment(order)}
                           disabled={paymentLoadingId === order.id}
@@ -394,7 +425,6 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
                     {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </button>
 
-                  {/* Itens expandidos */}
                   {expanded && (
                     <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
                       {order.order_items.map((item) => (
@@ -432,34 +462,49 @@ export function PedidosClient({ restaurantId, initialOrders, isToday, slug, acti
             {statusError && (
               <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-4">{statusError}</p>
             )}
+
             <div className="space-y-2 mb-6">
               {STATUS_OPTIONS
                 .filter((s) => editingOrder.type === 'delivery' || s.value !== 'out_for_delivery')
-                .map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setNewStatus(s.value)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors text-left ${
-                      newStatus === s.value ? '' : 'border-gray-100 bg-white hover:bg-gray-50'
-                    }`}
-                    style={newStatus === s.value ? {
-                      borderColor: 'var(--adm-primary)',
-                      background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
-                    } : undefined}
-                  >
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${s.color.replace('text-', 'bg-').split(' ')[0]}`} />
-                    <span
-                      className="text-sm font-medium"
-                      style={newStatus === s.value ? { color: 'var(--adm-primary)' } : { color: '#374151' }}
+                .map((s) => {
+                  const isAllowed = allowedStatuses.includes(s.value)
+                  const isSelected = newStatus === s.value
+
+                  return (
+                    <button
+                      key={s.value}
+                      onClick={() => isAllowed && setNewStatus(s.value)}
+                      disabled={!isAllowed}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors text-left ${
+                        !isAllowed
+                          ? 'border-gray-50 bg-gray-50 opacity-40 cursor-not-allowed'
+                          : isSelected
+                          ? ''
+                          : 'border-gray-100 bg-white hover:bg-gray-50'
+                      }`}
+                      style={isAllowed && isSelected ? {
+                        borderColor: 'var(--adm-primary)',
+                        background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                      } : undefined}
                     >
-                      {s.label}
-                    </span>
-                  </button>
-                ))}
+                      <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${s.color.replace('text-', 'bg-').split(' ')[0]}`} />
+                      <span
+                        className="text-sm font-medium"
+                        style={isAllowed && isSelected ? { color: 'var(--adm-primary)' } : { color: '#374151' }}
+                      >
+                        {s.label}
+                      </span>
+                      {!isAllowed && (
+                        <span className="ml-auto text-xs text-gray-400">sem permissão</span>
+                      )}
+                    </button>
+                  )
+                })}
             </div>
+
             <button
               onClick={handleStatusChange}
-              disabled={statusLoading || newStatus === editingOrder.status}
+              disabled={statusLoading || newStatus === editingOrder.status || !allowedStatuses.includes(newStatus)}
               className="w-full py-3.5 disabled:opacity-50 font-black rounded-2xl flex items-center justify-center gap-2 transition-all"
               style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
             >

@@ -1,7 +1,7 @@
 // ============================================================
 // HIVI — API de Funcionários do ADM
-// GET  → listar membros da equipe
-// POST → adicionar membro (cria conta HIVI via Supabase Admin)
+// GET    → listar membros da equipe
+// POST   → adicionar membro (cria conta HIVI via Supabase Admin)
 // DELETE → remover membro da equipe
 // ============================================================
 
@@ -37,7 +37,6 @@ export async function GET(
 
   const supabase = adminClient()
 
-  // Buscar restaurante
   const { data: restaurant } = await supabase
     .from('restaurants')
     .select('id')
@@ -48,10 +47,10 @@ export async function GET(
     return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
   }
 
-  // Buscar membros com dados do usuário via auth.users
+  // Inclui name e adm_password_hash para exibir badge "senha ✓"
   const { data: members, error } = await supabase
     .from('restaurant_users')
-    .select('id, role, created_at, user_id')
+    .select('id, role, name, adm_password_hash, created_at, user_id')
     .eq('restaurant_id', restaurant.id)
     .order('created_at', { ascending: true })
 
@@ -59,7 +58,7 @@ export async function GET(
     return NextResponse.json({ error: 'Erro ao buscar funcionários' }, { status: 500 })
   }
 
-  // Enriquecer com email/nome de cada usuário
+  // Enriquecer com email/nome do auth.users (como fallback)
   const enriched = await Promise.all(
     (members ?? []).map(async (m) => {
       const { data: { user } } = await supabase.auth.admin.getUserById(m.user_id)
@@ -67,10 +66,12 @@ export async function GET(
         id: m.id,
         user_id: m.user_id,
         role: m.role,
+        name: m.name ?? null,                                        // nome definido pelo dono
+        auth_name: (user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null) as string | null,
         created_at: m.created_at,
         email: user?.email ?? '—',
-        name: user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null,
-        avatar_url: user?.user_metadata?.avatar_url ?? null,
+        avatar_url: (user?.user_metadata?.avatar_url ?? null) as string | null,
+        has_adm_password: !!m.adm_password_hash,
       }
     })
   )
@@ -81,7 +82,8 @@ export async function GET(
 // ── POST /api/adm/[slug]/funcionarios ────────────────────────
 const inviteSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['owner', 'manager', 'staff']),
+  name: z.string().min(1).nullable().optional(),
+  role: z.enum(['owner', 'manager', 'cook', 'waiter', 'delivery']),
 })
 
 export async function POST(
@@ -112,10 +114,8 @@ export async function POST(
   }
 
   // Verificar se usuário já existe
-  const { data: existingUsers } = await supabase.auth.admin.listUsers()
-  const existingUser = existingUsers?.users?.find(
-    (u) => u.email === parsed.data.email
-  )
+  const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const existingUser = existingUsers?.users?.find((u) => u.email === parsed.data.email)
 
   let userId: string
 
@@ -143,10 +143,10 @@ export async function POST(
     .single()
 
   if (existing) {
-    // Atualizar role se já existe
+    // Atualizar role e nome se já existe
     await supabase
       .from('restaurant_users')
-      .update({ role: parsed.data.role })
+      .update({ role: parsed.data.role, name: parsed.data.name ?? null })
       .eq('id', existing.id)
     return NextResponse.json({ ok: true, updated: true })
   }
@@ -154,7 +154,12 @@ export async function POST(
   // Inserir como novo membro
   const { error: insertError } = await supabase
     .from('restaurant_users')
-    .insert({ restaurant_id: restaurant.id, user_id: userId, role: parsed.data.role })
+    .insert({
+      restaurant_id: restaurant.id,
+      user_id: userId,
+      role: parsed.data.role,
+      name: parsed.data.name ?? null,
+    })
 
   if (insertError) {
     return NextResponse.json({ error: 'Erro ao adicionar funcionário' }, { status: 500 })
@@ -195,7 +200,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
   }
 
-  // Não permitir remover o owner (role=owner)
   const { data: member } = await supabase
     .from('restaurant_users')
     .select('role')
