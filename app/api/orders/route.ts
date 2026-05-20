@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Erro ao salvar itens do pedido' }, { status: 500 })
     }
 
-    // Notificar restaurante + cliente via WhatsApp quando novo pedido de entrega chegar
+    // Notificar restaurante via WhatsApp apenas para pedidos de entrega
     if (order.type === 'delivery') {
       const { data: restaurant } = await supabase
         .from('restaurants')
@@ -83,25 +83,41 @@ export async function POST(request: Request) {
         .eq('id', restaurantId)
         .single()
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-
-      // Notificação ao restaurante (aviso de novo pedido)
-      if (restaurant?.whatsapp_number) {
-        const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        const customerName = (order.customer_name as string | null) ?? 'Cliente'
-        const notesLine = parsed.data.notes ? `\nObs: ${parsed.data.notes}` : ''
-        const restaurantMsg = `🛵 *Novo pedido de entrega!*\n\nPedido #${order.order_number}\nCliente: ${customerName}\nTotal: ${totalFormatted}${notesLine}\n\nAcesse o painel para ver os detalhes e confirmar.`
-        sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg).catch(() => {})
-      }
-
-      // Notificação ao cliente com link de acompanhamento em tempo real
-      const customerPhone = parsed.data.customer_phone
-      if (customerPhone && restaurant?.slug) {
+      if (restaurant?.whatsapp_number && restaurant.slug) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
         const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
         const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        const itemsList = items.map((i) => `• ${i.quantity}x ${i.product_name}`).join('\n')
-        const clientMsg = `*${restaurant.name}*\n\n✅ Pedido #${order.order_number} recebido!\n\n${itemsList}\n\nTotal: ${totalFormatted}\n\n📍 Acompanhe seu pedido em tempo real:\n${trackingUrl}`
-        sendWhatsAppMessage(customerPhone, clientMsg).catch(() => {})
+        const customerName = (order.customer_name as string | null) ?? 'Cliente'
+        const customerPhone = parsed.data.customer_phone // ex: 5595984150835
+        const address = parsed.data.address ?? ''
+        const notesLine = parsed.data.notes ? `\n📝 Obs: ${parsed.data.notes}` : ''
+        const paymentLabel = parsed.data.payment_method === 'dinheiro'
+          ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
+          : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
+        const itemsList = items.map((i) => `  • ${i.quantity}x ${i.product_name}`).join('\n')
+
+        // Mensagem de confirmação pré-preenchida para o cliente (vai embutida no link wa.me)
+        const customerConfirmMsg =
+          `✅ Olá, ${customerName}! Seu pedido foi confirmado 🎉\n\n` +
+          `Estamos preparando agora. Em breve um entregador sairá para sua casa.\n\n` +
+          `📍 Acompanhe em tempo real:\n${trackingUrl}`
+
+        // Linha de link wa.me com mensagem embutida (staff toca → abre conversa com cliente + mensagem pronta)
+        const waLine = customerPhone
+          ? `\n\n💬 *Enviar confirmação ao cliente:*\nhttps://wa.me/${customerPhone}?text=${encodeURIComponent(customerConfirmMsg)}`
+          : ''
+
+        const restaurantMsg =
+          `🛵 *Novo pedido de entrega!*\n\n` +
+          `Pedido #${order.order_number}\n` +
+          `👤 Cliente: ${customerName}\n` +
+          `📍 Endereço: ${address}${notesLine}\n` +
+          `💳 Pagamento: ${paymentLabel}\n` +
+          `💰 Total: ${totalFormatted}\n\n` +
+          `📦 Itens:\n${itemsList}` +
+          waLine
+
+        sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg).catch(() => {})
       }
     }
 
