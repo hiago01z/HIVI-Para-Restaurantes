@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 const confirmSchema = z.object({
   session_id: z.string().uuid(),
@@ -9,6 +10,15 @@ const confirmSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  // Rate limit: 20 confirmações por IP por minuto (proteção contra spam de pedidos mesa)
+  const ip = getClientIp(request)
+  if (!rateLimit(`qr-confirm:${ip}`, 20, 60_000)) {
+    return NextResponse.json(
+      { error: 'Muitas requisições. Aguarde um momento e tente novamente.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const parsed = confirmSchema.safeParse(body)
