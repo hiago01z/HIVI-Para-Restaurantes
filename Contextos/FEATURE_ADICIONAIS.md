@@ -1,7 +1,7 @@
 # Feature: Adicionais (Product Add-ons)
 
-> Status: **Em implementação**  
-> Prioridade: Alta — primeiro grande diferencial de produto
+> Status: **✅ Concluído** (2026-05-22)  
+> Migration 010 executada no Supabase.
 
 ---
 
@@ -208,8 +208,23 @@ As queries de produto incluem `product_option_groups(id)` para saber se o produt
 | `app/[slug]/categoria/[id]/page.tsx` | MODIFICADO |
 | `app/[slug]/page.tsx` | MODIFICADO |
 | `app/api/orders/route.ts` | MODIFICADO |
+| `app/api/qrcode/session/route.ts` | MODIFICADO |
+| `app/api/qrcode/confirm/route.ts` | MODIFICADO |
 | `app/[slug]/adm/pedidos/_pedidos-client.tsx` | MODIFICADO |
+| `app/[slug]/adm/pedidos/page.tsx` | MODIFICADO |
 | `app/[slug]/meu-pedido/[id]/_meu-pedido-client.tsx` | MODIFICADO |
+| `app/[slug]/meu-pedido/[id]/page.tsx` | MODIFICADO |
+
+---
+
+## Edição inline (implementada em 2026-05-22)
+
+O modal `OptionsManageModal` em `_pratos-client.tsx` inclui edição completa:
+
+- **Editar grupo**: botão lápis (azul) → formulário inline com nome, descrição, min/max seleções → salvar via `supabase.from('product_option_groups').update()`
+- **Editar item**: botão lápis (azul) → formulário inline com nome e preço → salvar via `supabase.from('product_option_items').update()`
+- Ao editar, os botões de excluir ficam ocultos para evitar clique acidental
+- Cancel volta para o estado de leitura sem fazer request
 
 ---
 

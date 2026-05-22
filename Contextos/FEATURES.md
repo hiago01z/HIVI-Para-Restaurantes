@@ -104,29 +104,22 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 ### Pedidos (`/[slug]/adm/pedidos`)
 
-**Tabs:**
+**Tabs (filtradas por cargo):**
 1. **Entrega** — pedidos `type = delivery`
-2. **Pedido na mesa** — pedidos `type = table`
+2. **Mesa** — pedidos `type = table`
 3. **Ler QR Code** — scanner de câmera
 
-**Filtros:**
-- Data: Hoje (default) / Período customizado
-- Ordenar por: Ordem do pedido, Mais recente
+**Filtros de período:**
+- Hoje (default) / Ontem / 7 dias — server-side com date range
 
-**Card de Pedido (Entrega):**
-- Data e hora, status com badge colorido
-- Cliente: nome
-- Endereço: rua, bairro, ponto de referência, número, município
-- Contato: telefone
-- Forma de pagamento + troco
-- Botão ✏️ → modal alterar status
-
-**Card de Pedido (Mesa):**
-- Data e hora, status com badge
-- Cliente: nome
-- Mesa: número
-- Pedido: número + "Ver itens" (expande itens do pedido)
-- Botão ✏️ → modal alterar status
+**Card de Pedido:**
+- Número do pedido, hora, nome do cliente
+- Badge de status colorido + "Alterado por [nome]" (audit trail)
+- Badge Pago ✓ / Não Pago ✗ (clicável) + "Alterado por [nome]"
+- Botão ✏️ → modal alterar status (filtrado por cargo)
+- Botão 🖨️ → imprimir cupom deste pedido (se impressora configurada)
+- Expandir: lista de itens, adicionais selecionados, total
+- Campo "Observações" com badge amarelo 💬
 
 **Status disponíveis:**
 - `pending` — Aguardando
@@ -139,11 +132,24 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 > Ao alterar status em pedidos de **entrega**, WhatsApp automático é disparado para o cliente via UltraMSG.
 
+**Notificação de novo pedido:**
+- Som (dois beeps via Web Audio API) — toggle 🔔 no header
+- Auto-impressão (se impressora configurada e ativa) — toggle 🖨️ no header
+
 **Aba "Ler QR Code":**
-- Abre câmera do dispositivo
+- Abre câmera do dispositivo (jsQR + canvas)
 - Escaneia QR code gerado pelo cliente
-- Exibe tela de confirmação com itens + total
-- Botão "Confirmar Pedido" → pedido vai para lista "Pedido na mesa"
+- Exibe tela de confirmação com itens + adicionais + total
+- Botão "Confirmar Pedido" → pedido vai para lista "Mesa"
+
+**RBAC — o que cada cargo vê/pode:**
+
+| Cargo | Tabs visíveis | Status selecionáveis |
+|---|---|---|
+| Dono / Gerente | Entrega + Mesa + QR | Todos |
+| Cozinheiro | Entrega + Mesa | pending, confirmed, preparing, ready, cancelled |
+| Garçom | Mesa + QR | pending, confirmed |
+| Entregador | Entrega | out_for_delivery, delivered, cancelled |
 
 ---
 
@@ -181,32 +187,117 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 ---
 
+### Pratos — Adicionais (Product Add-ons)
+
+Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes de adicionar ao carrinho.
+
+**Exemplos:**
+- "Carne" → Frango / Carne / Vegano (obrigatório, 1 escolha)
+- "Adicionais" → Queijo +R$2 / Bacon +R$3 (opcional, até 3)
+- "Tamanho" → P / M / G (obrigatório, 1 escolha)
+
+**ADM (botão "Adicionais" por produto):**
+- Criar grupo: nome, descrição, obrigatório/opcional, máx. seleções
+- Criar itens dentro do grupo: nome + preço adicional
+- Editar inline grupos e itens (lápis → formulário em linha → salvar)
+- Excluir grupos e itens individualmente
+- Toggle "Ativo" por item
+
+**Cardápio público:**
+- Modal abre automaticamente ao clicar em produto com adicionais
+- Grupos obrigatórios marcados com `*` e badge vermelho "Obrigatório"
+- Comportamento rádio (máx. 1) ou checkbox (máx. N)
+- Total unitário atualiza em tempo real com adicionais
+- Mesmo produto com opções diferentes = entradas separadas no carrinho
+
+**Pedidos e ADM:**
+- `selected_options` salvo em JSONB em `order_items`
+- Adicionais exibidos abaixo do item no detalhe do pedido
+- WhatsApp inclui adicionais (↳ nome +preço)
+- Meu Pedido do cliente exibe adicionais escolhidos
+
+---
+
 ### Configurações (`/[slug]/adm/configuracoes`)
 
 **Redes Sociais:**
 - Link do Instagram, Número do WhatsApp
 - Exibidos no rodapé do cardápio público
+- Botão "Testar notificação" envia mensagem WhatsApp de teste
+
+**Horário de Entregas:**
+- Toggle habilitar/desabilitar controle de horário
+- Modo "mesmo horário todos os dias" ou "horários diferentes por dia"
+- Fora do horário: botão de entrega bloqueado no cardápio com mensagem de reabertura
 
 **Temas:**
-- Cor primária, cor de background (color picker)
+- Cor primária, fundo, texto, ícones, secundária (color picker)
 - Família de fonte, tamanho base de fonte
-- Upload de logo do restaurante
-- Upload de imagem de banner
-- Preview ao vivo das alterações
-- Temas pré-definidos: Rústico, Moderno, Claro, Colorido
+- Upload de logo do restaurante (com remoção)
+- Upload de imagem de banner (com remoção)
+- Texto sobre imagens: fonte decorativa, cor, efeito (contorno/fundo/desalinhado), espessura e direção
+- Preview ao vivo via iframe real + postMessage
+- Temas pré-definidos: Rústico, Moderno, Claro, Verde
 
 **QR Code da Loja:**
 - Gerar QR code apontando para `/[slug]`
 - Botão "Baixar QR Code" (PNG) para imprimir e colocar nas mesas
 
+**Impressora Térmica:**
+- Tipo de conexão: 🔌 Cabo USB (WebUSB) / 📶 Bluetooth (Web Bluetooth) / 🖨️ Via sistema (window.print)
+- Largura do papel: 58 mm (32 col) ou 80 mm (48 col)
+- Toggle auto-imprimir ao confirmar pedido
+- Botão "Conectar" (USB/BT abre seletor do Chrome; Via sistema sempre pronto)
+- Botão "Imprimir teste" (envia cupom de teste para a impressora)
+- Configuração salva em `localStorage` — persiste entre sessões
+
 **Gerenciar Funcionários:**
-- Listar funcionários (nome, e-mail, role)
+- Listar funcionários (nome, e-mail, cargo)
 - Convidar novo funcionário via e-mail (Resend)
-- Remover funcionário, alterar role
+- Remover funcionário, alterar cargo
 
 ---
 
-## 4. Fluxos Críticos
+## 4. Impressão Térmica
+
+> Zero instalação em qualquer modo.
+
+### Modos de conexão
+
+| Modo | Como funciona | Requisito |
+|---|---|---|
+| 🔌 Cabo USB | WebUSB API — Chrome abre seletor de dispositivos USB | Chrome desktop, impressora USB |
+| 📶 Bluetooth | Web Bluetooth API — Chrome abre seletor BT | Chrome desktop/mobile, BT ativo |
+| 🖨️ Via sistema | `window.print()` + iframe oculto + CSS `@page` | Qualquer browser, impressora configurada no OS |
+
+### Formato do cupom
+
+- Cabeçalho: nome do restaurante + número do pedido (fonte dupla)
+- Corpo: tipo (Mesa N / Delivery) + data/hora + nome do cliente
+- Itens: `Nx Nome` alinhado com preço à direita
+- Adicionais: `  + Nome` com preço adicional
+- Rodapé: TOTAL em negrito + observações + assinatura HIVI
+- Corte de papel automático (ESC/POS `GS V 01`)
+
+### Configuração (ADM → Configurações → Impressora Térmica)
+
+1. Selecionar tipo de conexão
+2. Selecionar largura do papel (58 mm / 80 mm)
+3. Para USB/BT: clicar "Conectar" → browser abre seletor
+4. Para Via sistema: já pronto — testar direto
+5. Clicar "Imprimir teste" para confirmar
+6. Habilitar "Auto-imprimir ao confirmar pedido"
+
+### Comportamento no painel de pedidos
+
+- Header: badge 🖨️ mostra estado (Impr. ativa / pausada / Reconectar)
+- Novo pedido via Realtime → auto-imprime se conectado e ativo
+- Botão 🖨️ por card → reimprimir manualmente a qualquer momento
+- Toast verde/vermelho confirma sucesso ou exibe erro de impressão
+
+---
+
+## 5. Fluxos Críticos
 
 ### Fluxo 1: Novo restaurante se cadastra
 1. Dono acessa `hivi.com.br` → clica "Criar conta" → Google OAuth

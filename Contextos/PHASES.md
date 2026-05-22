@@ -12,7 +12,14 @@
 | 5 | Integrações (WhatsApp + Email) | ✅ Concluído |
 | 6 | Temas e Personalização | ✅ Concluído |
 | 7 | Billing e Gestão de Conta | ✅ Concluído |
-| 8 | Testes, Polimento e Deploy | 🔄 Em andamento |
+| 8 | Polimento, RBAC e Deploy | ✅ Concluído |
+| 9 | Analytics e Relatórios | 🔲 Pendente |
+| 10 | Adicionais (Product Add-ons) | ✅ Concluído |
+| 11 | Impressão Térmica | ✅ Concluído |
+| 12 | PIX e Pagamentos Online | 🔲 Pendente |
+| 13 | Cupons e Descontos | 🔲 Pendente |
+| 14 | Fidelidade e Clientes | 🔲 Pendente |
+| 15 | Multi-unidade | 🔲 Pendente |
 
 ---
 
@@ -30,7 +37,7 @@
 - [x] Criar `middleware.ts` para proteção das rotas `/[slug]/adm`
 - [x] Criar `lib/supabase/client.ts` e `lib/supabase/server.ts`
 - [x] Criar `.env.example` com todas as variáveis
-- [ ] Configurar conta Resend (domínio de e-mail) — API key pendente
+- [x] Configurar conta Resend (domínio de e-mail verificado)
 
 ---
 
@@ -43,6 +50,7 @@
 - [x] Área de conta `/conta`: listar cardápios, ações por cardápio
 - [x] Fluxo "Criar novo cardápio" com checkout Stripe
 - [x] Preview ao vivo na landing: iframe do primeiro restaurante ativo
+- [x] Seção QR Code: "Do QR code à cozinha em segundos" — 4 passos com destaque para confirmação do garçom e saída para cozinha
 
 ---
 
@@ -54,6 +62,7 @@
 - [x] Tela de pedido: resumo, botões QR Code e Entrega
 - [x] Modal QR Code de mesa
 - [x] Modal Dados para Entrega com formulário completo
+- [x] Pré-preenchimento automático de dados de entrega (localStorage)
 - [x] Tela "Meu Pedido" com status em realtime (Supabase Realtime)
 - [x] Rodapé com identidade do restaurante + redes sociais
 - [x] Página de restaurante pausado (PausedPage)
@@ -64,7 +73,8 @@
 
 ## Fase 3 — Sistema de Pedidos e QR Code ✅
 
-- [x] `POST /api/orders` — cliente cria pedido
+- [x] `POST /api/orders` — cliente cria pedido de entrega
+- [x] `POST /api/qrcode/session` — cliente inicia sessão de mesa
 - [x] `POST /api/qrcode/confirm` — garçom confirma pedido QR
 - [x] `PATCH /api/orders/[id]/status` — funcionário altera status
 - [x] Rota `/[slug]/adm/qr/[session_id]` — tela de confirmação do garçom
@@ -77,13 +87,13 @@
 - [x] Guard de rota ADM (middleware por JWT/cookie)
 - [x] Layout e navegação do ADM (header + menu hambúrguer)
 - [x] **Dashboard ADM** com métricas do dia (pedidos, receita, em andamento)
-- [x] Pedidos: lista com tabs (Entrega / Mesa / QR Code)
-- [x] Pedidos: filtros, cards completos, alterar status, "Ver itens"
-- [x] Pedidos: aba "Ler QR Code" com câmera + scanner
+- [x] Pedidos: lista com tabs (Entrega / Mesa / QR Code), filtros de período (Hoje / Ontem / 7 dias)
+- [x] Pedidos: cards completos, alterar status, badge Pago/Não Pago, audit trail "Alterado por [nome]"
+- [x] Pedidos: aba "Ler QR Code" com câmera + scanner (jsQR)
 - [x] Pedidos: **notificação sonora** de novo pedido (Web Audio API)
-- [x] Pratos/Bebidas: listagem, filtros, toggle destaques, CRUD + upload
+- [x] Pratos/Bebidas: listagem, filtros, toggle destaques, CRUD + upload + **Adicionais**
 - [x] Categorias: listagem, reordenação, CRUD + upload
-- [x] Configurações: redes sociais, temas, QR code da loja, funcionários
+- [x] Configurações: redes sociais, temas, QR code, funcionários, horário de entregas, **impressora térmica**
 - [x] Configurações: **preview ao vivo** via iframe real + postMessage
 
 ---
@@ -92,8 +102,9 @@
 
 - [x] `lib/ultramsg.ts` — cliente UltraMSG
 - [x] Mensagens automáticas WhatsApp por status (pedidos de entrega apenas)
+- [x] WhatsApp inclui adicionais selecionados (↳ item +preço)
 - [x] `lib/resend.ts` — e-mail de boas-vindas no webhook Stripe
-- [ ] Configurar Resend API key + domínio verificado
+- [x] Resend API key + domínio verificado
 
 ---
 
@@ -105,6 +116,7 @@
 - [x] Temas pré-definidos (Rústico, Moderno, Claro, Verde)
 - [x] Logo e banner aplicados na home do cardápio
 - [x] Cor dos ícones customizável por restaurante
+- [x] Texto sobre imagens: fonte decorativa, cor, efeito (contorno/fundo/desalinhado), sliders de espessura e direção
 
 ---
 
@@ -116,28 +128,121 @@
 - [x] Portal do cliente Stripe (gerenciar assinatura)
 - [x] Lógica de pausar cardápio (página de aviso para clientes)
 - [x] Lógica de excluir cardápio
-- [ ] Configurar Stripe Billing Portal no dashboard
+- [x] Stripe Billing Portal configurado
 
 ---
 
-## Fase 8 — Testes, Polimento e Deploy 🔄
+## Fase 8 — Polimento, RBAC e Deploy ✅
 
-- [x] Página 404 personalizada HIVI (app/not-found.tsx)
-- [x] Página de restaurante pausado (PausedPage com design neutro)
+- [x] Página 404 personalizada HIVI
+- [x] Página de restaurante pausado
 - [x] SEO básico por restaurante (meta tags, OG, Twitter card)
 - [x] Favicon + ícone do navegador
 - [x] Dashboard ADM com métricas
-- [x] Notificação sonora de novo pedido
-- [x] Rate limiting nas APIs públicas (/api/orders, /api/qrcode/session)
+- [x] Notificação sonora de novo pedido (toggle 🔔)
+- [x] Rate limiting nas APIs públicas
 - [x] Loading/skeleton states em todas as páginas do ADM
-- [x] Gerenciamento de funcionários (convidar via e-mail, remover, alterar role)
-- [x] **Upload de imagens com `ImageCropPicker`** — drag, zoom (roda do mouse + botões), recorte canvas 800×800 JPEG; integrado em Categorias e Pratos
-- [x] **Infra de Storage** — migration `004_storage_policies.sql` com RLS para bucket `restaurant-images`
-- [x] **Sistema de restaurante template** — webhook Stripe copia categorias, pratos e tema ao criar novo restaurante
-- [ ] Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
-- [ ] Testar pedido de mesa com QR Code (câmera real)
-- [ ] Testar pedido de entrega + WhatsApp automático
-- [ ] Testar upload de imagens (logo, banner, categorias, pratos) em produção
-- [ ] Responsividade mobile em todas as telas (375px — testes reais)
-- [ ] Página de cardápio vazio (sem pratos cadastrados)
-- [ ] Configurar domínio customizado na Vercel (hivi.com.br)
+- [x] **RBAC completo**: 5 cargos (Dono/Gerente/Cozinheiro/Garçom/Entregador), senhas individuais por membro, tabs e status filtrados por cargo
+- [x] Gerenciamento de equipe (convidar via e-mail, remover, alterar role, ver cargo)
+- [x] **Upload com `ImageCropPicker`** — drag, zoom, recorte canvas 800×800 JPEG
+- [x] Sistema de restaurante template (webhook copia categorias, pratos e tema)
+- [x] Horário de funcionamento das entregas (por dia da semana ou igual para todos)
+- [x] Campo "Observações" em pedidos (badge amarelo no ADM)
+- [x] Badge Pago/Não Pago por pedido com nome do funcionário
+- [x] Filtros de período nos pedidos (Hoje/Ontem/7 dias)
+- [x] QR scanner real na aba "Ler QR Code" (jsQR + canvas)
+- [x] Pré-preenchimento de entrega (localStorage com dados do último pedido)
+- [x] Migrations 005–009 executadas no Supabase
+
+---
+
+## Fase 9 — Analytics e Relatórios 🔲
+
+> Próxima fase prioritária.
+
+- [ ] Gráfico de receita por dia / semana / mês (Chart.js ou Recharts)
+- [ ] Top 5 produtos mais pedidos
+- [ ] Pedidos por período e por tipo (entrega / mesa)
+- [ ] Ticket médio, horário de pico
+- [ ] Comparativo semana a semana
+- [ ] Exportação CSV (pedidos + itens)
+
+---
+
+## Fase 10 — Adicionais (Product Add-ons) ✅
+
+- [x] Migration `010_product_options.sql` — tabelas `product_option_groups` e `product_option_items`, coluna `selected_options JSONB` em `order_items`
+- [x] ADM Pratos: botão "Adicionais" por produto → modal `OptionsManageModal`
+- [x] Modal: criar grupos (nome, descrição, min/max seleções, obrigatório/opcional)
+- [x] Modal: criar itens dentro de cada grupo (nome, preço adicional, disponível)
+- [x] Modal: editar grupos e itens inline (botão lápis → formulário em linha)
+- [x] Modal: excluir grupos e itens (com Supabase DELETE)
+- [x] Cardápio público: `ProductOptionsModal` — busca grupos ao abrir produto, mostra opções com comportamento rádio/checkbox, valida obrigatórios, calcula total com adicionais em tempo real
+- [x] CartContext: `SelectedOption`, `cartKey` (`productId__item1_item2`), total com adicionais
+- [x] API `POST /api/orders`: persiste `selected_options` por item
+- [x] API `POST /api/qrcode/session` + `POST /api/qrcode/confirm`: inclui `selected_options`
+- [x] WhatsApp: mensagem inclui adicionais (↳ nome +preço)
+- [x] ADM Pedidos: exibe adicionais abaixo do item no detalhe expandido
+- [x] Meu Pedido: exibe adicionais escolhidos
+
+---
+
+## Fase 11 — Impressão Térmica ✅
+
+- [x] `lib/thermal-printer/escpos.ts` — encoder ESC/POS puro (sem dependências): inicializar, alinhar, negrito, tamanho duplo, cortar papel; normaliza acentos para compatibilidade com codepage da impressora
+- [x] `lib/thermal-printer/printer.ts` — gerenciamento de conexão + impressão unificada:
+  - **USB** via WebUSB API (Chrome desktop) — pareia uma vez, zero instalação
+  - **Bluetooth** via Web Bluetooth API (Chrome mobile/desktop) — pareia uma vez, zero instalação
+  - **Via sistema** via `window.print()` + iframe oculto + CSS `@page` — usa qualquer impressora já configurada no OS, zero instalação
+  - Configuração persistida em `localStorage` (tipo + auto-print + largura do papel)
+  - Migração automática de configs legadas (`'network'` → `'browser'`)
+- [x] `lib/thermal-printer/receipt-html.ts` — gera HTML de cupom para modo "Via sistema": layout responsivo, CSS `@page` para 58 mm ou 80 mm, fonte monospace, colunas alinhadas, suporte a adicionais
+- [x] ADM Configurações: seção "Impressora Térmica"
+  - Seletor de tipo: 🔌 Cabo USB / 📶 Bluetooth / 🖨️ Via sistema
+  - Seletor de largura: 58 mm (32 col) / 80 mm (48 col)
+  - Toggle auto-imprimir ao confirmar pedido
+  - Botão "Conectar" (USB/BT) ou sempre pronto (Via sistema)
+  - Botão "Imprimir teste"
+  - Botão "Remover impressora"
+- [x] ADM Pedidos:
+  - Botão 🖨️ por card de pedido — reimprimir manualmente a qualquer momento
+  - Badge "Impr. ativa / pausada / Reconectar" no header (ao lado do som)
+  - Auto-impressão via Realtime: dispara quando novo pedido chega (se conectado e ativo)
+  - Toast verde/vermelho confirmando sucesso ou exibindo erro
+
+---
+
+## Fase 12 — PIX e Pagamentos Online 🔲
+
+- [ ] Geração de QR Code PIX estático por restaurante (chave PIX configurada no ADM)
+- [ ] Geração de QR Code PIX dinâmico por pedido (valor exato)
+- [ ] Integração com gateway (MercadoPago / PagSeguro / Asaas)
+- [ ] Confirmação automática de pagamento via webhook
+- [ ] Status "Pago via PIX" no ADM
+
+---
+
+## Fase 13 — Cupons e Descontos 🔲
+
+- [ ] ADM: criação de cupons (código, valor fixo ou percentual, validade, limite de usos)
+- [ ] Cardápio público: campo de cupom na tela de pedido
+- [ ] Validação + aplicação do desconto no total
+- [ ] Relatório de uso de cupons no ADM
+
+---
+
+## Fase 14 — Fidelidade e Clientes 🔲
+
+- [ ] Cadastro opcional do cliente (nome, WhatsApp, histórico)
+- [ ] Programa de pontos: X pedidos = desconto
+- [ ] Histórico de pedidos por cliente no ADM
+- [ ] Push notification via WhatsApp para clientes recorrentes (promoções)
+
+---
+
+## Fase 15 — Multi-unidade 🔲
+
+- [ ] Restaurante com múltiplas filiais sob o mesmo dono
+- [ ] Cardápio base compartilhado + customizações por unidade
+- [ ] Funcionários com acesso a unidades específicas
+- [ ] Dashboard consolidado com métricas por unidade e total
