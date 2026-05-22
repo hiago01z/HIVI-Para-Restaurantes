@@ -72,9 +72,22 @@ export function buildReceiptHtml(
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script>
+(function(){
+  var w=${width === 48 ? 80 : 58};
+  function setPageSize(){
+    var h=Math.ceil(document.documentElement.scrollHeight*0.2646)+12;
+    var s=document.createElement('style');
+    s.textContent='@page{size:'+w+'mm '+h+'mm !important;margin:0mm 2mm}';
+    document.head.appendChild(s);
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setPageSize);}
+  else{setPageSize();}
+}());
+</script>
 <style>
   @page {
-    size: ${pageMm} auto;
+    size: ${pageMm} 3000mm;
     margin: 0mm 2mm;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; overflow-wrap: break-word; word-break: break-word; }
