@@ -72,22 +72,9 @@ export function buildReceiptHtml(
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script>
-(function(){
-  var w=${width === 48 ? 80 : 58};
-  function setPageSize(){
-    var h=Math.ceil(document.documentElement.scrollHeight*0.2646)+12;
-    var s=document.createElement('style');
-    s.textContent='@page{size:'+w+'mm '+h+'mm !important;margin:0mm 2mm}';
-    document.head.appendChild(s);
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setPageSize);}
-  else{setPageSize();}
-}());
-</script>
 <style>
   @page {
-    size: ${pageMm} 3000mm;
+    size: ${pageMm} 2000mm;
     margin: 0mm 2mm;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; overflow-wrap: break-word; word-break: break-word; }
@@ -142,14 +129,22 @@ export function buildReceiptHtml(
 </html>`
 }
 
+/** 1 mm in CSS pixels at 96 dpi */
+const MM_TO_PX = 96 / 25.4
+
 /**
  * Prints an HTML receipt via a hidden iframe (uses the OS print dialog).
  * Does NOT trigger popup-blocker since it writes to an existing iframe.
+ * @param paperMm  Physical paper roll width in mm (58 or 80). Used to size
+ *                 the hidden iframe so scrollHeight reflects the real layout,
+ *                 then injects a precise @page size before triggering print.
  */
-export function printViaBrowser(html: string): void {
+export function printViaBrowser(html: string, paperMm: 58 | 80 = 58): void {
   const iframe = document.createElement('iframe')
+  // Width must match the actual roll so scrollHeight gives the correct value
+  const paperPx = Math.round(paperMm * MM_TO_PX)
   iframe.style.cssText =
-    'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;visibility:hidden;'
+    `position:fixed;top:-9999px;left:-9999px;width:${paperPx}px;height:2000px;border:none;visibility:hidden;`
   document.body.appendChild(iframe)
 
   const doc = iframe.contentDocument!
@@ -157,17 +152,23 @@ export function printViaBrowser(html: string): void {
   doc.write(html)
   doc.close()
 
-  // Give the browser time to finish layout before printing
+  // Wait for layout to settle, measure real content height, then print
   setTimeout(() => {
     try {
+      const contentDoc = iframe.contentDocument!
+      const heightPx = contentDoc.documentElement.scrollHeight
+      const heightMm = Math.ceil(heightPx / MM_TO_PX) + 10  // 10 mm tail buffer
+      const style = contentDoc.createElement('style')
+      style.textContent =
+        `@page{size:${paperMm}mm ${heightMm}mm !important;margin:0mm 2mm}`
+      contentDoc.head.appendChild(style)
+
       iframe.contentWindow?.print()
     } finally {
-      // Remove iframe after the dialog closes (afterprint fires on close)
       const cleanup = () => {
         try { document.body.removeChild(iframe) } catch { /* already removed */ }
       }
       iframe.contentWindow?.addEventListener('afterprint', cleanup, { once: true })
-      // Fallback cleanup in case afterprint doesn't fire
       setTimeout(cleanup, 30_000)
     }
   }, 400)

@@ -280,8 +280,9 @@ export async function printOrder(
   const charset = config.charset ?? 'ascii'
 
   if (config.type === 'browser') {
+    const paperMm = config.width === 48 ? 80 : 58
     const html = buildReceiptHtml(order, restaurantName, config.width)
-    printViaBrowser(html)
+    printViaBrowser(html, paperMm)
     return
   }
 
