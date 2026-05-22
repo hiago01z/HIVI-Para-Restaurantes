@@ -23,6 +23,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
   const [checking, setChecking] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalGoToPedido, setModalGoToPedido] = useState(false)
+  const [modalProduct, setModalProduct] = useState<Product | null>(null)
   const { addItem } = useCart()
   const router = useRouter()
   const touchStartX = useRef(0)
@@ -38,12 +39,12 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     setCurrent((c) => (c - 1 + products.length) % products.length)
   }, [products.length])
 
-  // Auto-scroll a cada 4 s (desativado se só 1 item)
+  // Auto-scroll a cada 4 s (pausado quando o modal de opções está aberto)
   useEffect(() => {
-    if (products.length <= 1) return
+    if (products.length <= 1 || modalOpen) return
     autoTimer.current = setInterval(goNext, 4000)
     return () => { if (autoTimer.current) clearInterval(autoTimer.current) }
-  }, [goNext, products.length])
+  }, [goNext, products.length, modalOpen])
 
   // ── Early return APÓS todos os hooks ──────────────────────────────────────
   if (products.length === 0) return null
@@ -72,11 +73,16 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
   }
 
   async function checkAndAct(goToPedido: boolean) {
-    if (product.hasOptions === false) {
+    // Capturar o produto no momento do clique — o carrosel pode girar
+    // enquanto o modal estiver aberto e mudar `current`
+    const clickedProduct = products[current]
+
+    if (clickedProduct.hasOptions === false) {
       doAdd(goToPedido)
       return
     }
-    if (product.hasOptions === true) {
+    if (clickedProduct.hasOptions === true) {
+      setModalProduct(clickedProduct)
       setModalGoToPedido(goToPedido)
       setModalOpen(true)
       return
@@ -87,11 +93,12 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     const { data } = await supabase
       .from('product_option_groups')
       .select('id')
-      .eq('product_id', product.id)
+      .eq('product_id', clickedProduct.id)
       .limit(1)
     setChecking(false)
 
     if (data && data.length > 0) {
+      setModalProduct(clickedProduct)
       setModalGoToPedido(goToPedido)
       setModalOpen(true)
     } else {
@@ -208,10 +215,10 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
         </div>
       </div>
 
-      {/* Options Modal */}
-      {modalOpen && (
+      {/* Options Modal — usa modalProduct (snapshot do clique), não o product reativo */}
+      {modalOpen && modalProduct && (
         <ProductOptionsModal
-          product={product}
+          product={modalProduct}
           slug={slug}
           goToPedido={modalGoToPedido}
           onClose={() => setModalOpen(false)}
