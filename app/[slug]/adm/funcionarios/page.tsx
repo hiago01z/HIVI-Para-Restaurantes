@@ -24,7 +24,7 @@ export default async function FuncionariosPage({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id')
+    .select('id, owner_id, adm_password_hash')
     .eq('slug', slug)
     .single()
 
@@ -49,7 +49,10 @@ export default async function FuncionariosPage({
         created_at: m.created_at,
         email: user?.email ?? '—',
         avatar_url: (user?.user_metadata?.avatar_url ?? null) as string | null,
-        has_adm_password: !!m.adm_password_hash,
+        // Dono: senha pode estar em restaurants.adm_password_hash (legado /conta)
+        // ou em restaurant_users.adm_password_hash (senha individual mais recente).
+        has_adm_password: !!m.adm_password_hash ||
+          (m.user_id === restaurant.owner_id && !!restaurant.adm_password_hash),
       }
     })
   )
