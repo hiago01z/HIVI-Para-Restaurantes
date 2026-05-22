@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
@@ -76,48 +77,54 @@ export async function POST(request: Request) {
     }
 
     // Notificar restaurante via WhatsApp apenas para pedidos de entrega
+    // Usa service role para garantir acesso ao whatsapp_number independente de RLS
     if (order.type === 'delivery') {
-      const { data: restaurant } = await supabase
-        .from('restaurants')
-        .select('name, whatsapp_number, slug')
-        .eq('id', restaurantId)
-        .single()
+      try {
+        const serviceSupabase = createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
 
-      if (restaurant?.whatsapp_number && restaurant.slug) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-        const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
-        const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        const customerName = (order.customer_name as string | null) ?? 'Cliente'
-        const customerPhone = parsed.data.customer_phone // ex: 5595984150835
-        const address = parsed.data.address ?? ''
-        const notesLine = parsed.data.notes ? `\n📝 Obs: ${parsed.data.notes}` : ''
-        const paymentLabel = parsed.data.payment_method === 'dinheiro'
-          ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
-          : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
-        const itemsList = items.map((i) => `  • ${i.quantity}x ${i.product_name}`).join('\n')
+        const { data: restaurant } = await serviceSupabase
+          .from('restaurants')
+          .select('name, whatsapp_number, slug')
+          .eq('id', restaurantId)
+          .single()
 
-        // Mensagem de confirmação pré-preenchida para o cliente (vai embutida no link wa.me)
-        const customerConfirmMsg =
-          `✅ Olá, ${customerName}! Seu pedido foi confirmado 🎉\n\n` +
-          `Estamos preparando agora. Em breve um entregador sairá para sua casa.\n\n` +
-          `📍 Acompanhe em tempo real:\n${trackingUrl}`
+        if (restaurant?.whatsapp_number && restaurant.slug) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+          const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
+          const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          const customerName = (order.customer_name as string | null) ?? 'Cliente'
+          const customerPhone = parsed.data.customer_phone
+          const address = parsed.data.address ?? ''
+          const notesLine = parsed.data.notes ? `\n📝 Obs: ${parsed.data.notes}` : ''
+          const paymentLabel = parsed.data.payment_method === 'dinheiro'
+            ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
+            : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
+          const itemsList = items.map((i) => `  • ${i.quantity}x ${i.product_name}`).join('\n')
 
-        // Linha de link wa.me com mensagem embutida (staff toca → abre conversa com cliente + mensagem pronta)
-        const waLine = customerPhone
-          ? `\n\n💬 *Enviar confirmação ao cliente:*\nhttps://wa.me/${customerPhone}?text=${encodeURIComponent(customerConfirmMsg)}`
-          : ''
+          // Link wa.me para o staff enviar confirmação ao cliente (curto, sem mensagem pré-preenchida)
+          const waLine = customerPhone
+            ? `\n\n💬 *Confirmar ao cliente:* https://wa.me/${customerPhone}`
+            : ''
 
-        const restaurantMsg =
-          `🛵 *Novo pedido de entrega!*\n\n` +
-          `Pedido #${order.order_number}\n` +
-          `👤 Cliente: ${customerName}\n` +
-          `📍 Endereço: ${address}${notesLine}\n` +
-          `💳 Pagamento: ${paymentLabel}\n` +
-          `💰 Total: ${totalFormatted}\n\n` +
-          `📦 Itens:\n${itemsList}` +
-          waLine
+          const restaurantMsg =
+            `🛵 *Novo pedido de entrega!*\n\n` +
+            `Pedido #${order.order_number}\n` +
+            `👤 Cliente: ${customerName}\n` +
+            `📍 Endereço: ${address}${notesLine}\n` +
+            `💳 Pagamento: ${paymentLabel}\n` +
+            `💰 Total: ${totalFormatted}\n\n` +
+            `📦 Itens:\n${itemsList}` +
+            waLine +
+            `\n\n🔗 ${trackingUrl}`
 
-        sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg).catch(() => {})
+          // await garante que o fetch completa antes de o Vercel encerrar a função
+          await sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg)
+        }
+      } catch {
+        // Não falha o pedido se o WhatsApp falhar
       }
     }
 
