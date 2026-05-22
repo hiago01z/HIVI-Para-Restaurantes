@@ -1160,24 +1160,89 @@ export function ConfiguracoesClient({
             ))}
           </div>
           {printerCfg.type === 'browser' && (
-            <p className="text-xs text-gray-400 mt-2">
-              Usa o diálogo de impressão do sistema. Selecione sua impressora térmica na primeira vez — o navegador lembra a escolha.
-            </p>
+            <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+              <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-blue-700 flex items-center gap-2 select-none list-none">
+                📋 Como configurar — passo a passo
+              </summary>
+              <div className="px-4 pb-4 pt-1 text-xs text-gray-700 space-y-2">
+                <p className="font-bold text-gray-800">Antes de imprimir, configure o tamanho do papel no Windows:</p>
+                <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                  <li>Abra o <strong>Painel de Controle → Dispositivos e Impressoras</strong></li>
+                  <li>Clique com o botão direito na sua impressora térmica → <strong>Preferências de impressão</strong></li>
+                  <li>Na aba <strong>Papel</strong>, selecione <strong>58mm Roll</strong> ou <strong>80mm Roll</strong> (depende do seu modelo)</li>
+                  <li>Clique em <strong>OK</strong> e salve</li>
+                </ol>
+                <p className="font-bold text-gray-800 pt-1">Para imprimir pelo HIVI:</p>
+                <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                  <li>Clique em <strong>Imprimir teste</strong> abaixo</li>
+                  <li>Na janela que abrir, selecione sua impressora térmica em <strong>Destino</strong></li>
+                  <li>Verifique se o tamanho do papel está correto (58mm ou 80mm)</li>
+                  <li>Clique em <strong>Imprimir</strong></li>
+                </ol>
+                <p className="text-gray-500 pt-1">💡 O navegador lembra a impressora escolhida — próximas impressões serão automáticas.</p>
+                <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+                  ⚠️ <strong>Imprimindo errado?</strong> O problema mais comum é o tamanho do papel. Confira se selecionou <strong>58mm</strong> ou <strong>80mm</strong> nas preferências da impressora — não deixe em A4.
+                </p>
+              </div>
+            </details>
           )}
           {printerCfg.type === 'usb' && (
-            <p className="text-xs text-gray-400 mt-2">
-              Conecta direto pelo Chrome (WebUSB). Clique em &quot;Conectar&quot; e selecione a impressora na lista.
-            </p>
+            <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+              <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-blue-700 flex items-center gap-2 select-none list-none">
+                📋 Como configurar — passo a passo
+              </summary>
+              <div className="px-4 pb-4 pt-1 text-xs text-gray-700 space-y-2">
+                <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                  <li>Conecte o <strong>cabo USB</strong> da impressora ao computador</li>
+                  <li>Use o navegador <strong>Google Chrome</strong> (não funciona em Firefox ou Edge)</li>
+                  <li>Clique no botão <strong>&ldquo;Conectar&rdquo;</strong> acima</li>
+                  <li>Na janela do Chrome, procure sua impressora na lista e clique em <strong>Conectar</strong></li>
+                  <li>Clique em <strong>Imprimir teste</strong> para confirmar</li>
+                </ol>
+                <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+                  ⚠️ <strong>Erro &ldquo;Access denied&rdquo; ou impressora não aparece?</strong> O Windows instalou um driver que bloqueia o acesso direto. Solução: baixe o <strong>Zadig</strong> (zadig.akeo.ie), selecione a impressora e troque o driver para <strong>WinUSB</strong>. Depois reconecte.
+                </p>
+                <p className="text-gray-500">💡 Neste modo, a conexão USB se perde ao recarregar a página. Clique em &ldquo;Conectar&rdquo; novamente se isso acontecer.</p>
+              </div>
+            </details>
           )}
           {printerCfg.type === 'bluetooth' && (
-            <p className="text-xs text-gray-400 mt-2">
-              Conecta pelo Bluetooth do dispositivo via Chrome. Clique em &quot;Conectar&quot; e selecione a impressora.
-            </p>
+            <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+              <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-blue-700 flex items-center gap-2 select-none list-none">
+                📋 Como configurar — passo a passo
+              </summary>
+              <div className="px-4 pb-4 pt-1 text-xs text-gray-700 space-y-2">
+                <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                  <li>Ligue a impressora e coloque-a em modo de emparelhamento (normalmente uma <strong>luz azul piscando</strong> — veja o manual)</li>
+                  <li>No Windows: <strong>Configurações → Bluetooth e outros dispositivos → Adicionar dispositivo</strong>. Selecione a impressora e emparelhe</li>
+                  <li>Use o navegador <strong>Google Chrome</strong></li>
+                  <li>Clique em <strong>&ldquo;Conectar&rdquo;</strong> acima</li>
+                  <li>Na lista do Chrome, selecione sua impressora e clique em <strong>Conectar</strong></li>
+                  <li>Clique em <strong>Imprimir teste</strong> para confirmar</li>
+                </ol>
+                <p className="text-gray-500">💡 A conexão Bluetooth se perde ao recarregar a página. Clique em &ldquo;Conectar&rdquo; novamente se necessário.</p>
+              </div>
+            </details>
           )}
           {printerCfg.type === 'network' && (
-            <p className="text-xs text-gray-400 mt-2">
-              Impressora de rede (TCP/IP porta 9100) via agente local. Execute <code className="bg-gray-100 px-1 rounded">node hivi-print-agent.js --ip SEU_IP</code> no computador do restaurante.
-            </p>
+            <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+              <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-blue-700 flex items-center gap-2 select-none list-none">
+                📋 Como configurar — passo a passo
+              </summary>
+              <div className="px-4 pb-4 pt-1 text-xs text-gray-700 space-y-2">
+                <p className="font-bold text-gray-800">Pré-requisito: Node.js instalado no computador do restaurante</p>
+                <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                  <li>Descubra o <strong>IP da impressora</strong>: segure o botão de alimentação por 3 segundos — ela imprime uma folha com as configurações, incluindo o IP</li>
+                  <li>Baixe o arquivo <code className="bg-white border border-gray-200 px-1 rounded">hivi-print-agent.js</code> (disponível em <strong>hivi-web.com/downloads</strong>)</li>
+                  <li>Abra o <strong>Prompt de Comando</strong> (pressione Win+R, digite <code className="bg-white border border-gray-200 px-1 rounded">cmd</code>)</li>
+                  <li>Navegue até a pasta onde salvou o arquivo: <code className="bg-white border border-gray-200 px-1 rounded">cd C:\Downloads</code></li>
+                  <li>Execute: <code className="bg-white border border-gray-200 px-1 rounded">node hivi-print-agent.js --ip 192.168.X.X</code> (substitua pelo IP da impressora)</li>
+                  <li>Deixe a janela do Prompt <strong>aberta</strong> durante o funcionamento do restaurante</li>
+                  <li>Clique em <strong>&ldquo;Verificar agente&rdquo;</strong> no campo acima para confirmar</li>
+                </ol>
+                <p className="text-gray-500">💡 Para iniciar automaticamente ao ligar o computador, crie um atalho para o comando na pasta de Inicialização do Windows.</p>
+              </div>
+            </details>
           )}
         </div>
 

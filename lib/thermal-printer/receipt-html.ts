@@ -75,9 +75,10 @@ export function buildReceiptHtml(
 <style>
   @page {
     size: ${pageMm} auto;
-    margin: 2mm 3mm;
+    margin: 0mm 2mm;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; overflow-wrap: break-word; word-break: break-word; }
+  html { width: ${pageMm}; }
   body {
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
@@ -85,18 +86,24 @@ export function buildReceiptHtml(
     color: #000;
     background: #fff;
     width: ${bodyMm};
+    max-width: ${bodyMm};
+    overflow: hidden;
+    padding: 2mm 0;
   }
   .center { text-align: center; }
   .bold { font-weight: 700; }
   .big  { font-size: 13pt; font-weight: 700; text-align: center; margin: 2px 0; }
-  .row  { display: flex; justify-content: space-between; gap: 4px; }
-  .row .l { flex: 1; word-break: break-word; }
+  .row  { display: flex; justify-content: space-between; gap: 4px; page-break-inside: avoid; }
+  .row .l { flex: 1; word-break: break-word; overflow-wrap: break-word; }
   .row .r { flex-shrink: 0; white-space: nowrap; }
-  .option  { padding-left: 6mm; font-size: 8pt; color: #444; }
-  hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
+  .option  { padding-left: 4mm; font-size: 8pt; color: #000; }
+  hr { border: none; border-top: 1px dashed #000; margin: 3px 0; }
   .total { font-size: 11pt; }
-  .notes { font-size: 8pt; margin-top: 4px; background: #f5f5f5; padding: 3px 4px; border-radius: 2px; }
-  .footer { text-align: center; font-size: 8pt; color: #666; margin-top: 6px; }
+  .notes { font-size: 8pt; margin-top: 4px; padding: 2px 0; }
+  .footer { text-align: center; font-size: 8pt; color: #000; margin-top: 6px; }
+  @media print {
+    body { width: ${bodyMm}; max-width: ${bodyMm}; }
+  }
 </style>
 </head>
 <body>
@@ -137,7 +144,7 @@ export function printViaBrowser(html: string): void {
   doc.write(html)
   doc.close()
 
-  // Give the browser a tick to lay out the content, then print
+  // Give the browser time to finish layout before printing
   setTimeout(() => {
     try {
       iframe.contentWindow?.print()
@@ -150,5 +157,5 @@ export function printViaBrowser(html: string): void {
       // Fallback cleanup in case afterprint doesn't fire
       setTimeout(cleanup, 30_000)
     }
-  }, 150)
+  }, 400)
 }
