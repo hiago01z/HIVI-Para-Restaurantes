@@ -6,7 +6,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import { Download, TrendingUp, ShoppingBag, Clock, Users } from 'lucide-react'
+import { Download, FileText, TrendingUp, ShoppingBag, Clock, Users } from 'lucide-react'
+import type { PdfOrder } from '@/lib/analytics-pdf'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ function lastNDays(n: number): string[] {
 
 export function AnalyticsClient({ restaurantName, orders }: Props) {
   const [period, setPeriod] = useState<'7d' | '30d'>('30d')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   // Filtra pedidos conforme período selecionado
   const filteredOrders = useMemo(() => {
@@ -208,6 +210,18 @@ export function AnalyticsClient({ restaurantName, orders }: Props) {
     URL.revokeObjectURL(url)
   }
 
+  async function exportPDF() {
+    setPdfLoading(true)
+    try {
+      const { generateAnalyticsPdf } = await import('@/lib/analytics-pdf')
+      await generateAnalyticsPdf(restaurantName, orders as unknown as PdfOrder[], period)
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const ORANGE = '#FF6B00'
@@ -243,7 +257,22 @@ export function AnalyticsClient({ restaurantName, orders }: Props) {
             className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Download className="w-4 h-4" />
-            Exportar CSV
+            CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={pdfLoading}
+            className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 border border-orange-500 rounded-xl text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {pdfLoading ? (
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            {pdfLoading ? 'Gerando...' : 'Relatório PDF'}
           </button>
         </div>
       </div>
