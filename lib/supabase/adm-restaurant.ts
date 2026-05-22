@@ -17,11 +17,11 @@ function admSupabase() {
   )
 }
 
-/** Returns { id, name } for any restaurant by slug, regardless of is_active. */
+/** Returns { id, name, plan } for any restaurant by slug, regardless of is_active. */
 export async function getAdmRestaurant(slug: string) {
   const { data } = await admSupabase()
     .from('restaurants')
-    .select('id, name')
+    .select('id, name, plan')
     .eq('slug', slug)
     .single()
 

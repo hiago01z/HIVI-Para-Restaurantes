@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, LayoutDashboard, Pause, Play, Trash2, CreditCard, Loader2 } from 'lucide-react'
+import { ExternalLink, LayoutDashboard, Pause, Play, Trash2, CreditCard, Loader2, TrendingUp } from 'lucide-react'
 
 type Loja = {
   id: string
@@ -12,6 +12,7 @@ type Loja = {
   is_active: boolean
   stripe_customer_id: string | null
   has_adm_password?: boolean
+  plan?: 'basic' | 'pro'
 }
 
 type Props = {
@@ -27,6 +28,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   const [portalError, setPortalError] = useState('')
   const [actionError, setActionError] = useState<Record<string, string>>({})
   const [localLojas, setLocalLojas] = useState<Loja[]>(lojas)
+  const [upgradingId, setUpgradingId] = useState<string | null>(null)
 
   function setLojaError(id: string, msg: string) {
     setActionError((prev) => ({ ...prev, [id]: msg }))
@@ -70,6 +72,33 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
       setLojaError(loja.id + '-del', 'Erro de conexão. Tente novamente.')
     } finally {
       setLoadingId(null)
+    }
+  }
+
+  async function handleUpgrade(loja: Loja) {
+    setUpgradingId(loja.id)
+    try {
+      const res = await fetch('/api/stripe/upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: loja.id }),
+      })
+      const data = await res.json()
+      if (data.upgraded) {
+        // Upgrade via subscription update — sem redirect
+        setLocalLojas((prev) =>
+          prev.map((l) => l.id === loja.id ? { ...l, plan: 'pro' } : l)
+        )
+        router.refresh()
+      } else if (data.url) {
+        window.location.href = data.url
+      } else {
+        setLojaError(loja.id, data.error ?? 'Erro ao iniciar upgrade.')
+      }
+    } catch {
+      setLojaError(loja.id, 'Erro de conexão. Tente novamente.')
+    } finally {
+      setUpgradingId(null)
     }
   }
 
@@ -123,9 +152,20 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 <p className="font-bold text-gray-900">{loja.name}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '')}/{loja.slug}</p>
               </div>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${loja.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                {loja.is_active ? 'Ativa' : 'Pausada'}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                {/* Badge de plano */}
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                  loja.plan === 'pro'
+                    ? 'bg-orange-100 text-orange-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {loja.plan === 'pro' ? 'Pro ★' : 'Básico'}
+                </span>
+                {/* Badge de status */}
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${loja.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {loja.is_active ? 'Ativa' : 'Pausada'}
+                </span>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Link
@@ -164,6 +204,20 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 Excluir cardápio
               </button>
             </div>
+
+            {/* Upgrade para Pro */}
+            {loja.plan !== 'pro' && (
+              <button
+                onClick={() => handleUpgrade(loja)}
+                disabled={upgradingId === loja.id}
+                className="col-span-2 mt-1 flex items-center justify-center gap-1.5 py-2.5 bg-orange-50 border border-orange-200 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-100 disabled:opacity-50 transition-colors"
+              >
+                {upgradingId === loja.id
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <TrendingUp className="w-4 h-4" />}
+                {upgradingId === loja.id ? 'Processando...' : 'Fazer upgrade para Pro — R$ 99,99/mês'}
+              </button>
+            )}
 
             {/* Erro de ação */}
             {(actionError[loja.id] || actionError[loja.id + '-del']) && (

@@ -54,7 +54,7 @@ export default async function AdmLayout({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, logo_url')
+    .select('id, name, logo_url, plan')
     .eq('slug', slug)
     .single()
 
@@ -97,6 +97,7 @@ export default async function AdmLayout({
         primaryColor={primary}
         memberRole={payload!.role}
         memberName={payload!.name}
+        plan={(restaurant.plan ?? 'basic') as 'basic' | 'pro'}
       />
       <main className="pt-14">
         {children}

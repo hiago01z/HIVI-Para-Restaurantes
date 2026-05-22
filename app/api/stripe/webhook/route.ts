@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      const { user_id, restaurant_name, slug } = session.metadata!
+      const { user_id, restaurant_name, slug, plan } = session.metadata!
 
       const { error } = await supabase.from('restaurants').insert({
         owner_id: user_id,
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: session.subscription as string,
         is_active: true,
+        plan: plan === 'pro' ? 'pro' : 'basic',
       })
 
       if (error) {
@@ -150,9 +151,25 @@ export async function POST(request: Request) {
     case 'customer.subscription.updated': {
       const subscription = event.data.object as Stripe.Subscription
       const isActive = subscription.status === 'active'
+
+      // Se o metadata da subscription contém plan (upgrade via API), persiste
+      const planFromMeta = subscription.metadata?.plan
+      const updatePayload: Record<string, unknown> = { is_active: isActive }
+      if (planFromMeta === 'pro' || planFromMeta === 'basic') {
+        updatePayload.plan = planFromMeta
+      }
+
+      // Também detecta upgrade via price_id: se o price muda para STRIPE_PRICE_PRO
+      const priceId = subscription.items.data[0]?.price?.id
+      if (priceId && priceId === process.env.STRIPE_PRICE_PRO) {
+        updatePayload.plan = 'pro'
+      } else if (priceId && priceId === process.env.STRIPE_PRICE_BASIC) {
+        updatePayload.plan = 'basic'
+      }
+
       await supabase
         .from('restaurants')
-        .update({ is_active: isActive })
+        .update(updatePayload)
         .eq('stripe_subscription_id', subscription.id)
       break
     }

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   ShoppingBag, UtensilsCrossed, LayoutGrid, Settings, Users,
-  X, Menu, LogOut, ExternalLink,
+  X, Menu, LogOut, ExternalLink, BarChart2,
 } from 'lucide-react'
 
 // Cargos que podem acessar cada página do ADM
@@ -15,14 +15,16 @@ const PAGE_ROLES: Record<string, string[]> = {
   pratos:       ['owner', 'manager'],
   funcionarios: ['owner', 'manager'],
   configuracoes:['owner', 'manager'],
+  analytics:    ['owner', 'manager'],
 }
 
 const ALL_NAV_ITEMS = [
-  { href: 'pedidos',       label: 'Pedidos',        icon: ShoppingBag },
-  { href: 'categorias',    label: 'Categorias',      icon: LayoutGrid },
-  { href: 'pratos',        label: 'Pratos/Bebidas',  icon: UtensilsCrossed },
-  { href: 'funcionarios',  label: 'Equipe',          icon: Users },
-  { href: 'configuracoes', label: 'Configurações',   icon: Settings },
+  { href: 'pedidos',       label: 'Pedidos',        icon: ShoppingBag,     proOnly: false },
+  { href: 'analytics',     label: 'Analytics',      icon: BarChart2,       proOnly: true  },
+  { href: 'categorias',    label: 'Categorias',      icon: LayoutGrid,      proOnly: false },
+  { href: 'pratos',        label: 'Pratos/Bebidas',  icon: UtensilsCrossed, proOnly: false },
+  { href: 'funcionarios',  label: 'Equipe',          icon: Users,           proOnly: false },
+  { href: 'configuracoes', label: 'Configurações',   icon: Settings,        proOnly: false },
 ]
 
 const ROLE_LABEL: Record<string, string> = {
@@ -48,6 +50,7 @@ type Props = {
   primaryColor?: string
   memberRole?: string
   memberName?: string
+  plan?: 'basic' | 'pro'
 }
 
 export function AdmNav({
@@ -57,13 +60,16 @@ export function AdmNav({
   primaryColor = '#FF6B00',
   memberRole = 'owner',
   memberName,
+  plan = 'basic',
 }: Props) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  // Filtra itens de nav que o cargo atual pode acessar
+  // Filtra itens de nav que o cargo atual pode acessar e que o plano permite
   const navItems = ALL_NAV_ITEMS.filter(
-    (item) => (PAGE_ROLES[item.href] ?? []).includes(memberRole)
+    (item) =>
+      (PAGE_ROLES[item.href] ?? []).includes(memberRole) &&
+      (!item.proOnly || plan === 'pro')
   )
 
   async function handleSignout() {

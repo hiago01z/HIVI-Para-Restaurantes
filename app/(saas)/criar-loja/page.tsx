@@ -22,6 +22,7 @@ function CriarLojaInner() {
   const [nome, setNome] = useState('')
   const [slug, setSlug] = useState('')
   const [slugEditado, setSlugEditado] = useState(false)
+  const [plano, setPlano] = useState<'basic' | 'pro'>('basic')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
   const [showCancelledInfo, setShowCancelledInfo] = useState(cancelled)
@@ -56,7 +57,7 @@ function CriarLojaInner() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantName: nome, slug }),
+        body: JSON.stringify({ restaurantName: nome, slug, plan: plano }),
       })
 
       const data = await res.json()
@@ -152,15 +153,63 @@ function CriarLojaInner() {
           </p>
         </div>
 
-        {/* Plano */}
-        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-bold text-gray-900 text-base">Plano Básico</span>
-            <span className="font-black text-orange-500 text-lg">R$ 59,99<span className="text-sm font-medium text-gray-400">/mês</span></span>
+        {/* Seletor de plano */}
+        <div>
+          <p className="block text-base font-bold text-gray-900 mb-3">Escolha seu plano</p>
+          <div className="space-y-3">
+            {/* Plano Básico */}
+            <button
+              type="button"
+              onClick={() => setPlano('basic')}
+              className={`w-full text-left rounded-2xl p-4 border-2 transition-all ${
+                plano === 'basic'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    plano === 'basic' ? 'border-orange-500' : 'border-gray-300'
+                  }`}>
+                    {plano === 'basic' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                  </div>
+                  <span className="font-bold text-gray-900">Plano Básico</span>
+                </div>
+                <span className="font-black text-orange-500">R$ 59,99<span className="text-xs font-medium text-gray-400">/mês</span></span>
+              </div>
+              <p className="text-xs text-gray-500 ml-6">
+                Cardápio digital, QR code de mesa, pedidos, equipe, temas e configurações.
+              </p>
+            </button>
+
+            {/* Plano Pro */}
+            <button
+              type="button"
+              onClick={() => setPlano('pro')}
+              className={`w-full text-left rounded-2xl p-4 border-2 transition-all ${
+                plano === 'pro'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    plano === 'pro' ? 'border-orange-500' : 'border-gray-300'
+                  }`}>
+                    {plano === 'pro' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                  </div>
+                  <span className="font-bold text-gray-900">Plano Pro</span>
+                  <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">Recomendado</span>
+                </div>
+                <span className="font-black text-orange-500">R$ 99,99<span className="text-xs font-medium text-gray-400">/mês</span></span>
+              </div>
+              <p className="text-xs text-gray-500 ml-6">
+                Tudo do Básico + <strong className="text-gray-700">Analytics completo</strong>: gráficos de receita, top produtos, horário de pico e exportação CSV.
+              </p>
+            </button>
           </div>
-          <p className="text-sm text-gray-500">
-            Cardápio digital, QR code de mesa, painel administrativo e muito mais.
-          </p>
         </div>
 
         {/* Erro */}

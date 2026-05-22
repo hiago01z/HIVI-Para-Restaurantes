@@ -271,39 +271,84 @@ export default async function LandingPage() {
         <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
           Preços
         </h2>
-        <div className="max-w-xs mx-auto">
-          <div className="border-2 border-orange-500 rounded-3xl p-7 shadow-xl">
+        <div className="max-w-2xl mx-auto grid sm:grid-cols-2 gap-5">
+
+          {/* Plano Básico */}
+          <div className="border-2 border-gray-200 rounded-3xl p-7">
             <p className="font-display font-semibold text-gray-500 text-base text-center mb-1 italic">
               Plano Básico
             </p>
-            <div className="text-center my-6">
+            <div className="text-center my-5">
               <div>
-                <span className="font-display text-6xl font-bold text-gray-950">R$&nbsp;59</span>
-                <span className="font-display text-2xl font-bold text-gray-950">,99</span>
+                <span className="font-display text-5xl font-bold text-gray-950">R$&nbsp;59</span>
+                <span className="font-display text-xl font-bold text-gray-950">,99</span>
               </div>
               <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
-            <ul className="text-[0.9375rem] text-gray-700 space-y-2.5 mb-8">
+            <ul className="text-sm text-gray-700 space-y-2.5 mb-7">
               {[
                 'Cardápio digital público',
-                'Painel administrativo',
+                'Painel administrativo completo',
                 'QR code de mesa',
-                'Pedidos de mesa',
+                'Adicionais e opções por prato',
+                'Impressão térmica',
                 'Categorias e pratos ilimitados',
-                'Upload de fotos dos pratos',
                 'Suporte via WhatsApp',
               ].map((f) => (
-                <li key={f} className="flex items-center gap-3">
-                  <span className="text-orange-500 font-bold text-base flex-shrink-0">✓</span>
-                  <span className="text-gray-700">{f}</span>
+                <li key={f} className="flex items-center gap-2.5">
+                  <span className="text-orange-500 font-bold flex-shrink-0">✓</span>
+                  <span>{f}</span>
                 </li>
               ))}
             </ul>
             <Link
               href="/criar-conta"
-              className="block w-full py-3.5 bg-orange-500 text-white font-semibold tracking-wide rounded-2xl text-base text-center hover:bg-orange-600 transition-colors"
+              className="block w-full py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-2xl text-base text-center hover:bg-orange-50 transition-colors"
             >
-              Contratar agora
+              Contratar Básico
+            </Link>
+          </div>
+
+          {/* Plano Pro */}
+          <div className="border-2 border-orange-500 rounded-3xl p-7 shadow-xl relative">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+              <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                Recomendado
+              </span>
+            </div>
+            <p className="font-display font-semibold text-orange-500 text-base text-center mb-1 italic">
+              Plano Pro
+            </p>
+            <div className="text-center my-5">
+              <div>
+                <span className="font-display text-5xl font-bold text-gray-950">R$&nbsp;99</span>
+                <span className="font-display text-xl font-bold text-gray-950">,99</span>
+              </div>
+              <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
+            </div>
+            <ul className="text-sm text-gray-700 space-y-2.5 mb-7">
+              <li className="flex items-center gap-2.5">
+                <span className="text-orange-500 font-bold flex-shrink-0">★</span>
+                <span className="font-semibold text-gray-800">Tudo do Básico, mais:</span>
+              </li>
+              {[
+                'Analytics: gráfico de receita diária',
+                'Top 5 produtos mais vendidos',
+                'Ticket médio e horário de pico',
+                'Comparativo semanal',
+                'Exportação de pedidos em CSV',
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-2.5">
+                  <span className="text-orange-500 font-bold flex-shrink-0">✓</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/criar-conta"
+              className="block w-full py-3 bg-orange-500 text-white font-semibold tracking-wide rounded-2xl text-base text-center hover:bg-orange-600 transition-colors"
+            >
+              Contratar Pro →
             </Link>
           </div>
         </div>

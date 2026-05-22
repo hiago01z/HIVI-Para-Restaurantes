@@ -23,7 +23,7 @@ export default async function ContaPage({
   // ── Restaurantes onde o usuário é DONO ───────────────────────
   const { data: restaurantes } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash')
+    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash, plan')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -195,7 +195,7 @@ export default async function ContaPage({
                   <Plus className="w-4 h-4" />
                   Adicionar cardápio
                 </Link>
-                <p className="text-xs text-gray-400 mt-2">R$ 59,99/mês por cardápio adicional</p>
+                <p className="text-xs text-gray-400 mt-2">Básico R$ 59,99/mês · Pro R$ 99,99/mês</p>
               </div>
             )}
           </div>
