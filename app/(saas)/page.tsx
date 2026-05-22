@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { QrCode, Smartphone, TrendingUp, Clock, ScanLine, UtensilsCrossed, CheckCircle2 } from 'lucide-react'
+import { QrCode, Smartphone, TrendingUp, Clock, ScanLine, UtensilsCrossed, CheckCircle2, ChefHat, CheckSquare } from 'lucide-react'
 import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import { createClient } from '@/lib/supabase/server'
@@ -140,26 +140,27 @@ export default async function LandingPage() {
             <QrCode className="w-7 h-7 text-orange-500" />
           </div>
           <h2 className="font-display text-[2rem] font-bold text-gray-950 text-center mb-4 leading-tight">
-            QR Code nas mesas
+            Do QR code à cozinha<br />em segundos
           </h2>
           <p className="text-[1.0625rem] text-gray-600 text-center leading-relaxed mb-10">
-            Seu cliente escaneia o QR code da mesa, vê o cardápio no celular e faz o pedido — sem precisar chamar o garçom.
+            Seu cliente escaneia, monta o pedido e mostra ao garçom. Em um clique, o pedido aparece no painel e vai direto para a cozinha.
           </p>
 
           {/* Fluxo visual */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
-              { icon: ScanLine,       title: '1. Cliente escaneia',     desc: 'O QR code fica impresso na mesa ou em um suporte. Basta apontar a câmera do celular.' },
-              { icon: Smartphone,     title: '2. Navega pelo cardápio', desc: 'O cardápio abre direto no navegador, sem baixar nenhum aplicativo. Fotos, preços e categorias.' },
-              { icon: UtensilsCrossed,title: '3. Faz o pedido',         desc: 'Monta o carrinho e gera um QR code para o garçom confirmar. O pedido entra direto no painel.' },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-4 bg-gray-50 rounded-2xl p-5">
-                <div className="w-11 h-11 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              { icon: ScanLine,        title: '1. Cliente escaneia',       desc: 'O QR code fica impresso na mesa. Basta apontar a câmera — abre na hora, sem aplicativo.' },
+              { icon: UtensilsCrossed, title: '2. Monta o pedido',         desc: 'Navega pelo cardápio com fotos, preços e categorias e adiciona o que quiser ao carrinho.' },
+              { icon: CheckSquare,     title: '3. Garçom confirma',        desc: 'O cliente mostra o QR code do pedido. O garçom escaneia e confirma em segundos.' },
+              { icon: ChefHat,         title: '4. Pedido vai à cozinha',   desc: 'O pedido aparece no painel do ADM em tempo real. Zero erros, zero retrabalho.' },
+            ].map((item, i) => (
+              <div key={item.title} className="flex items-start gap-4 rounded-2xl p-4" style={{ background: i === 3 ? '#fff7ed' : '#f9fafb', border: i === 3 ? '1.5px solid #fed7aa' : 'none' }}>
+                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                   <item.icon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-display font-semibold text-gray-900 text-base">{item.title}</p>
-                  <p className="text-gray-600 text-sm mt-1 leading-relaxed">{item.desc}</p>
+                  <p className="font-display font-semibold text-gray-900 text-sm">{item.title}</p>
+                  <p className="text-gray-600 text-sm mt-0.5 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -171,7 +172,7 @@ export default async function LandingPage() {
               'Sem download de aplicativo',
               'Funciona em qualquer celular',
               'QR code para imprimir grátis',
-              'Pedidos chegam em tempo real',
+              'Pedidos chegam em tempo real na cozinha',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />

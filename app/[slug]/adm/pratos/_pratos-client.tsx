@@ -476,19 +476,30 @@ function OptionsManageModal({
   const [loadingGroups, setLoadingGroups] = useState(true)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  // Group creation form
+  // Create group
   const [showGroupForm, setShowGroupForm] = useState(false)
   const [groupForm, setGroupForm] = useState<GroupForm>(EMPTY_GROUP_FORM)
   const [savingGroup, setSavingGroup] = useState(false)
   const [groupError, setGroupError] = useState('')
 
-  // Item creation forms per group
+  // Edit group
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
+  const [editGroupForm, setEditGroupForm] = useState<GroupForm>(EMPTY_GROUP_FORM)
+  const [savingEditGroup, setSavingEditGroup] = useState(false)
+  const [editGroupError, setEditGroupError] = useState('')
+
+  // Create item
   const [showItemForm, setShowItemForm] = useState<Record<string, boolean>>({})
   const [itemForms, setItemForms] = useState<Record<string, ItemForm>>({})
   const [savingItem, setSavingItem] = useState<string | null>(null)
   const [itemError, setItemError] = useState<Record<string, string>>({})
 
-  // Supress warning: restaurantId is passed for future use (e.g. verifying ownership)
+  // Edit item
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editItemForm, setEditItemForm] = useState<ItemForm>(EMPTY_ITEM_FORM)
+  const [savingEditItem, setSavingEditItem] = useState(false)
+  const [editItemError, setEditItemError] = useState('')
+
   void restaurantId
 
   // Fetch groups + items on mount
@@ -516,126 +527,109 @@ function OptionsManageModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id])
 
+  // ── Group CRUD ───────────────────────────────────────────────
   async function handleSaveGroup() {
     if (!groupForm.name.trim()) { setGroupError('Nome do grupo é obrigatório.'); return }
     const min = parseInt(groupForm.min_selections) || 0
     const max = parseInt(groupForm.max_selections) || 1
     if (max < 1) { setGroupError('Máx. deve ser ≥ 1.'); return }
     if (min > max) { setGroupError('Mín. não pode ser maior que Máx.'); return }
-
-    setSavingGroup(true)
-    setGroupError('')
+    setSavingGroup(true); setGroupError('')
     const { data, error } = await supabase
       .from('product_option_groups')
-      .insert({
-        product_id: product.id,
-        name: groupForm.name.trim(),
-        description: groupForm.description.trim() || null,
-        min_selections: min,
-        max_selections: max,
-        sort_order: groups.length,
-      })
-      .select()
-      .single()
-
+      .insert({ product_id: product.id, name: groupForm.name.trim(), description: groupForm.description.trim() || null, min_selections: min, max_selections: max, sort_order: groups.length })
+      .select().single()
     setSavingGroup(false)
     if (error || !data) { setGroupError('Erro ao salvar. Tente novamente.'); return }
-
-    const newGroup: OptionGroup = {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      min_selections: data.min_selections,
-      max_selections: data.max_selections,
-      sort_order: data.sort_order,
-      items: [],
-    }
+    const newGroup: OptionGroup = { id: data.id, name: data.name, description: data.description, min_selections: data.min_selections, max_selections: data.max_selections, sort_order: data.sort_order, items: [] }
     setGroups((prev) => [...prev, newGroup])
-    setGroupForm(EMPTY_GROUP_FORM)
-    setShowGroupForm(false)
-    setExpandedGroup(newGroup.id)
+    setGroupForm(EMPTY_GROUP_FORM); setShowGroupForm(false); setExpandedGroup(newGroup.id)
+  }
+
+  function openEditGroup(group: OptionGroup) {
+    setEditingGroupId(group.id)
+    setEditGroupForm({ name: group.name, description: group.description ?? '', min_selections: String(group.min_selections), max_selections: String(group.max_selections) })
+    setEditGroupError('')
+    // Ensure group is expanded
+    setExpandedGroup(group.id)
+  }
+
+  async function handleUpdateGroup(groupId: string) {
+    if (!editGroupForm.name.trim()) { setEditGroupError('Nome obrigatório.'); return }
+    const min = parseInt(editGroupForm.min_selections) || 0
+    const max = parseInt(editGroupForm.max_selections) || 1
+    if (min > max) { setEditGroupError('Mín. não pode ser maior que Máx.'); return }
+    setSavingEditGroup(true); setEditGroupError('')
+    const { error } = await supabase
+      .from('product_option_groups')
+      .update({ name: editGroupForm.name.trim(), description: editGroupForm.description.trim() || null, min_selections: min, max_selections: max })
+      .eq('id', groupId)
+    setSavingEditGroup(false)
+    if (error) { setEditGroupError('Erro ao salvar.'); return }
+    setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, name: editGroupForm.name.trim(), description: editGroupForm.description.trim() || null, min_selections: min, max_selections: max } : g))
+    setEditingGroupId(null)
   }
 
   async function handleDeleteGroup(groupId: string) {
-    if (!confirm('Excluir este grupo de opções e todos os seus itens?')) return
+    if (!confirm('Excluir este grupo e todos os seus itens?')) return
     const { error } = await supabase.from('product_option_groups').delete().eq('id', groupId)
-    if (!error) {
-      setGroups((prev) => prev.filter((g) => g.id !== groupId))
-    }
+    if (!error) setGroups((prev) => prev.filter((g) => g.id !== groupId))
   }
 
+  // ── Item CRUD ────────────────────────────────────────────────
   async function handleSaveItem(groupId: string) {
     const form = itemForms[groupId] ?? EMPTY_ITEM_FORM
-    if (!form.name.trim()) {
-      setItemError((prev) => ({ ...prev, [groupId]: 'Nome do item é obrigatório.' }))
-      return
-    }
+    if (!form.name.trim()) { setItemError((prev) => ({ ...prev, [groupId]: 'Nome obrigatório.' })); return }
     const priceAdd = parseFloat(form.price_addition.replace(',', '.')) || 0
-
-    setSavingItem(groupId)
-    setItemError((prev) => ({ ...prev, [groupId]: '' }))
-
+    setSavingItem(groupId); setItemError((prev) => ({ ...prev, [groupId]: '' }))
     const group = groups.find((g) => g.id === groupId)
     const { data, error } = await supabase
       .from('product_option_items')
-      .insert({
-        group_id: groupId,
-        name: form.name.trim(),
-        price_addition: priceAdd,
-        sort_order: group?.items.length ?? 0,
-      })
-      .select()
-      .single()
-
+      .insert({ group_id: groupId, name: form.name.trim(), price_addition: priceAdd, sort_order: group?.items.length ?? 0 })
+      .select().single()
     setSavingItem(null)
-    if (error || !data) {
-      setItemError((prev) => ({ ...prev, [groupId]: 'Erro ao salvar. Tente novamente.' }))
-      return
-    }
+    if (error || !data) { setItemError((prev) => ({ ...prev, [groupId]: 'Erro ao salvar.' })); return }
+    const newItem: OptionItem = { id: data.id, name: data.name, price_addition: data.price_addition, is_available: data.is_available, sort_order: data.sort_order }
+    setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, items: [...g.items, newItem] } : g))
+    setItemForms((prev) => ({ ...prev, [groupId]: EMPTY_ITEM_FORM })); setShowItemForm((prev) => ({ ...prev, [groupId]: false }))
+  }
 
-    const newItem: OptionItem = {
-      id: data.id,
-      name: data.name,
-      price_addition: data.price_addition,
-      is_available: data.is_available,
-      sort_order: data.sort_order,
-    }
-    setGroups((prev) =>
-      prev.map((g) => g.id === groupId ? { ...g, items: [...g.items, newItem] } : g)
-    )
-    setItemForms((prev) => ({ ...prev, [groupId]: EMPTY_ITEM_FORM }))
-    setShowItemForm((prev) => ({ ...prev, [groupId]: false }))
+  function openEditItem(item: OptionItem) {
+    setEditingItemId(item.id)
+    setEditItemForm({ name: item.name, price_addition: String(item.price_addition) })
+    setEditItemError('')
+  }
+
+  async function handleUpdateItem(groupId: string, itemId: string) {
+    if (!editItemForm.name.trim()) { setEditItemError('Nome obrigatório.'); return }
+    const priceAdd = parseFloat(editItemForm.price_addition.replace(',', '.')) || 0
+    setSavingEditItem(true); setEditItemError('')
+    const { error } = await supabase
+      .from('product_option_items')
+      .update({ name: editItemForm.name.trim(), price_addition: priceAdd })
+      .eq('id', itemId)
+    setSavingEditItem(false)
+    if (error) { setEditItemError('Erro ao salvar.'); return }
+    setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, items: g.items.map((i) => i.id === itemId ? { ...i, name: editItemForm.name.trim(), price_addition: priceAdd } : i) } : g))
+    setEditingItemId(null)
   }
 
   async function handleDeleteItem(groupId: string, itemId: string) {
     const { error } = await supabase.from('product_option_items').delete().eq('id', itemId)
-    if (!error) {
-      setGroups((prev) =>
-        prev.map((g) => g.id === groupId ? { ...g, items: g.items.filter((i) => i.id !== itemId) } : g)
-      )
-    }
+    if (!error) setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, items: g.items.filter((i) => i.id !== itemId) } : g))
   }
 
   async function handleToggleItemAvailable(groupId: string, item: OptionItem) {
     const next = !item.is_available
-    const { error } = await supabase
-      .from('product_option_items')
-      .update({ is_available: next })
-      .eq('id', item.id)
-    if (!error) {
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === groupId
-            ? { ...g, items: g.items.map((i) => i.id === item.id ? { ...i, is_available: next } : i) }
-            : g
-        )
-      )
-    }
+    const { error } = await supabase.from('product_option_items').update({ is_available: next }).eq('id', item.id)
+    if (!error) setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, items: g.items.map((i) => i.id === item.id ? { ...i, is_available: next } : i) } : g))
   }
 
   function formatPrice(v: number) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
+
+  const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
@@ -670,65 +664,137 @@ function OptionsManageModal({
               {/* Existing groups */}
               {groups.map((group) => {
                 const isExpanded = expandedGroup === group.id
+                const isEditing = editingGroupId === group.id
                 const isRequired = group.min_selections > 0
                 const labelType = group.max_selections === 1 ? 'Escolha 1' : `Até ${group.max_selections}`
 
                 return (
                   <div key={group.id} className="border border-gray-200 rounded-2xl overflow-hidden">
-                    {/* Group header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                      <button
-                        onClick={() => setExpandedGroup(isExpanded ? null : group.id)}
-                        className="flex-1 flex items-center gap-2 text-left"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-gray-900 truncate">
-                            {group.name}
-                            {isRequired && <span className="text-red-500 ml-1">*</span>}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {labelType} · {group.items.length} {group.items.length === 1 ? 'item' : 'itens'}
-                          </p>
+
+                    {/* Group header — edit mode */}
+                    {isEditing ? (
+                      <div className="px-4 py-3 bg-blue-50 space-y-2.5">
+                        <p className="text-xs font-bold text-blue-700 mb-1">Editando grupo</p>
+                        <input
+                          value={editGroupForm.name}
+                          onChange={(e) => setEditGroupForm({ ...editGroupForm, name: e.target.value })}
+                          placeholder="Nome do grupo"
+                          className={inputCls}
+                        />
+                        <input
+                          value={editGroupForm.description}
+                          onChange={(e) => setEditGroupForm({ ...editGroupForm, description: e.target.value })}
+                          placeholder="Descrição (opcional)"
+                          className={inputCls}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Mínimo</label>
+                            <select value={editGroupForm.min_selections} onChange={(e) => setEditGroupForm({ ...editGroupForm, min_selections: e.target.value })} className={inputCls}>
+                              {[0,1,2,3].map((n) => <option key={n} value={n}>{n === 0 ? '0 (opcional)' : n}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Máximo</label>
+                            <select value={editGroupForm.max_selections} onChange={(e) => setEditGroupForm({ ...editGroupForm, max_selections: e.target.value })} className={inputCls}>
+                              {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n === 1 ? '1 (única)' : n}</option>)}
+                            </select>
+                          </div>
                         </div>
-                        {isExpanded
-                          ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteGroup(group.id)}
-                        className="ml-2 p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                        {editGroupError && <p className="text-xs text-red-500">{editGroupError}</p>}
+                        <div className="flex gap-2">
+                          <button onClick={() => handleUpdateGroup(group.id)} disabled={savingEditGroup}
+                            className="flex-1 py-2 text-sm font-bold rounded-xl text-white disabled:opacity-50"
+                            style={{ background: 'var(--adm-primary)' }}>
+                            {savingEditGroup ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Salvar grupo'}
+                          </button>
+                          <button onClick={() => setEditingGroupId(null)} className="px-3 py-2 text-sm rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Group header — view mode */
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                        <button onClick={() => setExpandedGroup(isExpanded ? null : group.id)} className="flex-1 flex items-center gap-2 text-left">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm text-gray-900 truncate">
+                              {group.name}
+                              {isRequired && <span className="text-red-500 ml-1">*</span>}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {labelType} · {group.items.length} {group.items.length === 1 ? 'item' : 'itens'}
+                            </p>
+                          </div>
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                        </button>
+                        <button onClick={() => openEditGroup(group)} className="ml-1 p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 transition-colors" title="Editar grupo">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDeleteGroup(group.id)} className="ml-1 p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     {/* Group items */}
-                    {isExpanded && (
+                    {isExpanded && !isEditing && (
                       <div className="px-4 py-3 space-y-2">
-                        {group.items.map((item) => (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <span className="flex-1 text-sm text-gray-700 truncate">{item.name}</span>
-                            {item.price_addition > 0 && (
-                              <span className="text-xs font-bold text-gray-500">+{formatPrice(item.price_addition)}</span>
-                            )}
-                            <button
-                              onClick={() => handleToggleItemAvailable(group.id, item)}
-                              className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
-                                item.is_available
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              {item.is_available ? 'Ativo' : 'Pausado'}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteItem(group.id, item.id)}
-                              className="p-1 rounded text-red-400 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
+                        {group.items.map((item) => {
+                          const isEditingItem = editingItemId === item.id
+                          if (isEditingItem) {
+                            return (
+                              <div key={item.id} className="rounded-xl bg-blue-50 p-2.5 space-y-2">
+                                <input
+                                  value={editItemForm.name}
+                                  onChange={(e) => setEditItemForm({ ...editItemForm, name: e.target.value })}
+                                  placeholder="Nome da opção"
+                                  className={inputCls}
+                                />
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+R$</span>
+                                    <input type="number" min="0" step="0.01"
+                                      value={editItemForm.price_addition}
+                                      onChange={(e) => setEditItemForm({ ...editItemForm, price_addition: e.target.value })}
+                                      className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none"
+                                    />
+                                  </div>
+                                  <button onClick={() => handleUpdateItem(group.id, item.id)} disabled={savingEditItem}
+                                    className="px-4 py-2 text-sm font-bold rounded-xl text-white disabled:opacity-50"
+                                    style={{ background: 'var(--adm-primary)' }}>
+                                    {savingEditItem ? <Loader2 className="w-4 h-4 animate-spin" /> : 'OK'}
+                                  </button>
+                                  <button onClick={() => setEditingItemId(null)} className="px-3 py-2 text-sm rounded-xl bg-gray-100 text-gray-500">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                {editItemError && <p className="text-xs text-red-500">{editItemError}</p>}
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <div key={item.id} className="flex items-center gap-2">
+                              <span className="flex-1 text-sm text-gray-700 truncate">{item.name}</span>
+                              {item.price_addition > 0 && (
+                                <span className="text-xs font-bold text-gray-500 flex-shrink-0">+{formatPrice(item.price_addition)}</span>
+                              )}
+                              <button
+                                onClick={() => handleToggleItemAvailable(group.id, item)}
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors flex-shrink-0 ${item.is_available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}
+                              >
+                                {item.is_available ? 'Ativo' : 'Pausado'}
+                              </button>
+                              <button onClick={() => openEditItem(item)} className="p-1 rounded text-blue-400 hover:bg-blue-50 transition-colors flex-shrink-0" title="Editar">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => handleDeleteItem(group.id, item.id)} className="p-1 rounded text-red-400 hover:bg-red-50 transition-colors flex-shrink-0">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )
+                        })}
 
                         {/* Add item form */}
                         {showItemForm[group.id] ? (
@@ -737,39 +803,28 @@ function OptionsManageModal({
                               value={itemForms[group.id]?.name ?? ''}
                               onChange={(e) => setItemForms((prev) => ({ ...prev, [group.id]: { ...(prev[group.id] ?? EMPTY_ITEM_FORM), name: e.target.value } }))}
                               placeholder="Nome da opção (ex: Carne dupla)"
-                              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+                              className={inputCls}
                             />
                             <div className="flex gap-2">
                               <div className="relative flex-1">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+R$</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
+                                <input type="number" min="0" step="0.01"
                                   value={itemForms[group.id]?.price_addition ?? '0'}
                                   onChange={(e) => setItemForms((prev) => ({ ...prev, [group.id]: { ...(prev[group.id] ?? EMPTY_ITEM_FORM), price_addition: e.target.value } }))}
                                   placeholder="0,00"
                                   className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none"
                                 />
                               </div>
-                              <button
-                                onClick={() => handleSaveItem(group.id)}
-                                disabled={savingItem === group.id}
-                                className="px-4 py-2 text-sm font-bold rounded-xl text-white disabled:opacity-50 transition-colors"
-                                style={{ background: 'var(--adm-primary)' }}
-                              >
+                              <button onClick={() => handleSaveItem(group.id)} disabled={savingItem === group.id}
+                                className="px-4 py-2 text-sm font-bold rounded-xl text-white disabled:opacity-50"
+                                style={{ background: 'var(--adm-primary)' }}>
                                 {savingItem === group.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
                               </button>
-                              <button
-                                onClick={() => setShowItemForm((prev) => ({ ...prev, [group.id]: false }))}
-                                className="px-3 py-2 text-sm rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200"
-                              >
+                              <button onClick={() => setShowItemForm((prev) => ({ ...prev, [group.id]: false }))} className="px-3 py-2 text-sm rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
-                            {itemError[group.id] && (
-                              <p className="text-xs text-red-500">{itemError[group.id]}</p>
-                            )}
+                            {itemError[group.id] && <p className="text-xs text-red-500">{itemError[group.id]}</p>}
                           </div>
                         ) : (
                           <button
