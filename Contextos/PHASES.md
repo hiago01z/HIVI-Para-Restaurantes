@@ -13,10 +13,12 @@
 | 6 | Temas e Personalização | ✅ Concluído |
 | 7 | Billing e Gestão de Conta | ✅ Concluído |
 | 8 | Polimento, RBAC e Deploy | ✅ Concluído |
-| 9 | Analytics e Relatórios | 🔲 Pendente |
+| 9 | Analytics e Relatórios | ✅ Concluído |
 | 10 | Adicionais (Product Add-ons) | ✅ Concluído |
 | 11 | Impressão Térmica | ✅ Concluído |
-| 12 | PIX e Pagamentos Online | 🔲 Pendente |
+| 12 | Plano Pro + Billing Multi-plano | ✅ Concluído |
+| 13 | PIX e Pagamentos Online | 🔲 Pendente |
+| 14 | Cupons e Descontos | 🔲 Pendente |
 | 13 | Cupons e Descontos | 🔲 Pendente |
 | 14 | Fidelidade e Clientes | 🔲 Pendente |
 | 15 | Multi-unidade | 🔲 Pendente |
@@ -156,16 +158,40 @@
 
 ---
 
-## Fase 9 — Analytics e Relatórios 🔲
+## Fase 9 — Analytics e Relatórios ✅
 
-> Próxima fase prioritária.
+> Concluído em 2026-05-22. Exclusivo do Plano Pro.
 
-- [ ] Gráfico de receita por dia / semana / mês (Chart.js ou Recharts)
-- [ ] Top 5 produtos mais pedidos
-- [ ] Pedidos por período e por tipo (entrega / mesa)
-- [ ] Ticket médio, horário de pico
-- [ ] Comparativo semana a semana
-- [ ] Exportação CSV (pedidos + itens)
+- [x] Página `/[slug]/adm/analytics` — gateada por `plan === 'pro'`
+- [x] Gráfico de receita por dia (AreaChart — recharts) — últimos 7 ou 30 dias
+- [x] Gráfico de pedidos por dia (BarChart)
+- [x] Top 5 produtos mais pedidos (barras CSS + qtd + receita)
+- [x] Pedidos por tipo: mesa vs entrega (PieChart donut)
+- [x] Distribuição por horário do dia (BarChart 06h–23h)
+- [x] KPIs: receita total, total de pedidos, ticket médio, horário de pico
+- [x] Comparativo semanal (semana atual vs anterior) com variação %
+- [x] Seletor de período: 7 dias / 30 dias
+- [x] Exportação CSV (todos os pedidos do período, com BOM UTF-8 para Excel)
+
+---
+
+## Fase 12 — Plano Pro + Billing Multi-plano ✅
+
+> Concluído em 2026-05-22.
+
+- [x] Migration `011_pro_plan.sql` — coluna `plan TEXT DEFAULT 'basic' CHECK (basic|pro)` em restaurants
+- [x] `STRIPE_PRICE_PRO` — novo price no Stripe (R$ 99,99/mês)
+- [x] Checkout: aceita `plan` (basic|pro), usa price correto, persiste em metadata
+- [x] Webhook `checkout.session.completed`: salva `plan` ao criar restaurante
+- [x] Webhook `customer.subscription.updated`: detecta troca de price (basic↔pro) e atualiza `plan`
+- [x] API `POST /api/stripe/upgrade` — upgrade Basic → Pro via Stripe subscription update com proration
+- [x] `AdmNav`: link "Analytics" visível somente para `plan === 'pro'`
+- [x] `getAdmRestaurant` retorna `plan`
+- [x] ADM Layout passa `plan` para `AdmNav`
+- [x] `/criar-loja`: seletor de plano (Basic R$59,99 vs Pro R$99,99 — Recomendado)
+- [x] `/precos`: dois cards de plano com feature list completa
+- [x] Landing page `/`: seção de preços com dois planos side-by-side
+- [x] `/conta`: badge de plano por restaurante + botão "Fazer upgrade para Pro"
 
 ---
 

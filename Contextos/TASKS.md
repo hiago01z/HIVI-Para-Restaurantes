@@ -131,15 +131,17 @@
 | 2026-05-22 | Feature: edição inline de grupos e itens de adicionais — botão lápis (azul) por grupo e por item abre formulário inline com Supabase UPDATE |
 | 2026-05-22 | Update: seção QR Code da landing page reescrita — título "Do QR code à cozinha em segundos", 4 passos (escaneia → monta pedido → garçom confirma → cozinha), passo final destacado em laranja |
 | 2026-05-22 | Feature: Fase 10 — Impressão Térmica — USB via WebUSB, Bluetooth via Web Bluetooth, rede/padrão via diálogo do sistema (window.print + iframe oculto + CSS @page). ESC/POS encoder em `lib/thermal-printer/escpos.ts`, gerenciamento de conexão em `lib/thermal-printer/printer.ts`, receipt HTML em `lib/thermal-printer/receipt-html.ts`. Setup em ADM Configurações, auto-impressão e botão 🖨️ por pedido no ADM Pedidos. Zero instalação em qualquer modo. |
+| 2026-05-22 | Feature: Plano Pro (R$99,99/mês) — migration 011 (`plan` column em restaurants), checkout/webhook suportam `plan` básico|pro, API POST /api/stripe/upgrade (upgrade Basic→Pro via Stripe subscription update), AdmNav exibe link Analytics apenas para Pro, badge de plano e botão upgrade em /conta, seletor de plano em /criar-loja, páginas /precos e landing atualizadas com dois planos. |
+| 2026-05-22 | Feature: Fase 9 — Analytics e Relatórios (exclusivo Plano Pro) — página /[slug]/adm/analytics com gráfico de receita por dia (AreaChart), pedidos por dia (BarChart), top 5 produtos (barras CSS + receita), pedidos por tipo (PieChart), distribuição por horário (BarChart), KPIs (receita total, pedidos, ticket médio, horário de pico), comparativo semanal com variação %, exportação CSV com BOM UTF-8. Seletor de período 7d/30d. recharts instalado. |
 
 ---
 
 ## Pendente (Próximas Fases)
 
-### Fase 9 — Analytics e Relatórios
-- [ ] Dashboard com gráficos: receita por dia/semana, produtos mais vendidos, pedidos por período
-- [ ] Exportação de dados (CSV)
-- [ ] Ticket médio, horário de pico, comparativo semana a semana
+### Fase 9 — Analytics e Relatórios ✅ Concluído (2026-05-22)
+- [x] Dashboard com gráficos: receita por dia, pedidos por dia, top 5, tipo de pedido, horário de pico
+- [x] Exportação de dados (CSV com BOM UTF-8)
+- [x] Ticket médio, horário de pico, comparativo semana a semana
 
 ### Fase 11 — PIX e Pagamentos Online
 - [ ] Geração de QR Code PIX estático e dinâmico por pedido
@@ -197,3 +199,6 @@ Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 | 2026-05-22 | Adicionais usam `cartKey` = `productId__itemId1_itemId2` | Permite mesmo produto com opções diferentes como entradas separadas no carrinho |
 | 2026-05-22 | Impressão térmica via diálogo do sistema (browser mode) em vez de agente Node.js | Zero instalação para o dono do restaurante — usa impressoras já configuradas no OS |
 | 2026-05-22 | ESC/POS encoder próprio sem dependências externas | Controle total do formato, sem npm packages com problemas de compatibilidade browser |
+| 2026-05-22 | Analytics gateado por plano (`plan === 'pro'`) em vez de por feature flag | Monetização: plan é a fonte da verdade, sem estado extra no client |
+| 2026-05-22 | Upgrade de plano via Stripe subscription update (troca de price) com proration | Upgrade transparente sem cancelar a assinatura — cliente paga apenas a diferença pro-rata |
+| 2026-05-22 | recharts para gráficos de analytics | Biblioteca React-native, SSR-compatível com `ResponsiveContainer`, sem canvas manual |

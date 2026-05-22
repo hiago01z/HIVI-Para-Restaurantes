@@ -12,20 +12,21 @@ A vitrine pública da HIVI para atrair donos de restaurante.
 - **Benefícios**: cards com vantagens do cardápio online
 - **Quem usa aprova**: depoimentos de clientes HIVI
 - **Como funciona**: passo a passo (contratar → configurar → publicar)
-- **Preços**: card do plano Básico (R$ 59,99/mês) com CTA "Contratar"
+- **Preços**: dois cards de plano (Básico R$ 59,99 e Pro R$ 99,99 — destacado como Recomendado) com feature lists completas
 - **Rodapé**: Como funciona, Preços, FAQ, Feedback, Entrar, Privacidade, Termos, Exclusão de dados, Copyright
 
 ### Área de Conta (`/conta`)
 Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 **Funcionalidades:**
-- Listar todas as lojas do usuário (nome, status, slug)
+- Listar todas as lojas do usuário com **badge de plano** (Básico / Pro ★) e status (Ativa / Pausada)
 - Ações por loja:
   - **Ver loja** → abre `/[slug]` (cardápio público)
   - **Painel Administrativo** → vai para `/[slug]/adm`
   - **Pausar/Ativar loja** → toggle de `is_active`
   - **Excluir loja** → confirmação → soft delete
-- **Criar nova loja** → fluxo de checkout Stripe
+  - **Fazer upgrade para Pro** → botão visível para cardápios no plano Básico → checkout Stripe ou upgrade via subscription update
+- **Criar nova loja** → seletor de plano (Básico R$59,99 / Pro R$99,99) → fluxo de checkout Stripe
 - Configurações de conta: nome, e-mail
 
 ---
@@ -297,7 +298,82 @@ Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes d
 
 ---
 
-## 5. Fluxos Críticos
+## 5. Planos e Billing
+
+### Plano Básico — R$ 59,99/mês
+
+Tudo que o restaurante precisa para operar:
+- Cardápio digital público, QR code de mesa, pedidos em tempo real
+- Adicionais e grupos de opções por prato
+- Impressão térmica (USB, Bluetooth, sistema)
+- Personalização de tema, logo, banner, fonte
+- Gerenciamento de equipe com RBAC (5 cargos)
+- Integração WhatsApp automática
+- Horário de funcionamento de entregas
+
+### Plano Pro — R$ 99,99/mês
+
+Tudo do Básico + **Analytics e Relatórios**:
+- Gráfico de receita por dia (últimos 7 ou 30 dias)
+- Gráfico de pedidos por dia
+- Top 5 produtos mais vendidos (quantidade + receita)
+- Pedidos por tipo: mesa vs entrega (gráfico donut)
+- Distribuição de pedidos por horário (06h–23h)
+- KPIs: receita total, nº pedidos, ticket médio, horário de pico
+- Comparativo semanal com variação percentual
+- Exportação de todos os pedidos em CSV
+
+### Upgrade Basic → Pro
+
+Via `/conta`: botão "Fazer upgrade para Pro" por restaurante.
+- Se já tem assinatura Stripe: atualiza subscription (troca de price + proration)
+- Se não tem: novo checkout Stripe com price Pro
+
+### Ambiente Stripe
+
+| Variável | Descrição |
+|---|---|
+| `STRIPE_PRICE_BASIC` | Price ID do plano Básico R$59,99/mês |
+| `STRIPE_PRICE_PRO` | Price ID do plano Pro R$99,99/mês |
+
+---
+
+## 6. Analytics e Relatórios (`/[slug]/adm/analytics`)
+
+> Exclusivo do Plano Pro.
+
+### Gráficos disponíveis
+
+| Gráfico | Tipo | Dados |
+|---|---|---|
+| Receita por dia | AreaChart | Soma de `total` por dia (sem cancelados) |
+| Pedidos por dia | BarChart | Contagem de pedidos por dia |
+| Top 5 produtos | Barras CSS | Ordenado por quantidade, mostra qtd + receita |
+| Pedidos por tipo | PieChart donut | Mesa vs Entrega |
+| Distribuição horária | BarChart | Pedidos por hora 06h–23h |
+
+### KPIs
+
+- **Receita total** — soma de todos os pedidos não cancelados no período
+- **Total de pedidos** — contagem
+- **Ticket médio** — receita / pedidos
+- **Horário de pico** — hora com mais pedidos (ex: "19h–20h")
+
+### Comparativo semanal
+
+Compara a receita dos últimos 7 dias com os 7 dias anteriores. Mostra variação % com badge verde (▲) ou vermelho (▼).
+
+### Seletor de período
+
+Toggle "7 dias" / "30 dias" — filtra todos os gráficos e KPIs.
+
+### Exportação CSV
+
+Botão "Exportar CSV" — gera arquivo `[restaurante]-pedidos-[data].csv` com colunas: Pedido, Data, Tipo, Status, Total, Itens. BOM UTF-8 para compatibilidade com Excel.
+
+---
+
+## 7. Fluxos Críticos
 
 ### Fluxo 1: Novo restaurante se cadastra
 1. Dono acessa `hivi.com.br` → clica "Criar conta" → Google OAuth
