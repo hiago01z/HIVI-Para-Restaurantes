@@ -9,7 +9,6 @@ import {
   printTestOrder, isConnected, checkNetworkAgent,
   type PrinterConfig, type ConnectionType,
 } from '@/lib/thermal-printer/printer'
-import type { CutMode, Charset } from '@/lib/thermal-printer/escpos'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {

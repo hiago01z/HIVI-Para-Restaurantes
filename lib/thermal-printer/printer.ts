@@ -86,7 +86,7 @@ export function isConnected(type: ConnectionType): boolean {
 // ─── USB (WebUSB) ─────────────────────────────────────────────────────────────
 
 /** Finds the printer-class interface (class 7) or falls back to the first interface. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function findPrinterInterface(device: any): any {
   return (
     device.configuration.interfaces.find((i: any) =>
@@ -94,6 +94,7 @@ function findPrinterInterface(device: any): any {
     ) ?? device.configuration.interfaces[0]
   )
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function connectUsb(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

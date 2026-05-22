@@ -122,7 +122,6 @@ function row(left: string, right: string, width = 32, charset: Charset = 'ascii'
   const rAscii = normalizeAscii(right)
   const lAscii = normalizeAscii(left).substring(0, Math.max(0, width - rAscii.length - 1))
   const padCount = Math.max(1, width - lAscii.length - rAscii.length)
-  const pad = ' '.repeat(padCount)
 
   // Encode with the chosen charset
   const lBytes = encodeString(left.substring(0, Math.max(0, width - rAscii.length - 1)), charset)
