@@ -248,7 +248,7 @@ export async function printNetwork(data: Uint8Array, agentUrl = DEFAULT_AGENT_UR
     const res = await fetch(`${agentUrl}/print`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/octet-stream' },
-      body: data,
+      body: data.buffer as ArrayBuffer,
       signal: controller.signal,
     })
     clearTimeout(timeout)
