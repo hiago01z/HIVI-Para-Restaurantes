@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, LayoutDashboard, Pause, Play, Trash2, CreditCard, Loader2, TrendingUp } from 'lucide-react'
+import { ExternalLink, LayoutDashboard, Pause, Play, Trash2, CreditCard, Loader2, TrendingUp, TrendingDown } from 'lucide-react'
 
 type Loja = {
   id: string
@@ -28,7 +28,8 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   const [portalError, setPortalError] = useState('')
   const [actionError, setActionError] = useState<Record<string, string>>({})
   const [localLojas, setLocalLojas] = useState<Loja[]>(lojas)
-  const [upgradingId, setUpgradingId] = useState<string | null>(null)
+  const [upgradingId, setUpgradingId]   = useState<string | null>(null)
+  const [downgradingId, setDowngradingId] = useState<string | null>(null)
 
   function setLojaError(id: string, msg: string) {
     setActionError((prev) => ({ ...prev, [id]: msg }))
@@ -99,6 +100,31 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
       setLojaError(loja.id, 'Erro de conexão. Tente novamente.')
     } finally {
       setUpgradingId(null)
+    }
+  }
+
+  async function handleDowngrade(loja: Loja) {
+    if (!confirm(`Fazer downgrade de "${loja.name}" para o Plano Básico?\n\nO plano muda imediatamente e a próxima fatura será R$ 59,99. Você perderá acesso ao Analytics.`)) return
+    setDowngradingId(loja.id)
+    try {
+      const res = await fetch('/api/stripe/downgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: loja.id }),
+      })
+      const data = await res.json()
+      if (data.downgraded) {
+        setLocalLojas((prev) =>
+          prev.map((l) => l.id === loja.id ? { ...l, plan: 'basic' } : l)
+        )
+        router.refresh()
+      } else {
+        setLojaError(loja.id, data.error ?? 'Erro ao fazer downgrade.')
+      }
+    } catch {
+      setLojaError(loja.id, 'Erro de conexão. Tente novamente.')
+    } finally {
+      setDowngradingId(null)
     }
   }
 
@@ -210,12 +236,26 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
               <button
                 onClick={() => handleUpgrade(loja)}
                 disabled={upgradingId === loja.id}
-                className="col-span-2 mt-1 flex items-center justify-center gap-1.5 py-2.5 bg-orange-50 border border-orange-200 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-100 disabled:opacity-50 transition-colors"
+                className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-orange-50 border border-orange-200 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-100 disabled:opacity-50 transition-colors"
               >
                 {upgradingId === loja.id
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <TrendingUp className="w-4 h-4" />}
                 {upgradingId === loja.id ? 'Processando...' : 'Fazer upgrade para Pro — R$ 99,99/mês'}
+              </button>
+            )}
+
+            {/* Downgrade para Básico */}
+            {loja.plan === 'pro' && (
+              <button
+                onClick={() => handleDowngrade(loja)}
+                disabled={downgradingId === loja.id}
+                className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+              >
+                {downgradingId === loja.id
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <TrendingDown className="w-4 h-4" />}
+                {downgradingId === loja.id ? 'Processando...' : 'Voltar para o Básico — R$ 59,99/mês'}
               </button>
             )}
 

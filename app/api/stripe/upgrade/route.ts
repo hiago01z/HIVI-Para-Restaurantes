@@ -60,9 +60,11 @@ export async function POST(request: Request) {
       const sub = await stripe.subscriptions.retrieve(restaurant.stripe_subscription_id)
       const item = sub.items.data[0]
 
+      // proration_behavior: 'none' → plano muda imediatamente, mas sem
+      // cobranças/créditos intermediários — a próxima fatura será apenas R$99,99.
       await stripe.subscriptions.update(restaurant.stripe_subscription_id, {
         items: [{ id: item.id, price: priceId }],
-        proration_behavior: 'create_prorations',
+        proration_behavior: 'none',
         metadata: { plan: 'pro', restaurant_id: restaurant.id },
       })
 
