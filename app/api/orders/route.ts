@@ -22,6 +22,13 @@ const orderSchema = z.object({
     product_price: z.number(),
     quantity: z.number().int().min(1),
     notes: z.string().optional().nullable(),
+    selected_options: z.array(z.object({
+      group_id: z.string(),
+      group_name: z.string(),
+      item_id: z.string(),
+      item_name: z.string(),
+      price_addition: z.number(),
+    })).optional().nullable(),
   })).min(1),
 })
 
@@ -67,6 +74,7 @@ export async function POST(request: Request) {
           product_price: item.product_price,
           quantity: item.quantity,
           notes: item.notes ?? null,
+          selected_options: item.selected_options?.length ? item.selected_options : null,
         }))
       )
 
@@ -102,7 +110,10 @@ export async function POST(request: Request) {
           const paymentLabel = parsed.data.payment_method === 'dinheiro'
             ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
             : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
-          const itemsList = items.map((i) => `  • ${i.quantity}x ${i.product_name}`).join('\n')
+          const itemsList = items.map((i) => {
+            const opts = (i.selected_options ?? []).map((o) => `    ↳ ${o.item_name}${o.price_addition > 0 ? ` (+${o.price_addition.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`).join('\n')
+            return `  • ${i.quantity}x ${i.product_name}${opts ? '\n' + opts : ''}`
+          }).join('\n')
 
           // Link wa.me para o staff enviar confirmação ao cliente (curto, sem mensagem pré-preenchida)
           const waLine = customerPhone

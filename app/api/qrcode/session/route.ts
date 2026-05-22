@@ -10,6 +10,13 @@ const sessionSchema = z.object({
     product_name: z.string(),
     product_price: z.number().positive(),
     quantity: z.number().int().positive(),
+    selected_options: z.array(z.object({
+      group_id: z.string(),
+      group_name: z.string(),
+      item_id: z.string(),
+      item_name: z.string(),
+      price_addition: z.number(),
+    })).optional().nullable(),
   })).min(1),
   total: z.number().positive(),
   notes: z.string().max(500).optional().nullable(),

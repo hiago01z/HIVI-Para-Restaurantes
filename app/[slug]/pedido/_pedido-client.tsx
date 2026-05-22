@@ -200,6 +200,7 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
             product_name: i.name,
             product_price: i.price,
             quantity: i.quantity,
+            selected_options: i.selectedOptions ?? null,
           })),
           total: totalPrice,
           notes: qrNotes.trim() || null,
@@ -245,6 +246,7 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
             product_name: i.name,
             product_price: i.price,
             quantity: i.quantity,
+            selected_options: i.selectedOptions ?? null,
           })),
         }),
       })
@@ -357,7 +359,7 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
           <div className="px-4 mt-4 space-y-3">
             {items.map((item) => (
               <div
-                key={item.id}
+                key={item.cartKey ?? item.id}
                 className="flex items-center gap-3 rounded-2xl p-3"
                 style={{ background: 'var(--menu-card)' }}
               >
@@ -370,13 +372,20 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm leading-tight truncate" style={{ color: 'var(--menu-text)' }}>{item.name}</p>
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--menu-text-muted)' }}>
+                      {item.selectedOptions.map((o) => o.item_name).join(', ')}
+                    </p>
+                  )}
                   <p className="text-sm font-black mt-1" style={{ color: 'var(--menu-primary)' }}>
-                    {formatPrice(item.price * item.quantity)}
+                    {formatPrice(
+                      (item.price + (item.selectedOptions ?? []).reduce((s, o) => s + o.price_addition, 0)) * item.quantity
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
-                    onClick={() => decrement(item.id)}
+                    onClick={() => decrement(item.cartKey ?? item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
                     style={{ background: 'rgba(128,128,128,0.15)' }}
                   >
@@ -384,14 +393,14 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
                   </button>
                   <span className="font-bold text-sm w-5 text-center" style={{ color: 'var(--menu-text)' }}>{item.quantity}</span>
                   <button
-                    onClick={() => increment(item.id)}
+                    onClick={() => increment(item.cartKey ?? item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
                     style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.cartKey ?? item.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center ml-1"
                     style={{ background: 'rgba(128,128,128,0.10)' }}
                   >
@@ -528,12 +537,22 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
                 </div>
                 <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
                   <p className="text-xs mb-2" style={{ color: 'var(--menu-text-muted)' }}>Itens do pedido</p>
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm py-1" style={{ color: 'var(--menu-text-muted)' }}>
-                      <span>{item.quantity}x {item.name}</span>
-                      <span>{formatPrice(item.price * item.quantity)}</span>
-                    </div>
-                  ))}
+                  {items.map((item) => {
+                    const unitPrice = item.price + (item.selectedOptions ?? []).reduce((s, o) => s + o.price_addition, 0)
+                    return (
+                      <div key={item.cartKey ?? item.id} className="py-1" style={{ color: 'var(--menu-text-muted)' }}>
+                        <div className="flex justify-between text-sm">
+                          <span>{item.quantity}x {item.name}</span>
+                          <span>{formatPrice(unitPrice * item.quantity)}</span>
+                        </div>
+                        {item.selectedOptions && item.selectedOptions.length > 0 && (
+                          <p className="text-xs pl-4 mt-0.5" style={{ opacity: 0.7 }}>
+                            {item.selectedOptions.map((o) => o.item_name).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
                   <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
                     <span>Total</span>
                     <span>{formatPrice(totalPrice)}</span>

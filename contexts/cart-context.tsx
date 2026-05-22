@@ -2,12 +2,32 @@
 
 import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react'
 
+export type SelectedOption = {
+  group_id: string
+  group_name: string
+  item_id: string
+  item_name: string
+  price_addition: number
+}
+
 export type CartItem = {
-  id: string
+  id: string                        // product_id
+  cartKey?: string                  // unique cart entry key: product_id or product_id__opt1_opt2
   name: string
-  price: number
+  price: number                     // base product price
   quantity: number
   image_url?: string | null
+  selectedOptions?: SelectedOption[]
+}
+
+/** Computes a unique cart key for product + options combo */
+export function makeCartKey(productId: string, selectedOptions?: SelectedOption[]): string {
+  if (!selectedOptions?.length) return productId
+  const ids = [...selectedOptions]
+    .sort((a, b) => a.item_id.localeCompare(b.item_id))
+    .map((o) => o.item_id)
+    .join('_')
+  return `${productId}__${ids}`
 }
 
 type CartState = {
@@ -17,40 +37,45 @@ type CartState = {
 
 type CartAction =
   | { type: 'ADD'; item: Omit<CartItem, 'quantity'> }
-  | { type: 'REMOVE'; id: string }
-  | { type: 'INCREMENT'; id: string }
-  | { type: 'DECREMENT'; id: string }
+  | { type: 'REMOVE'; cartKey: string }
+  | { type: 'INCREMENT'; cartKey: string }
+  | { type: 'DECREMENT'; cartKey: string }
   | { type: 'CLEAR' }
   | { type: 'LOAD'; items: CartItem[] }
+
+function resolveKey(item: Pick<CartItem, 'id' | 'cartKey'>): string {
+  return item.cartKey ?? item.id
+}
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD': {
-      const existing = state.items.find((i) => i.id === action.item.id)
+      const key = resolveKey(action.item)
+      const existing = state.items.find((i) => resolveKey(i) === key)
       if (existing) {
         return {
           ...state,
           items: state.items.map((i) =>
-            i.id === action.item.id ? { ...i, quantity: i.quantity + 1 } : i
+            resolveKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i
           ),
         }
       }
       return { ...state, items: [...state.items, { ...action.item, quantity: 1 }] }
     }
     case 'REMOVE':
-      return { ...state, items: state.items.filter((i) => i.id !== action.id) }
+      return { ...state, items: state.items.filter((i) => resolveKey(i) !== action.cartKey) }
     case 'INCREMENT':
       return {
         ...state,
         items: state.items.map((i) =>
-          i.id === action.id ? { ...i, quantity: i.quantity + 1 } : i
+          resolveKey(i) === action.cartKey ? { ...i, quantity: i.quantity + 1 } : i
         ),
       }
     case 'DECREMENT':
       return {
         ...state,
         items: state.items
-          .map((i) => (i.id === action.id ? { ...i, quantity: i.quantity - 1 } : i))
+          .map((i) => (resolveKey(i) === action.cartKey ? { ...i, quantity: i.quantity - 1 } : i))
           .filter((i) => i.quantity > 0),
       }
     case 'CLEAR':
@@ -67,9 +92,9 @@ type CartContextValue = {
   totalItems: number
   totalPrice: number
   addItem: (item: Omit<CartItem, 'quantity'>) => void
-  removeItem: (id: string) => void
-  increment: (id: string) => void
-  decrement: (id: string) => void
+  removeItem: (cartKey: string) => void
+  increment: (cartKey: string) => void
+  decrement: (cartKey: string) => void
   clearCart: () => void
 }
 
@@ -78,7 +103,7 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children, slug }: { children: ReactNode; slug: string }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [], slug })
 
-  // Carregar do localStorage ao montar
+  // Load from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(`hivi-cart-${slug}`)
@@ -91,7 +116,7 @@ export function CartProvider({ children, slug }: { children: ReactNode; slug: st
     }
   }, [slug])
 
-  // Salvar no localStorage a cada mudança
+  // Save to localStorage on every change
   useEffect(() => {
     try {
       localStorage.setItem(`hivi-cart-${slug}`, JSON.stringify(state.items))
@@ -101,13 +126,16 @@ export function CartProvider({ children, slug }: { children: ReactNode; slug: st
   }, [state.items, slug])
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => dispatch({ type: 'ADD', item }), [])
-  const removeItem = useCallback((id: string) => dispatch({ type: 'REMOVE', id }), [])
-  const increment = useCallback((id: string) => dispatch({ type: 'INCREMENT', id }), [])
-  const decrement = useCallback((id: string) => dispatch({ type: 'DECREMENT', id }), [])
+  const removeItem = useCallback((cartKey: string) => dispatch({ type: 'REMOVE', cartKey }), [])
+  const increment = useCallback((cartKey: string) => dispatch({ type: 'INCREMENT', cartKey }), [])
+  const decrement = useCallback((cartKey: string) => dispatch({ type: 'DECREMENT', cartKey }), [])
   const clearCart = useCallback(() => dispatch({ type: 'CLEAR' }), [])
 
   const totalItems = state.items.reduce((sum, i) => sum + i.quantity, 0)
-  const totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  const totalPrice = state.items.reduce((sum, i) => {
+    const extra = (i.selectedOptions ?? []).reduce((s, o) => s + o.price_addition, 0)
+    return sum + (i.price + extra) * i.quantity
+  }, 0)
 
   return (
     <CartContext.Provider value={{ items: state.items, totalItems, totalPrice, addItem, removeItem, increment, decrement, clearCart }}>

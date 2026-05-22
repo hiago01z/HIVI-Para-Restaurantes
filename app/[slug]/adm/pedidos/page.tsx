@@ -80,7 +80,8 @@ export default async function PedidosPage({
         id,
         product_name,
         product_price,
-        quantity
+        quantity,
+        selected_options
       )
     `)
     .eq('restaurant_id', restaurantId)

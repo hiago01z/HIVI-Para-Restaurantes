@@ -42,8 +42,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Sessão inválida ou expirada' }, { status: 400 })
     }
 
+    type SelectedOption = { group_id: string; group_name: string; item_id: string; item_name: string; price_addition: number }
     const orderData = session.order_data as {
-      items: Array<{ product_id: string; product_name: string; product_price: number; quantity: number }>
+      items: Array<{ product_id: string; product_name: string; product_price: number; quantity: number; selected_options?: SelectedOption[] | null }>
       total: number
       notes?: string | null
     }
@@ -67,7 +68,14 @@ export async function POST(request: Request) {
     }
 
     const { error: itemsError } = await supabase.from('order_items').insert(
-      orderData.items.map(item => ({ ...item, order_id: order.id }))
+      orderData.items.map(item => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        product_price: item.product_price,
+        quantity: item.quantity,
+        selected_options: item.selected_options?.length ? item.selected_options : null,
+      }))
     )
 
     if (itemsError) {

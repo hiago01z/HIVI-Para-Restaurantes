@@ -6,11 +6,20 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Clock, CheckCircle2, ChefHat, Package, Bike, Check, XCircle } from 'lucide-react'
 
+type SelectedOption = {
+  group_id: string
+  group_name: string
+  item_id: string
+  item_name: string
+  price_addition: number
+}
+
 type OrderItem = {
   id: string
   product_name: string
   product_price: number
   quantity: number
+  selected_options?: SelectedOption[] | null
 }
 
 type Order = {
@@ -175,20 +184,35 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
         <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--menu-card)' }}>
           <p className="text-xs mb-3 uppercase tracking-wide font-bold" style={{ color: 'var(--menu-text-muted)' }}>Itens</p>
           <div className="space-y-2">
-            {initialOrder.order_items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-6 h-6 rounded-full text-xs font-black flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
-                  >
-                    {item.quantity}
-                  </span>
-                  <span className="text-sm" style={{ color: 'var(--menu-text)' }}>{item.product_name}</span>
+            {initialOrder.order_items.map((item) => {
+              const optionsExtra = (item.selected_options ?? []).reduce((s, o) => s + o.price_addition, 0)
+              return (
+              <div key={item.id}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-6 h-6 rounded-full text-xs font-black flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
+                    >
+                      {item.quantity}
+                    </span>
+                    <span className="text-sm" style={{ color: 'var(--menu-text)' }}>{item.product_name}</span>
+                  </div>
+                  <span className="text-sm" style={{ color: 'var(--menu-text-muted)' }}>{formatPrice((item.product_price + optionsExtra) * item.quantity)}</span>
                 </div>
-                <span className="text-sm" style={{ color: 'var(--menu-text-muted)' }}>{formatPrice(item.product_price * item.quantity)}</span>
+                {item.selected_options && item.selected_options.length > 0 && (
+                  <div className="pl-8 mt-0.5 space-y-0.5">
+                    {item.selected_options.map((o) => (
+                      <p key={o.item_id} className="text-xs" style={{ color: 'var(--menu-text-muted)', opacity: 0.75 }}>
+                        {o.group_name}: <span style={{ opacity: 1, fontWeight: 600 }}>{o.item_name}</span>
+                        {o.price_addition > 0 && ` (+${formatPrice(o.price_addition)})`}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
+              )
+            })}
           </div>
           <div className="mt-3 pt-3 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
             <span>Total</span>

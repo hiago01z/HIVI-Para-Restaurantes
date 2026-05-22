@@ -125,6 +125,22 @@
 - [x] **2026-05-20**: Observações em pedidos — badge amarelo no ADM funcional
 - [x] **2026-05-20**: Som de novo pedido — funcional (botão 🔔 Som ativo por padrão, volume +70%)
 
+| 2026-05-20 | Fix: "Painel ADM" em /conta causava crash para novas contas — link apontava para `/adm` sem `page.tsx`. Fix: link alterado para `/{slug}/adm/login` |
+| 2026-05-20 | Fix: notificação WhatsApp de entrega não chegava — causa 1: anon client bloqueado por RLS; causa 2: fire-and-forget cancelado pela Vercel antes de completar. Fix: service role + await |
+| 2026-05-22 | Feature: Adicionais (product add-ons) — grupos de opções por produto no ADM, modal de seleção no cardápio público, opções salvas no pedido, exibidas no ADM pedidos e meu-pedido. Migration 010 executada. |
+
+---
+
+## Pendente (Próximas Fases)
+
+### Fase 9 — Analytics e Relatórios
+- [ ] Dashboard com gráficos: receita por dia/semana, produtos mais vendidos, pedidos por período
+- [ ] Exportação de dados (CSV)
+
+### Fase 10 — Impressão Automática
+- [ ] Integração com impressora térmica via WebUSB / ESC/POS
+- [ ] Configuração de formato do cupom
+
 ---
 
 ## ✅ Projeto em produção — validação completa em 2026-05-20

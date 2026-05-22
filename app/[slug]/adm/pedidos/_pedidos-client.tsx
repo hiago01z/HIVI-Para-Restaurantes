@@ -8,11 +8,20 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
 
+type SelectedOption = {
+  group_id: string
+  group_name: string
+  item_id: string
+  item_name: string
+  price_addition: number
+}
+
 type OrderItem = {
   id: string
   product_name: string
   product_price: number
   quantity: number
+  selected_options?: SelectedOption[] | null
 }
 
 type Order = {
@@ -208,7 +217,7 @@ export function PedidosClient({
             .select(`
               id, order_number, type, status, status_changed_by, customer_name, customer_phone,
               address, table_number, payment_method, change_for, notes, payment_status, payment_changed_by, total, created_at,
-              order_items (id, product_name, product_price, quantity)
+              order_items (id, product_name, product_price, quantity, selected_options)
             `)
             .eq('id', payload.new.id)
             .single()
@@ -503,14 +512,29 @@ export function PedidosClient({
 
                   {expanded && (
                     <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                      {order.order_items.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center py-1.5">
-                          <span className="text-sm text-gray-700">
-                            <span className="font-bold" style={{ color: 'var(--adm-primary)' }}>{item.quantity}x</span> {item.product_name}
-                          </span>
-                          <span className="text-sm text-gray-500">{formatPrice(item.product_price * item.quantity)}</span>
+                      {order.order_items.map((item) => {
+                        const optionsExtra = (item.selected_options ?? []).reduce((s, o) => s + o.price_addition, 0)
+                        return (
+                        <div key={item.id} className="py-1.5">
+                          <div className="flex justify-between items-start">
+                            <span className="text-sm text-gray-700">
+                              <span className="font-bold" style={{ color: 'var(--adm-primary)' }}>{item.quantity}x</span> {item.product_name}
+                            </span>
+                            <span className="text-sm text-gray-500 flex-shrink-0 ml-2">{formatPrice((item.product_price + optionsExtra) * item.quantity)}</span>
+                          </div>
+                          {item.selected_options && item.selected_options.length > 0 && (
+                            <div className="mt-0.5 pl-5 space-y-0.5">
+                              {item.selected_options.map((o) => (
+                                <p key={o.item_id} className="text-xs text-gray-400">
+                                  {o.group_name}: <span className="font-medium text-gray-600">{o.item_name}</span>
+                                  {o.price_addition > 0 && <span className="text-gray-400"> (+{formatPrice(o.price_addition)})</span>}
+                                </p>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        )
+                      })}
                       <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-black text-gray-900 text-sm">
                         <span>Total</span>
                         <span>{formatPrice(order.total)}</span>

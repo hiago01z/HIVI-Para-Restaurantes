@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Plus, Pencil, Trash2, X, Loader2, Star, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Star, Search, ListPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
 
 type Category = { id: string; name: string }
@@ -18,6 +18,25 @@ type Product = {
   category_id: string | null
 }
 
+// ── Adicionais types ─────────────────────────────────────────
+type OptionItem = {
+  id: string
+  name: string
+  price_addition: number
+  is_available: boolean
+  sort_order: number
+}
+
+type OptionGroup = {
+  id: string
+  name: string
+  description: string | null
+  min_selections: number
+  max_selections: number
+  sort_order: number
+  items: OptionItem[]
+}
+
 type Form = {
   name: string
   description: string
@@ -26,6 +45,9 @@ type Form = {
   is_featured: boolean
   is_available: boolean
 }
+
+type GroupForm = { name: string; description: string; min_selections: string; max_selections: string }
+type ItemForm  = { name: string; price_addition: string }
 
 const EMPTY_FORM: Form = {
   name: '', description: '', price: '', category_id: '', is_featured: false, is_available: true,
@@ -57,6 +79,10 @@ export function PratosClient({
   const [search, setSearch] = useState('')
   const [pickerKey, setPickerKey] = useState(0)
   const cropPickerRef = useRef<ImageCropPickerHandle>(null)
+
+  // ── Adicionais (options management) ─────────────────────────
+  const [optsProductId, setOptsProductId] = useState<string | null>(null)
+  const optsProduct = products.find((p) => p.id === optsProductId) ?? null
 
   function openCreate() {
     setEditing(null)
@@ -319,6 +345,13 @@ export function PratosClient({
                   </button>
 
                   <button
+                    onClick={() => setOptsProductId(product.id)}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-colors"
+                  >
+                    <ListPlus className="w-3.5 h-3.5" /> Adicionais
+                  </button>
+
+                  <button
                     onClick={() => handleDelete(product)}
                     className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 font-medium transition-colors"
                   >
@@ -329,6 +362,15 @@ export function PratosClient({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modal Adicionais */}
+      {optsProductId && optsProduct && (
+        <OptionsManageModal
+          product={optsProduct}
+          restaurantId={restaurantId}
+          onClose={() => setOptsProductId(null)}
+        />
       )}
 
       {/* Modal criar/editar */}
@@ -414,6 +456,422 @@ export function PratosClient({
     </div>
   )
 }
+
+// ── OptionsManageModal ────────────────────────────────────────────────────────
+
+const EMPTY_GROUP_FORM: GroupForm = { name: '', description: '', min_selections: '0', max_selections: '1' }
+const EMPTY_ITEM_FORM:  ItemForm  = { name: '', price_addition: '0' }
+
+function OptionsManageModal({
+  product,
+  restaurantId,
+  onClose,
+}: {
+  product: Product
+  restaurantId: string
+  onClose: () => void
+}) {
+  const supabase = createClient()
+  const [groups, setGroups] = useState<OptionGroup[]>([])
+  const [loadingGroups, setLoadingGroups] = useState(true)
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
+
+  // Group creation form
+  const [showGroupForm, setShowGroupForm] = useState(false)
+  const [groupForm, setGroupForm] = useState<GroupForm>(EMPTY_GROUP_FORM)
+  const [savingGroup, setSavingGroup] = useState(false)
+  const [groupError, setGroupError] = useState('')
+
+  // Item creation forms per group
+  const [showItemForm, setShowItemForm] = useState<Record<string, boolean>>({})
+  const [itemForms, setItemForms] = useState<Record<string, ItemForm>>({})
+  const [savingItem, setSavingItem] = useState<string | null>(null)
+  const [itemError, setItemError] = useState<Record<string, string>>({})
+
+  // Supress warning: restaurantId is passed for future use (e.g. verifying ownership)
+  void restaurantId
+
+  // Fetch groups + items on mount
+  useEffect(() => {
+    supabase
+      .from('product_option_groups')
+      .select('id, name, description, min_selections, max_selections, sort_order, product_option_items(id, name, price_addition, is_available, sort_order)')
+      .eq('product_id', product.id)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setGroups(data.map((g) => ({
+            id: g.id,
+            name: g.name,
+            description: g.description,
+            min_selections: g.min_selections,
+            max_selections: g.max_selections,
+            sort_order: g.sort_order,
+            items: ((g.product_option_items as OptionItem[] | null) ?? [])
+              .sort((a, b) => a.sort_order - b.sort_order),
+          })))
+        }
+        setLoadingGroups(false)
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id])
+
+  async function handleSaveGroup() {
+    if (!groupForm.name.trim()) { setGroupError('Nome do grupo é obrigatório.'); return }
+    const min = parseInt(groupForm.min_selections) || 0
+    const max = parseInt(groupForm.max_selections) || 1
+    if (max < 1) { setGroupError('Máx. deve ser ≥ 1.'); return }
+    if (min > max) { setGroupError('Mín. não pode ser maior que Máx.'); return }
+
+    setSavingGroup(true)
+    setGroupError('')
+    const { data, error } = await supabase
+      .from('product_option_groups')
+      .insert({
+        product_id: product.id,
+        name: groupForm.name.trim(),
+        description: groupForm.description.trim() || null,
+        min_selections: min,
+        max_selections: max,
+        sort_order: groups.length,
+      })
+      .select()
+      .single()
+
+    setSavingGroup(false)
+    if (error || !data) { setGroupError('Erro ao salvar. Tente novamente.'); return }
+
+    const newGroup: OptionGroup = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      min_selections: data.min_selections,
+      max_selections: data.max_selections,
+      sort_order: data.sort_order,
+      items: [],
+    }
+    setGroups((prev) => [...prev, newGroup])
+    setGroupForm(EMPTY_GROUP_FORM)
+    setShowGroupForm(false)
+    setExpandedGroup(newGroup.id)
+  }
+
+  async function handleDeleteGroup(groupId: string) {
+    if (!confirm('Excluir este grupo de opções e todos os seus itens?')) return
+    const { error } = await supabase.from('product_option_groups').delete().eq('id', groupId)
+    if (!error) {
+      setGroups((prev) => prev.filter((g) => g.id !== groupId))
+    }
+  }
+
+  async function handleSaveItem(groupId: string) {
+    const form = itemForms[groupId] ?? EMPTY_ITEM_FORM
+    if (!form.name.trim()) {
+      setItemError((prev) => ({ ...prev, [groupId]: 'Nome do item é obrigatório.' }))
+      return
+    }
+    const priceAdd = parseFloat(form.price_addition.replace(',', '.')) || 0
+
+    setSavingItem(groupId)
+    setItemError((prev) => ({ ...prev, [groupId]: '' }))
+
+    const group = groups.find((g) => g.id === groupId)
+    const { data, error } = await supabase
+      .from('product_option_items')
+      .insert({
+        group_id: groupId,
+        name: form.name.trim(),
+        price_addition: priceAdd,
+        sort_order: group?.items.length ?? 0,
+      })
+      .select()
+      .single()
+
+    setSavingItem(null)
+    if (error || !data) {
+      setItemError((prev) => ({ ...prev, [groupId]: 'Erro ao salvar. Tente novamente.' }))
+      return
+    }
+
+    const newItem: OptionItem = {
+      id: data.id,
+      name: data.name,
+      price_addition: data.price_addition,
+      is_available: data.is_available,
+      sort_order: data.sort_order,
+    }
+    setGroups((prev) =>
+      prev.map((g) => g.id === groupId ? { ...g, items: [...g.items, newItem] } : g)
+    )
+    setItemForms((prev) => ({ ...prev, [groupId]: EMPTY_ITEM_FORM }))
+    setShowItemForm((prev) => ({ ...prev, [groupId]: false }))
+  }
+
+  async function handleDeleteItem(groupId: string, itemId: string) {
+    const { error } = await supabase.from('product_option_items').delete().eq('id', itemId)
+    if (!error) {
+      setGroups((prev) =>
+        prev.map((g) => g.id === groupId ? { ...g, items: g.items.filter((i) => i.id !== itemId) } : g)
+      )
+    }
+  }
+
+  async function handleToggleItemAvailable(groupId: string, item: OptionItem) {
+    const next = !item.is_available
+    const { error } = await supabase
+      .from('product_option_items')
+      .update({ is_available: next })
+      .eq('id', item.id)
+    if (!error) {
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === groupId
+            ? { ...g, items: g.items.map((i) => i.id === item.id ? { ...i, is_available: next } : i) }
+            : g
+        )
+      )
+    }
+  }
+
+  function formatPrice(v: number) {
+    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
+      <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+          <div>
+            <h2 className="font-bold text-gray-900 text-lg tracking-tight">Adicionais</h2>
+            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{product.name}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto flex-1 px-5 py-4">
+          {loadingGroups ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {groups.length === 0 && !showGroupForm && (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-3">📋</div>
+                  <p className="text-sm text-gray-400 mb-4">Nenhum grupo de adicionais ainda.</p>
+                </div>
+              )}
+
+              {/* Existing groups */}
+              {groups.map((group) => {
+                const isExpanded = expandedGroup === group.id
+                const isRequired = group.min_selections > 0
+                const labelType = group.max_selections === 1 ? 'Escolha 1' : `Até ${group.max_selections}`
+
+                return (
+                  <div key={group.id} className="border border-gray-200 rounded-2xl overflow-hidden">
+                    {/* Group header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                      <button
+                        onClick={() => setExpandedGroup(isExpanded ? null : group.id)}
+                        className="flex-1 flex items-center gap-2 text-left"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-gray-900 truncate">
+                            {group.name}
+                            {isRequired && <span className="text-red-500 ml-1">*</span>}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {labelType} · {group.items.length} {group.items.length === 1 ? 'item' : 'itens'}
+                          </p>
+                        </div>
+                        {isExpanded
+                          ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGroup(group.id)}
+                        className="ml-2 p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Group items */}
+                    {isExpanded && (
+                      <div className="px-4 py-3 space-y-2">
+                        {group.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-2">
+                            <span className="flex-1 text-sm text-gray-700 truncate">{item.name}</span>
+                            {item.price_addition > 0 && (
+                              <span className="text-xs font-bold text-gray-500">+{formatPrice(item.price_addition)}</span>
+                            )}
+                            <button
+                              onClick={() => handleToggleItemAvailable(group.id, item)}
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
+                                item.is_available
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-400'
+                              }`}
+                            >
+                              {item.is_available ? 'Ativo' : 'Pausado'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(group.id, item.id)}
+                              className="p-1 rounded text-red-400 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add item form */}
+                        {showItemForm[group.id] ? (
+                          <div className="pt-2 space-y-2 border-t border-gray-100">
+                            <input
+                              value={itemForms[group.id]?.name ?? ''}
+                              onChange={(e) => setItemForms((prev) => ({ ...prev, [group.id]: { ...(prev[group.id] ?? EMPTY_ITEM_FORM), name: e.target.value } }))}
+                              placeholder="Nome da opção (ex: Carne dupla)"
+                              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+                            />
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={itemForms[group.id]?.price_addition ?? '0'}
+                                  onChange={(e) => setItemForms((prev) => ({ ...prev, [group.id]: { ...(prev[group.id] ?? EMPTY_ITEM_FORM), price_addition: e.target.value } }))}
+                                  placeholder="0,00"
+                                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none"
+                                />
+                              </div>
+                              <button
+                                onClick={() => handleSaveItem(group.id)}
+                                disabled={savingItem === group.id}
+                                className="px-4 py-2 text-sm font-bold rounded-xl text-white disabled:opacity-50 transition-colors"
+                                style={{ background: 'var(--adm-primary)' }}
+                              >
+                                {savingItem === group.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+                              </button>
+                              <button
+                                onClick={() => setShowItemForm((prev) => ({ ...prev, [group.id]: false }))}
+                                className="px-3 py-2 text-sm rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            {itemError[group.id] && (
+                              <p className="text-xs text-red-500">{itemError[group.id]}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowItemForm((prev) => ({ ...prev, [group.id]: true }))}
+                            className="w-full mt-1 py-2 text-xs font-bold border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors"
+                          >
+                            + Adicionar opção
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Add group form */}
+              {showGroupForm ? (
+                <div className="border-2 border-dashed border-blue-200 rounded-2xl p-4 space-y-3 bg-blue-50/30">
+                  <p className="text-sm font-bold text-gray-700">Novo grupo de opções</p>
+                  <input
+                    value={groupForm.name}
+                    onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
+                    placeholder="Nome do grupo (ex: Proteína, Tamanho...)"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+                  />
+                  <input
+                    value={groupForm.description}
+                    onChange={(e) => setGroupForm({ ...groupForm, description: e.target.value })}
+                    placeholder="Descrição (opcional)"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Mínimo de escolhas</label>
+                      <select
+                        value={groupForm.min_selections}
+                        onChange={(e) => setGroupForm({ ...groupForm, min_selections: e.target.value })}
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none"
+                      >
+                        {[0,1,2,3].map((n) => <option key={n} value={n}>{n === 0 ? '0 (opcional)' : n}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Máximo de escolhas</label>
+                      <select
+                        value={groupForm.max_selections}
+                        onChange={(e) => setGroupForm({ ...groupForm, max_selections: e.target.value })}
+                        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none"
+                      >
+                        {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n === 1 ? '1 (escolha única)' : n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {groupError && <p className="text-xs text-red-500">{groupError}</p>}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveGroup}
+                      disabled={savingGroup}
+                      className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white disabled:opacity-50"
+                      style={{ background: 'var(--adm-primary)' }}
+                    >
+                      {savingGroup ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Criar grupo'}
+                    </button>
+                    <button
+                      onClick={() => { setShowGroupForm(false); setGroupForm(EMPTY_GROUP_FORM); setGroupError('') }}
+                      className="px-4 py-2.5 text-sm rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowGroupForm(true)}
+                  className="w-full py-3 text-sm font-bold border-2 border-dashed rounded-2xl transition-colors"
+                  style={{ borderColor: 'var(--adm-primary)', color: 'var(--adm-primary)' }}
+                >
+                  <Plus className="w-4 h-4 inline mr-1.5" />
+                  Novo grupo de adicionais
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="w-full py-3 text-sm font-bold rounded-2xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 function Field({
   label, value, onChange, placeholder, type = 'text', textarea = false,

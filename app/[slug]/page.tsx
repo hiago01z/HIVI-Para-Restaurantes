@@ -107,7 +107,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
       .order('display_order', { ascending: true }),
     supabase
       .from('products')
-      .select('id, name, description, price, image_url')
+      .select('id, name, description, price, image_url, product_option_groups(id)')
       .eq('restaurant_id', restaurant.id)
       .eq('is_featured', true)
       .eq('is_available', true),
@@ -124,7 +124,12 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
   ])
 
   const cats = categories ?? []
-  const featured = featuredProducts ?? []
+  // Compute hasOptions for featured products
+  type RawFeatured = NonNullable<typeof featuredProducts>[number]
+  const featured = (featuredProducts ?? []).map((p: RawFeatured) => {
+    const { product_option_groups, ...rest } = p as RawFeatured & { product_option_groups?: { id: string }[] }
+    return { ...rest, hasOptions: (product_option_groups ?? []).length > 0 }
+  })
   const products = allProducts ?? []
   const bannerUrl = themeData?.banner_url ?? null
 

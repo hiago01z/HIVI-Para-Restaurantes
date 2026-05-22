@@ -45,7 +45,7 @@ export default async function CategoriaPage({
   ] = await Promise.all([
     supabase
       .from('products')
-      .select('id, name, description, price, image_url')
+      .select('id, name, description, price, image_url, product_option_groups(id)')
       .eq('category_id', id)
       .eq('is_available', true)
       .order('price', { ascending }),
@@ -61,7 +61,12 @@ export default async function CategoriaPage({
       .eq('is_available', true),
   ])
 
-  const pratos = products ?? []
+  // Normalize product shape: compute hasOptions, strip joined data
+  type RawProduct = typeof products extends (infer T)[] | null ? T : never
+  const pratos = (products ?? []).map((p: RawProduct) => {
+    const { product_option_groups, ...rest } = p as RawProduct & { product_option_groups?: { id: string }[] }
+    return { ...rest, hasOptions: (product_option_groups ?? []).length > 0 }
+  })
 
   return (
     <div className="min-h-screen pb-24" style={{ color: 'var(--menu-text)' }}>

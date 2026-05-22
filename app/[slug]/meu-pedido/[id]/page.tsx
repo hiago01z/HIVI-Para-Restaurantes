@@ -22,7 +22,8 @@ export default async function MeuPedidoPage({ params }: { params: Promise<{ slug
         id,
         product_name,
         product_price,
-        quantity
+        quantity,
+        selected_options
       )
     `)
     .eq('id', id)
