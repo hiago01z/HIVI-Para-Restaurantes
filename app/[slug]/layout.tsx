@@ -62,16 +62,20 @@ export default async function SlugLayout({
 
   if (!restaurant) notFound()
 
+  const hdrs = await headers()
+  const pathname = hdrs.get('x-pathname') ?? ''
+  const isAdmPath = pathname.split('/').filter(Boolean).includes('adm')
+
+  // Rotas ADM têm layout e CSS vars próprios — não aplica o tema do cardápio público
+  // para evitar flash do fundo escuro do restaurante durante a navegação.
+  if (isAdmPath) {
+    return <>{children}</>
+  }
+
   // Se o restaurante estiver explicitamente pausado (is_active === false), mostra tela de pausa.
   // is_active = null → restaurante novo, trata como ativo.
   if (restaurant.is_active === false) {
-    const hdrs = await headers()
-    const pathname = hdrs.get('x-pathname') ?? ''
-    const isAdmPath = pathname.split('/').filter(Boolean).includes('adm')
-
-    if (!isAdmPath) {
-      return <PausedPage name={restaurant.name} logoUrl={restaurant.logo_url} />
-    }
+    return <PausedPage name={restaurant.name} logoUrl={restaurant.logo_url} />
   }
 
   const { data: theme } = await supabase
