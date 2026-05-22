@@ -72,6 +72,10 @@ const server = http.createServer((req, res) => {
           printer.end()
         }
       )
+      // Prevent indefinite hang when the printer IP is wrong or powered off
+      printer.setTimeout(5000, () => {
+        printer.destroy(new Error('Timeout: impressora não respondeu em 5 segundos.'))
+      })
       printer.on('close', () => {
         res.writeHead(200)
         res.end('OK')

@@ -36,6 +36,18 @@ export function buildReceiptHtml(
     ? `Mesa ${order.table_number ?? '-'}`
     : 'Delivery'
 
+  const deliveryHtml = order.type === 'delivery' ? [
+    order.address        ? `<div>End: ${esc(order.address)}</div>` : '',
+    order.customer_phone ? `<div>Tel: ${esc(order.customer_phone)}</div>` : '',
+    order.payment_method ? (() => {
+      const pm = order.payment_method
+      const payLabel = pm === 'dinheiro'
+        ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for)})` : ''}`
+        : pm === 'cartao' ? 'Pgto: Cartao' : 'Pgto: Pix'
+      return `<div>${esc(payLabel)}</div>`
+    })() : '',
+  ].join('') : ''
+
   const itemRows = order.order_items.map((item) => {
     const lineTotal = item.product_price * item.quantity
     const optionsHtml = item.selected_options?.length
@@ -96,6 +108,7 @@ export function buildReceiptHtml(
     <span class="r">${formatDateTime(order.created_at)}</span>
   </div>
   ${order.customer_name ? `<div>Cliente: ${esc(order.customer_name)}</div>` : ''}
+  ${deliveryHtml}
   <hr>
   ${itemRows}
   <hr>

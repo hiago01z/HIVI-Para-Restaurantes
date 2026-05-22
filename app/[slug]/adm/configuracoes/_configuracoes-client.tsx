@@ -4,11 +4,12 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, Clock, Printer } from 'lucide-react'
 import {
-  loadConfig, saveConfig, clearConfig, DEFAULT_CONFIG,
+  loadConfig, saveConfig, clearConfig, DEFAULT_CONFIG, DEFAULT_AGENT_URL,
   connectUsb, connectBluetooth, disconnectUsb, disconnectBluetooth,
-  printTestOrder, isConnected,
+  printTestOrder, isConnected, checkNetworkAgent,
   type PrinterConfig, type ConnectionType,
 } from '@/lib/thermal-printer/printer'
+import type { CutMode, Charset } from '@/lib/thermal-printer/escpos'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
@@ -409,13 +410,15 @@ export function ConfiguracoesClient({
   const [printerTesting, setPrinterTesting] = useState(false)
   const [printerTestOk, setPrinterTestOk] = useState(false)
   const [printerError, setPrinterError] = useState('')
+  const [agentStatus, setAgentStatus] = useState<'unknown' | 'online' | 'offline'>('unknown')
+  const [agentChecking, setAgentChecking] = useState(false)
 
   // Check connection status on mount
   useEffect(() => {
     const cfg = loadConfig()
     if (!cfg) return
     setPrinterCfg(cfg)
-    if (cfg.type === 'browser') {
+    if (cfg.type === 'browser' || cfg.type === 'network') {
       setPrinterConnected(true)
     } else {
       setPrinterConnected(isConnected(cfg.type))
@@ -438,8 +441,8 @@ export function ConfiguracoesClient({
   }
 
   async function handleConnectPrinter() {
-    // Browser mode is always "connected" — no device pairing needed
-    if (printerCfg.type === 'browser') {
+    // Browser/network mode: no device pairing needed
+    if (printerCfg.type === 'browser' || printerCfg.type === 'network') {
       setPrinterConnected(true)
       return
     }
@@ -455,6 +458,15 @@ export function ConfiguracoesClient({
     } finally {
       setPrinterConnecting(false)
     }
+  }
+
+  async function handleCheckAgent() {
+    setAgentChecking(true)
+    setAgentStatus('unknown')
+    const ok = await checkNetworkAgent(printerCfg.agentUrl ?? DEFAULT_AGENT_URL)
+    setAgentStatus(ok ? 'online' : 'offline')
+    setAgentChecking(false)
+    if (ok) setPrinterConnected(true)
   }
 
   async function handleTestPrint() {
@@ -1126,10 +1138,11 @@ export function ConfiguracoesClient({
         {/* Tipo de conexão */}
         <div className="mb-4">
           <p className="text-xs font-medium text-gray-600 mb-2">Como a impressora está conectada?</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {([
               { type: 'usb',       icon: '🔌', label: 'Cabo USB' },
               { type: 'bluetooth', icon: '📶', label: 'Bluetooth' },
+              { type: 'network',   icon: '🌐', label: 'Rede' },
               { type: 'browser',   icon: '🖨️', label: 'Via sistema' },
             ] as { type: ConnectionType; icon: string; label: string }[]).map((opt) => (
               <button
@@ -1162,7 +1175,41 @@ export function ConfiguracoesClient({
               Conecta pelo Bluetooth do dispositivo via Chrome. Clique em &quot;Conectar&quot; e selecione a impressora.
             </p>
           )}
+          {printerCfg.type === 'network' && (
+            <p className="text-xs text-gray-400 mt-2">
+              Impressora de rede (TCP/IP porta 9100) via agente local. Execute <code className="bg-gray-100 px-1 rounded">node hivi-print-agent.js --ip SEU_IP</code> no computador do restaurante.
+            </p>
+          )}
         </div>
+
+        {/* Agent URL (network mode) */}
+        {printerCfg.type === 'network' && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-600 mb-2">IP da impressora de rede</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={printerCfg.agentUrl ?? DEFAULT_AGENT_URL}
+                onChange={(e) => updatePrinterCfg({ agentUrl: e.target.value })}
+                placeholder="http://localhost:6557"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)]"
+              />
+              <button
+                onClick={handleCheckAgent}
+                disabled={agentChecking}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all disabled:opacity-50 flex-shrink-0"
+                style={
+                  agentStatus === 'online'  ? { borderColor: '#22c55e', color: '#15803d', background: '#dcfce7' } :
+                  agentStatus === 'offline' ? { borderColor: '#ef4444', color: '#b91c1c', background: '#fee2e2' } :
+                  { borderColor: 'var(--adm-primary)', color: 'var(--adm-primary)', background: 'color-mix(in srgb, var(--adm-primary) 8%, white)' }
+                }
+              >
+                {agentChecking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                {agentStatus === 'online' ? '✓ Online' : agentStatus === 'offline' ? '✗ Offline' : 'Verificar agente'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Paper width */}
         <div className="mb-4">
@@ -1205,6 +1252,62 @@ export function ConfiguracoesClient({
             />
           </button>
         </div>
+
+        {/* Cut mode — only for ESC/POS modes */}
+        {printerCfg.type !== 'browser' && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-600 mb-2">Corte do papel</p>
+            <div className="flex gap-2">
+              {([
+                { value: 'partial', label: 'Parcial' },
+                { value: 'full',    label: 'Total' },
+                { value: 'none',    label: 'Sem corte' },
+              ] as { value: import('@/lib/thermal-printer/escpos').CutMode; label: string }[]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updatePrinterCfg({ cutMode: opt.value })}
+                  className="flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all"
+                  style={(printerCfg.cutMode ?? 'partial') === opt.value ? {
+                    borderColor: 'var(--adm-primary)',
+                    color: 'var(--adm-primary)',
+                    background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                  } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Charset — only for ESC/POS modes */}
+        {printerCfg.type !== 'browser' && (
+          <div className="mb-5">
+            <p className="text-xs font-medium text-gray-600 mb-2">Codificação de caracteres</p>
+            <div className="flex gap-2">
+              {([
+                { value: 'ascii',  label: 'ASCII (sem acentos)' },
+                { value: 'latin1', label: 'Latin-1 (com acentos)' },
+              ] as { value: import('@/lib/thermal-printer/escpos').Charset; label: string }[]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updatePrinterCfg({ charset: opt.value })}
+                  className="flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all"
+                  style={(printerCfg.charset ?? 'ascii') === opt.value ? {
+                    borderColor: 'var(--adm-primary)',
+                    color: 'var(--adm-primary)',
+                    background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                  } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Latin-1 imprime ã, ç, é corretamente — use se sua impressora suportar codepage WPC1252.
+            </p>
+          </div>
+        )}
 
         {/* Connect + Test */}
         <div className="flex gap-2 flex-wrap">

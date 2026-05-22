@@ -19,7 +19,11 @@
       "Bash(npx tsc *)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}, indent=2\\)\\)\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('dependencies',{}\\).get\\('jsqr','NOT FOUND'\\)\\)\")",
-      "Bash(mkdir -p \"C:/Users/Escritorio/Dropbox/HIVI/app/api/orders/[id]/payment-status\")"
+      "Bash(mkdir -p \"C:/Users/Escritorio/Dropbox/HIVI/app/api/orders/[id]/payment-status\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('jsqr:', p.dependencies?.jsqr || p.devDependencies?.jsqr || 'NOT FOUND'\\)\")",
+      "mcp__aaa6eb48-d9c5-493c-92e4-b333a7edde9a__generate-design",
+      "Bash(npx next *)",
+      "Bash(find /mnt/c/Users/Escritorio/Dropbox/HIVI/app -name \"*.tsx\" | sort)"
     ]
   }
 }

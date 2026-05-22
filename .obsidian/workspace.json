@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "README.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -183,19 +183,21 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "0f83facdab23a3a3",
+  "active": "b922f02e6e41f3f3",
   "lastOpenFiles": [
+    "Contextos/TASKS.md.tmp.3528.4fc5925b2c4c",
+    "Contextos/TASKS.md.tmp.3528.57a0a7f911c5",
+    "supabase/migrations/009_payment_changed_by.sql",
+    "app/[slug]/adm/pedidos/page.tsx.tmp.3528.e26a95f8573f",
+    "Contextos/TASKS.md.tmp.3528.50a82fc43c8b",
+    "Contextos/TASKS.md.tmp.3528.de64d214fdcf",
+    "RULES.md",
+    "README.md",
     "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.edge.production.js",
     "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.browser.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
     "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.node.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
     "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.node.unbundled.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
     "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.edge.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/package (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).json",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/client.node (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/server.browser (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/server.node.unbundled (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/client.edge (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/client.browser (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
     "node_modules/next/dist/compiled/react-is/README (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).md",
     "docs/rules/no-unknown-property.md"
   ]
