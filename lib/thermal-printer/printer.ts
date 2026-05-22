@@ -1,21 +1,23 @@
 /**
  * HIVI Thermal Printer — connection management
  *
- * Supports three connection types:
- *  - USB  : WebUSB API (Chrome desktop, USB cable)
- *  - BT   : Web Bluetooth API (Chrome, Bluetooth)
- *  - Network: HTTP POST to a local print agent (hivi-print-agent.js)
+ * Three connection types:
+ *  - usb      : WebUSB API (Chrome desktop, USB cable) — zero install
+ *  - bluetooth: Web Bluetooth API (Chrome) — zero install
+ *  - browser  : OS print dialog via hidden iframe — zero install, any printer
  *
- * Module-level device references survive React re-renders but are reset
- * on full page reload. For USB/Bluetooth, the user must reconnect once
- * after each page load.
+ * Module-level device references survive React re-renders but reset on
+ * full page reload. USB/Bluetooth require reconnecting once per load.
+ * Browser mode is always "connected" — no setup needed.
  */
 
-export type ConnectionType = 'usb' | 'bluetooth' | 'network'
+import { encodeOrder, type PrintOrder } from './escpos'
+import { buildReceiptHtml, printViaBrowser } from './receipt-html'
+
+export type ConnectionType = 'usb' | 'bluetooth' | 'browser'
 
 export interface PrinterConfig {
   type: ConnectionType
-  networkUrl: string
   autoPrint: boolean
   /** Characters per line — 32 for 58 mm, 48 for 80 mm */
   width: number
@@ -23,7 +25,6 @@ export interface PrinterConfig {
 
 export const DEFAULT_CONFIG: PrinterConfig = {
   type: 'usb',
-  networkUrl: 'http://localhost:6557',
   autoPrint: true,
   width: 32,
 }
@@ -34,7 +35,11 @@ export function loadConfig(): PrinterConfig | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<PrinterConfig>
+    // Migrate legacy 'network' type to 'browser'
+    if ((parsed as { type?: string }).type === 'network') parsed.type = 'browser'
+    return { ...DEFAULT_CONFIG, ...parsed }
   } catch {
     return null
   }
@@ -50,18 +55,18 @@ export function clearConfig(): void {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-// ─── Module-level state (persists within browser session) ────────────────────
+// ─── Module-level connection state (persists within browser session) ─────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _usbDevice: any = null
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _btCharacteristic: any = null
 
-export function isUsbConnected(): boolean  { return _usbDevice !== null }
+export function isUsbConnected(): boolean       { return _usbDevice !== null }
 export function isBluetoothConnected(): boolean { return _btCharacteristic !== null }
 export function isConnected(type: ConnectionType): boolean {
   if (type === 'usb')       return isUsbConnected()
   if (type === 'bluetooth') return isBluetoothConnected()
-  return true // network: connection is stateless HTTP
+  return true // browser: no connection state — always ready
 }
 
 // ─── USB (WebUSB) ─────────────────────────────────────────────────────────────
@@ -102,12 +107,11 @@ export function disconnectUsb(): void {
 
 // ─── Bluetooth (Web Bluetooth) ────────────────────────────────────────────────
 
-// Common BLE service/characteristic UUIDs for thermal printers
 const BLE_SERVICES = [
-  '000018f0-0000-1000-8000-00805f9b34fb', // common Chinese printers
-  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Postek, newer models
-  '0000ff00-0000-1000-8000-00805f9b34fb', // some Zjiang models
-  '0000ffe0-0000-1000-8000-00805f9b34fb', // some small BT printers
+  '000018f0-0000-1000-8000-00805f9b34fb',
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+  '0000ff00-0000-1000-8000-00805f9b34fb',
+  '0000ffe0-0000-1000-8000-00805f9b34fb',
 ]
 const BLE_CHARACTERISTICS = [
   '00002af1-0000-1000-8000-00805f9b34fb',
@@ -138,14 +142,14 @@ export async function connectBluetooth(): Promise<void> {
           _btCharacteristic = await service.getCharacteristic(charId)
           found = true
           break
-        } catch { /* try next characteristic */ }
+        } catch { /* try next */ }
       }
-    } catch { /* try next service */ }
+    } catch { /* try next */ }
   }
 
   if (!found) {
     throw new Error(
-      'Impressora encontrada mas serviço de impressão não identificado. Tente outro modelo ou use USB.'
+      'Impressora encontrada mas serviço de impressão não identificado. Tente USB.'
     )
   }
 }
@@ -157,52 +161,60 @@ export async function printBluetooth(data: Uint8Array): Promise<void> {
   const CHUNK = 512
   for (let i = 0; i < data.byteLength; i += CHUNK) {
     await _btCharacteristic.writeValue(data.slice(i, i + CHUNK))
-    await new Promise((r) => setTimeout(r, 20)) // small delay between chunks
+    await new Promise((r) => setTimeout(r, 20))
   }
 }
 
 export function disconnectBluetooth(): void {
-  try {
-    _btCharacteristic?.service?.device?.gatt?.disconnect()
-  } catch { /* ignore */ }
+  try { _btCharacteristic?.service?.device?.gatt?.disconnect() } catch { /* ignore */ }
   _btCharacteristic = null
-}
-
-// ─── Network (local print agent) ─────────────────────────────────────────────
-
-export async function printNetwork(
-  data: Uint8Array,
-  agentUrl = 'http://localhost:6557',
-): Promise<void> {
-  const res = await fetch(`${agentUrl}/print`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/octet-stream' },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    body: data as unknown as any,
-  })
-  if (!res.ok) {
-    throw new Error(`Agente retornou ${res.status}. Verifique se hivi-print-agent.js está rodando.`)
-  }
-}
-
-export async function pingNetworkAgent(agentUrl = 'http://localhost:6557'): Promise<boolean> {
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 2500)
-    const res = await fetch(`${agentUrl}/status`, { signal: controller.signal })
-    clearTimeout(timer)
-    return res.ok
-  } catch {
-    return false
-  }
 }
 
 // ─── Unified print ────────────────────────────────────────────────────────────
 
-export async function printData(data: Uint8Array, config: PrinterConfig): Promise<void> {
-  switch (config.type) {
-    case 'usb':       return printUsb(data)
-    case 'bluetooth': return printBluetooth(data)
-    case 'network':   return printNetwork(data, config.networkUrl)
+/**
+ * Prints an order using whichever connection is configured.
+ * Handles ESC/POS (USB/BT) and HTML receipt (browser) automatically.
+ */
+export async function printOrder(
+  order: PrintOrder,
+  config: PrinterConfig,
+  restaurantName?: string,
+): Promise<void> {
+  if (config.type === 'browser') {
+    const html = buildReceiptHtml(order, restaurantName, config.width)
+    printViaBrowser(html)
+    return
   }
+
+  const bytes = encodeOrder(order, restaurantName, config.width)
+
+  if (config.type === 'usb') {
+    await printUsb(bytes)
+  } else {
+    await printBluetooth(bytes)
+  }
+}
+
+/** Prints a test receipt */
+export async function printTestOrder(config: PrinterConfig, restaurantName?: string): Promise<void> {
+  const testOrder: PrintOrder = {
+    order_number: 1,
+    type: 'table',
+    customer_name: 'Cliente Teste',
+    table_number: '5',
+    notes: 'Impressao de teste HIVI',
+    total: 45.50,
+    created_at: new Date().toISOString(),
+    order_items: [
+      {
+        product_name: 'Item de Teste',
+        product_price: 32.50,
+        quantity: 1,
+        selected_options: [{ group_name: 'Adicional', item_name: 'Queijo extra', price_addition: 3.00 }],
+      },
+      { product_name: 'Bebida', product_price: 5.00, quantity: 2 },
+    ],
+  }
+  await printOrder(testOrder, config, restaurantName)
 }

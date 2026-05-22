@@ -6,10 +6,9 @@ import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, 
 import {
   loadConfig, saveConfig, clearConfig, DEFAULT_CONFIG,
   connectUsb, connectBluetooth, disconnectUsb, disconnectBluetooth,
-  printData, isConnected, pingNetworkAgent,
+  printTestOrder, isConnected,
   type PrinterConfig, type ConnectionType,
 } from '@/lib/thermal-printer/printer'
-import { encodeTestReceipt } from '@/lib/thermal-printer/escpos'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
@@ -416,8 +415,8 @@ export function ConfiguracoesClient({
     const cfg = loadConfig()
     if (!cfg) return
     setPrinterCfg(cfg)
-    if (cfg.type === 'network') {
-      pingNetworkAgent(cfg.networkUrl).then((ok) => setPrinterConnected(ok))
+    if (cfg.type === 'browser') {
+      setPrinterConnected(true)
     } else {
       setPrinterConnected(isConnected(cfg.type))
     }
@@ -439,15 +438,16 @@ export function ConfiguracoesClient({
   }
 
   async function handleConnectPrinter() {
+    // Browser mode is always "connected" — no device pairing needed
+    if (printerCfg.type === 'browser') {
+      setPrinterConnected(true)
+      return
+    }
     setPrinterConnecting(true)
     setPrinterError('')
     try {
       if (printerCfg.type === 'usb') await connectUsb()
-      else if (printerCfg.type === 'bluetooth') await connectBluetooth()
-      else {
-        const ok = await pingNetworkAgent(printerCfg.networkUrl)
-        if (!ok) throw new Error('Agente não encontrado. Verifique se hivi-print-agent.js está rodando.')
-      }
+      else await connectBluetooth()
       setPrinterConnected(true)
     } catch (e) {
       setPrinterError(e instanceof Error ? e.message : 'Erro ao conectar.')
@@ -461,8 +461,7 @@ export function ConfiguracoesClient({
     setPrinterTesting(true)
     setPrinterError('')
     try {
-      const bytes = encodeTestReceipt(restaurant.name, printerCfg.width)
-      await printData(bytes, printerCfg)
+      await printTestOrder(printerCfg, restaurant.name)
       setPrinterTestOk(true)
       setTimeout(() => setPrinterTestOk(false), 3000)
     } catch (e) {
@@ -1126,51 +1125,44 @@ export function ConfiguracoesClient({
 
         {/* Tipo de conexão */}
         <div className="mb-4">
-          <p className="text-xs font-medium text-gray-600 mb-2">Tipo de conexão</p>
+          <p className="text-xs font-medium text-gray-600 mb-2">Como a impressora está conectada?</p>
           <div className="grid grid-cols-3 gap-2">
-            {([ 'usb', 'bluetooth', 'network' ] as ConnectionType[]).map((type) => (
+            {([
+              { type: 'usb',       icon: '🔌', label: 'Cabo USB' },
+              { type: 'bluetooth', icon: '📶', label: 'Bluetooth' },
+              { type: 'browser',   icon: '🖨️', label: 'Via sistema' },
+            ] as { type: ConnectionType; icon: string; label: string }[]).map((opt) => (
               <button
-                key={type}
-                onClick={() => handleChangePrinterType(type)}
-                className="py-2.5 rounded-xl border-2 text-xs font-bold transition-all"
-                style={printerCfg.type === type ? {
+                key={opt.type}
+                onClick={() => handleChangePrinterType(opt.type)}
+                className="py-2.5 px-1 rounded-xl border-2 text-xs font-bold transition-all flex flex-col items-center gap-1"
+                style={printerCfg.type === opt.type ? {
                   borderColor: 'var(--adm-primary)',
                   color: 'var(--adm-primary)',
                   background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
                 } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
               >
-                {type === 'usb' ? '🔌 USB' : type === 'bluetooth' ? '📶 Bluetooth' : '🌐 Rede'}
+                <span className="text-base">{opt.icon}</span>
+                {opt.label}
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Network agent URL */}
-        {printerCfg.type === 'network' && (
-          <div className="mb-4 space-y-2">
-            <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1.5">URL do agente local</label>
-              <input
-                type="text"
-                value={printerCfg.networkUrl}
-                onChange={(e) => updatePrinterCfg({ networkUrl: e.target.value })}
-                placeholder="http://localhost:6557"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-mono focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
-              />
-            </div>
-            <a
-              href="/hivi-print-agent.js"
-              download="hivi-print-agent.js"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Baixar hivi-print-agent.js
-            </a>
-            <p className="text-xs text-gray-400">
-              Execute <code className="bg-gray-100 px-1 rounded">node hivi-print-agent.js --ip IP_DA_IMPRESSORA</code> no computador da cozinha.
+          {printerCfg.type === 'browser' && (
+            <p className="text-xs text-gray-400 mt-2">
+              Usa o diálogo de impressão do sistema. Selecione sua impressora térmica na primeira vez — o navegador lembra a escolha.
             </p>
-          </div>
-        )}
+          )}
+          {printerCfg.type === 'usb' && (
+            <p className="text-xs text-gray-400 mt-2">
+              Conecta direto pelo Chrome (WebUSB). Clique em &quot;Conectar&quot; e selecione a impressora na lista.
+            </p>
+          )}
+          {printerCfg.type === 'bluetooth' && (
+            <p className="text-xs text-gray-400 mt-2">
+              Conecta pelo Bluetooth do dispositivo via Chrome. Clique em &quot;Conectar&quot; e selecione a impressora.
+            </p>
+          )}
+        </div>
 
         {/* Paper width */}
         <div className="mb-4">
@@ -1216,24 +1208,26 @@ export function ConfiguracoesClient({
 
         {/* Connect + Test */}
         <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={handleConnectPrinter}
-            disabled={printerConnecting}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all disabled:opacity-50"
-            style={printerConnected
-              ? { borderColor: '#22c55e', color: '#15803d', background: '#dcfce7' }
-              : { borderColor: 'var(--adm-primary)', color: 'var(--adm-primary)', background: 'color-mix(in srgb, var(--adm-primary) 8%, white)' }
-            }
-          >
-            {printerConnecting
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Printer className="w-4 h-4" />
-            }
-            {printerConnecting
-              ? 'Conectando...'
-              : printerConnected ? '✓ Conectada' : 'Conectar impressora'
-            }
-          </button>
+          {printerCfg.type !== 'browser' && (
+            <button
+              onClick={handleConnectPrinter}
+              disabled={printerConnecting}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all disabled:opacity-50"
+              style={printerConnected
+                ? { borderColor: '#22c55e', color: '#15803d', background: '#dcfce7' }
+                : { borderColor: 'var(--adm-primary)', color: 'var(--adm-primary)', background: 'color-mix(in srgb, var(--adm-primary) 8%, white)' }
+              }
+            >
+              {printerConnecting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Printer className="w-4 h-4" />
+              }
+              {printerConnecting
+                ? 'Conectando...'
+                : printerConnected ? '✓ Conectada' : 'Conectar impressora'
+              }
+            </button>
+          )}
 
           {printerConnected && (
             <button

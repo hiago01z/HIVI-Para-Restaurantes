@@ -8,12 +8,11 @@ import {
   loadConfig,
   connectUsb,
   connectBluetooth,
-  printData,
+  printOrder as printerPrintOrder,
   isConnected,
-  pingNetworkAgent,
   type PrinterConfig,
 } from '@/lib/thermal-printer/printer'
-import { encodeOrder, type PrintOrder } from '@/lib/thermal-printer/escpos'
+import type { PrintOrder } from '@/lib/thermal-printer/escpos'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
@@ -164,11 +163,8 @@ export function PedidosClient({
     autoPrintRef.current = cfg.autoPrint
     setAutoPrintOn(cfg.autoPrint)
     setPrinterConfigured(true)
-    if (cfg.type === 'network') {
-      pingNetworkAgent(cfg.networkUrl).then((ok) => setPrinterConnected(ok))
-    } else {
-      setPrinterConnected(isConnected(cfg.type))
-    }
+    // browser mode is always connected; usb/bt depend on device pairing state
+    setPrinterConnected(cfg.type === 'browser' ? true : isConnected(cfg.type))
   }, [])
 
   function showPrintToast(ok: boolean, msg: string) {
@@ -178,7 +174,7 @@ export function PedidosClient({
 
   async function handleReconnectPrinter() {
     const cfg = printerConfigRef.current
-    if (!cfg || cfg.type === 'network') return
+    if (!cfg || cfg.type === 'browser') return
     setReconnecting(true)
     try {
       if (cfg.type === 'usb') await connectUsb()
@@ -203,34 +199,28 @@ export function PedidosClient({
     }
   }
 
-  async function printOrder(order: Order) {
+  async function doPrint(order: Order) {
     const cfg = printerConfigRef.current
     if (!cfg) return
-    try {
-      const bytes = encodeOrder(order as unknown as PrintOrder, restaurantName, cfg.width)
-      await printData(bytes, cfg)
-    } catch (e) {
-      throw e
-    }
+    await printerPrintOrder(order as unknown as PrintOrder, cfg, restaurantName)
   }
 
   async function handleAutoPrint(order: Order) {
     if (!autoPrintRef.current || !printerConfigRef.current) return
     const cfg = printerConfigRef.current
-    if (cfg.type !== 'network' && !isConnected(cfg.type)) return
+    if (cfg.type !== 'browser' && !isConnected(cfg.type)) return
     try {
-      await printOrder(order)
+      await doPrint(order)
     } catch (e) {
       showPrintToast(false, e instanceof Error ? e.message : 'Falha na auto-impressão.')
     }
   }
 
   async function handleManualPrint(order: Order) {
-    const cfg = printerConfigRef.current
-    if (!cfg) return
+    if (!printerConfigRef.current) return
     setPrintingId(order.id)
     try {
-      await printOrder(order)
+      await doPrint(order)
       showPrintToast(true, `Pedido #${order.order_number} enviado para impressora.`)
     } catch (e) {
       showPrintToast(false, e instanceof Error ? e.message : 'Erro ao imprimir.')
@@ -439,7 +429,7 @@ export function PedidosClient({
               onClick={autoPrintOn ? toggleAutoPrint : handleReconnectPrinter}
               disabled={reconnecting}
               title={
-                !printerConnected && printerConfigRef.current?.type !== 'network'
+                !printerConnected && printerConfigRef.current?.type !== 'browser'
                   ? 'Clique para reconectar a impressora'
                   : autoPrintOn ? 'Auto-impressão ativa' : 'Auto-impressão pausada'
               }
