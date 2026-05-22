@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { PedidosClient } from './_pedidos-client'
-import { getAdmRestaurantId } from '@/lib/supabase/adm-restaurant'
+import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 
 type Periodo = 'hoje' | 'ontem' | '7dias'
@@ -43,8 +43,9 @@ export default async function PedidosPage({
   const { periodo: periodoParam } = await searchParams
   const periodo: Periodo = (periodoParam as Periodo) ?? 'hoje'
 
-  const restaurantId = await getAdmRestaurantId(slug)
-  if (!restaurantId) notFound()
+  const restaurant = await getAdmRestaurant(slug)
+  if (!restaurant) notFound()
+  const { id: restaurantId, name: restaurantName } = restaurant
 
   // Extrai cargo do token ADM para filtros de RBAC no cliente
   const cookieStore = await cookies()
@@ -93,6 +94,7 @@ export default async function PedidosPage({
     <PedidosClient
       key={periodo}
       restaurantId={restaurantId}
+      restaurantName={restaurantName}
       initialOrders={orders ?? []}
       isToday={isToday}
       slug={slug}

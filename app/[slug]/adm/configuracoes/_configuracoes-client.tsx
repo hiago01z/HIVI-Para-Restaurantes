@@ -2,7 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, Clock } from 'lucide-react'
+import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, Clock, Printer } from 'lucide-react'
+import {
+  loadConfig, saveConfig, clearConfig, DEFAULT_CONFIG,
+  connectUsb, connectBluetooth, disconnectUsb, disconnectBluetooth,
+  printData, isConnected, pingNetworkAgent,
+  type PrinterConfig, type ConnectionType,
+} from '@/lib/thermal-printer/printer'
+import { encodeTestReceipt } from '@/lib/thermal-printer/escpos'
 import { QRCodeSVG } from 'qrcode.react'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
@@ -394,6 +401,84 @@ export function ConfiguracoesClient({
     await supabase
       .from('restaurant_themes')
       .upsert({ restaurant_id: restaurant.id, banner_url: null }, { onConflict: 'restaurant_id' })
+  }
+
+  // ── Impressora térmica ─────────────────────────────────────────────────────
+  const [printerCfg, setPrinterCfg] = useState<PrinterConfig>(() => loadConfig() ?? DEFAULT_CONFIG)
+  const [printerConnected, setPrinterConnected] = useState(false)
+  const [printerConnecting, setPrinterConnecting] = useState(false)
+  const [printerTesting, setPrinterTesting] = useState(false)
+  const [printerTestOk, setPrinterTestOk] = useState(false)
+  const [printerError, setPrinterError] = useState('')
+
+  // Check connection status on mount
+  useEffect(() => {
+    const cfg = loadConfig()
+    if (!cfg) return
+    setPrinterCfg(cfg)
+    if (cfg.type === 'network') {
+      pingNetworkAgent(cfg.networkUrl).then((ok) => setPrinterConnected(ok))
+    } else {
+      setPrinterConnected(isConnected(cfg.type))
+    }
+  }, [])
+
+  function updatePrinterCfg(patch: Partial<PrinterConfig>) {
+    const next = { ...printerCfg, ...patch }
+    setPrinterCfg(next)
+    saveConfig(next)
+  }
+
+  function handleChangePrinterType(type: ConnectionType) {
+    // Disconnect old
+    if (printerCfg.type === 'usb') disconnectUsb()
+    else if (printerCfg.type === 'bluetooth') disconnectBluetooth()
+    setPrinterConnected(false)
+    setPrinterError('')
+    updatePrinterCfg({ type })
+  }
+
+  async function handleConnectPrinter() {
+    setPrinterConnecting(true)
+    setPrinterError('')
+    try {
+      if (printerCfg.type === 'usb') await connectUsb()
+      else if (printerCfg.type === 'bluetooth') await connectBluetooth()
+      else {
+        const ok = await pingNetworkAgent(printerCfg.networkUrl)
+        if (!ok) throw new Error('Agente não encontrado. Verifique se hivi-print-agent.js está rodando.')
+      }
+      setPrinterConnected(true)
+    } catch (e) {
+      setPrinterError(e instanceof Error ? e.message : 'Erro ao conectar.')
+      setPrinterConnected(false)
+    } finally {
+      setPrinterConnecting(false)
+    }
+  }
+
+  async function handleTestPrint() {
+    setPrinterTesting(true)
+    setPrinterError('')
+    try {
+      const bytes = encodeTestReceipt(restaurant.name, printerCfg.width)
+      await printData(bytes, printerCfg)
+      setPrinterTestOk(true)
+      setTimeout(() => setPrinterTestOk(false), 3000)
+    } catch (e) {
+      setPrinterError(e instanceof Error ? e.message : 'Erro ao imprimir.')
+    } finally {
+      setPrinterTesting(false)
+    }
+  }
+
+  function handleDisconnectPrinter() {
+    if (printerCfg.type === 'usb') disconnectUsb()
+    else if (printerCfg.type === 'bluetooth') disconnectBluetooth()
+    clearConfig()
+    setPrinterConnected(false)
+    setPrinterCfg(DEFAULT_CONFIG)
+    setPrinterError('')
   }
 
   function downloadQr() {
@@ -1031,6 +1116,153 @@ export function ConfiguracoesClient({
             Baixar QR Code (PNG)
           </button>
         </div>
+      </Section>
+
+      {/* ── Impressora Térmica ── */}
+      <Section title="Impressora Térmica">
+        <p className="text-xs text-gray-400 mb-4">
+          Configure uma impressora para imprimir cupons automaticamente quando novos pedidos chegarem.
+        </p>
+
+        {/* Tipo de conexão */}
+        <div className="mb-4">
+          <p className="text-xs font-medium text-gray-600 mb-2">Tipo de conexão</p>
+          <div className="grid grid-cols-3 gap-2">
+            {([ 'usb', 'bluetooth', 'network' ] as ConnectionType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => handleChangePrinterType(type)}
+                className="py-2.5 rounded-xl border-2 text-xs font-bold transition-all"
+                style={printerCfg.type === type ? {
+                  borderColor: 'var(--adm-primary)',
+                  color: 'var(--adm-primary)',
+                  background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
+              >
+                {type === 'usb' ? '🔌 USB' : type === 'bluetooth' ? '📶 Bluetooth' : '🌐 Rede'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Network agent URL */}
+        {printerCfg.type === 'network' && (
+          <div className="mb-4 space-y-2">
+            <div>
+              <label className="text-xs font-medium text-gray-600 block mb-1.5">URL do agente local</label>
+              <input
+                type="text"
+                value={printerCfg.networkUrl}
+                onChange={(e) => updatePrinterCfg({ networkUrl: e.target.value })}
+                placeholder="http://localhost:6557"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-mono focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+              />
+            </div>
+            <a
+              href="/hivi-print-agent.js"
+              download="hivi-print-agent.js"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Baixar hivi-print-agent.js
+            </a>
+            <p className="text-xs text-gray-400">
+              Execute <code className="bg-gray-100 px-1 rounded">node hivi-print-agent.js --ip IP_DA_IMPRESSORA</code> no computador da cozinha.
+            </p>
+          </div>
+        )}
+
+        {/* Paper width */}
+        <div className="mb-4">
+          <p className="text-xs font-medium text-gray-600 mb-2">Largura do papel</p>
+          <div className="flex gap-2">
+            {([
+              { value: 32, label: '58 mm (32 col)' },
+              { value: 48, label: '80 mm (48 col)' },
+            ] as { value: number; label: string }[]).map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => updatePrinterCfg({ width: opt.value })}
+                className="flex-1 py-2.5 rounded-xl border-2 text-xs font-bold transition-all"
+                style={printerCfg.width === opt.value ? {
+                  borderColor: 'var(--adm-primary)',
+                  color: 'var(--adm-primary)',
+                  background: 'color-mix(in srgb, var(--adm-primary) 8%, white)',
+                } : { borderColor: '#e5e7eb', color: '#6b7280', background: 'white' }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Auto-print toggle */}
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <p className="text-sm font-medium text-gray-800">Auto-imprimir ao confirmar</p>
+            <p className="text-xs text-gray-400 mt-0.5">Imprime automaticamente cada novo pedido confirmado.</p>
+          </div>
+          <button
+            onClick={() => updatePrinterCfg({ autoPrint: !printerCfg.autoPrint })}
+            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none"
+            style={{ background: printerCfg.autoPrint ? 'var(--adm-primary)' : '#d1d5db' }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              style={{ transform: printerCfg.autoPrint ? 'translateX(24px)' : 'translateX(0)' }}
+            />
+          </button>
+        </div>
+
+        {/* Connect + Test */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={handleConnectPrinter}
+            disabled={printerConnecting}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all disabled:opacity-50"
+            style={printerConnected
+              ? { borderColor: '#22c55e', color: '#15803d', background: '#dcfce7' }
+              : { borderColor: 'var(--adm-primary)', color: 'var(--adm-primary)', background: 'color-mix(in srgb, var(--adm-primary) 8%, white)' }
+            }
+          >
+            {printerConnecting
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Printer className="w-4 h-4" />
+            }
+            {printerConnecting
+              ? 'Conectando...'
+              : printerConnected ? '✓ Conectada' : 'Conectar impressora'
+            }
+          </button>
+
+          {printerConnected && (
+            <button
+              onClick={handleTestPrint}
+              disabled={printerTesting}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-gray-200 bg-white hover:bg-gray-50 transition-all disabled:opacity-50"
+              style={printerTestOk ? { background: '#dcfce7', color: '#15803d', borderColor: '#22c55e' } : undefined}
+            >
+              {printerTesting
+                ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                : printerTestOk ? <Check className="w-4 h-4" /> : <Printer className="w-4 h-4 text-gray-400" />
+              }
+              {printerTesting ? 'Imprimindo...' : printerTestOk ? 'Impresso!' : 'Imprimir teste'}
+            </button>
+          )}
+
+          {printerConnected && (
+            <button
+              onClick={handleDisconnectPrinter}
+              className="px-4 py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            >
+              Remover impressora
+            </button>
+          )}
+        </div>
+
+        {printerError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-3">{printerError}</p>
+        )}
       </Section>
 
       {/* ── Funcionários ── */}

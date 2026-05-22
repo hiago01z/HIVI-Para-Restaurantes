@@ -1,9 +1,19 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell, BellOff, Printer } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, ChevronDown, ChevronUp, X, Loader2, QrCode, UserCheck } from 'lucide-react'
+import {
+  loadConfig,
+  connectUsb,
+  connectBluetooth,
+  printData,
+  isConnected,
+  pingNetworkAgent,
+  type PrinterConfig,
+} from '@/lib/thermal-printer/printer'
+import { encodeOrder, type PrintOrder } from '@/lib/thermal-printer/escpos'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
@@ -90,6 +100,7 @@ type Periodo = 'hoje' | 'ontem' | '7dias'
 
 type Props = {
   restaurantId: string
+  restaurantName: string
   initialOrders: Order[]
   isToday: boolean
   slug: string
@@ -111,7 +122,7 @@ const PERIODO_LABEL: Record<Periodo, string> = {
 }
 
 export function PedidosClient({
-  restaurantId, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
+  restaurantId, restaurantName, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
 }: Props) {
   const router = useRouter()
   const allowedTabs = TAB_ALLOWED[memberRole] ?? ['delivery', 'table', 'qr']
@@ -135,6 +146,98 @@ export function PedidosClient({
   const [soundOn, setSoundOn] = useState(true)
   const soundOnRef  = useRef(true)
   const audioCtxRef = useRef<AudioContext | null>(null)
+
+  // ── Impressora térmica ─────────────────────────────────────────────────────
+  const printerConfigRef  = useRef<PrinterConfig | null>(null)
+  const autoPrintRef      = useRef(true)
+  const [printerConfigured, setPrinterConfigured] = useState(false)
+  const [printerConnected, setPrinterConnected]   = useState(false)
+  const [autoPrintOn, setAutoPrintOn]             = useState(true)
+  const [reconnecting, setReconnecting]           = useState(false)
+  const [printingId, setPrintingId]               = useState<string | null>(null)
+  const [printToast, setPrintToast]               = useState<{ ok: boolean; msg: string } | null>(null)
+
+  useEffect(() => {
+    const cfg = loadConfig()
+    if (!cfg) return
+    printerConfigRef.current = cfg
+    autoPrintRef.current = cfg.autoPrint
+    setAutoPrintOn(cfg.autoPrint)
+    setPrinterConfigured(true)
+    if (cfg.type === 'network') {
+      pingNetworkAgent(cfg.networkUrl).then((ok) => setPrinterConnected(ok))
+    } else {
+      setPrinterConnected(isConnected(cfg.type))
+    }
+  }, [])
+
+  function showPrintToast(ok: boolean, msg: string) {
+    setPrintToast({ ok, msg })
+    setTimeout(() => setPrintToast(null), 4000)
+  }
+
+  async function handleReconnectPrinter() {
+    const cfg = printerConfigRef.current
+    if (!cfg || cfg.type === 'network') return
+    setReconnecting(true)
+    try {
+      if (cfg.type === 'usb') await connectUsb()
+      else await connectBluetooth()
+      setPrinterConnected(true)
+    } catch (e) {
+      showPrintToast(false, e instanceof Error ? e.message : 'Erro ao conectar impressora.')
+    } finally {
+      setReconnecting(false)
+    }
+  }
+
+  function toggleAutoPrint() {
+    const next = !autoPrintRef.current
+    autoPrintRef.current = next
+    setAutoPrintOn(next)
+    const cfg = printerConfigRef.current
+    if (cfg) {
+      const updated = { ...cfg, autoPrint: next }
+      printerConfigRef.current = updated
+      import('@/lib/thermal-printer/printer').then(({ saveConfig }) => saveConfig(updated))
+    }
+  }
+
+  async function printOrder(order: Order) {
+    const cfg = printerConfigRef.current
+    if (!cfg) return
+    try {
+      const bytes = encodeOrder(order as unknown as PrintOrder, restaurantName, cfg.width)
+      await printData(bytes, cfg)
+    } catch (e) {
+      throw e
+    }
+  }
+
+  async function handleAutoPrint(order: Order) {
+    if (!autoPrintRef.current || !printerConfigRef.current) return
+    const cfg = printerConfigRef.current
+    if (cfg.type !== 'network' && !isConnected(cfg.type)) return
+    try {
+      await printOrder(order)
+    } catch (e) {
+      showPrintToast(false, e instanceof Error ? e.message : 'Falha na auto-impressão.')
+    }
+  }
+
+  async function handleManualPrint(order: Order) {
+    const cfg = printerConfigRef.current
+    if (!cfg) return
+    setPrintingId(order.id)
+    try {
+      await printOrder(order)
+      showPrintToast(true, `Pedido #${order.order_number} enviado para impressora.`)
+    } catch (e) {
+      showPrintToast(false, e instanceof Error ? e.message : 'Erro ao imprimir.')
+    } finally {
+      setPrintingId(null)
+    }
+  }
 
   // Desbloqueia o AudioContext no primeiro gesto do usuário na página
   useEffect(() => {
@@ -224,6 +327,7 @@ export function PedidosClient({
           if (data) {
             setOrders((prev) => [data as Order, ...prev])
             playNewOrderSound()
+            handleAutoPrint(data as Order)
           }
         }
       )
@@ -328,19 +432,66 @@ export function PedidosClient({
     <div className="px-4 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">{PERIODO_LABEL[activePeriodo]}</h1>
-        <button
-          onClick={toggleSound}
-          title={soundOn ? 'Desativar som de notificação' : 'Ativar som de notificação'}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
-          style={soundOn
-            ? { background: 'color-mix(in srgb, var(--adm-primary) 12%, white)', color: 'var(--adm-primary)' }
-            : { background: '#f3f4f6', color: '#9ca3af' }
+        <div className="flex items-center gap-2">
+          {/* Printer toggle — only shown when printer is configured */}
+          {printerConfigured && (
+            <button
+              onClick={autoPrintOn ? toggleAutoPrint : handleReconnectPrinter}
+              disabled={reconnecting}
+              title={
+                !printerConnected && printerConfigRef.current?.type !== 'network'
+                  ? 'Clique para reconectar a impressora'
+                  : autoPrintOn ? 'Auto-impressão ativa' : 'Auto-impressão pausada'
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+              style={
+                reconnecting
+                  ? { background: '#f3f4f6', color: '#9ca3af' }
+                  : printerConnected && autoPrintOn
+                  ? { background: 'color-mix(in srgb, var(--adm-primary) 12%, white)', color: 'var(--adm-primary)' }
+                  : { background: '#fef3c7', color: '#b45309' }
+              }
+            >
+              {reconnecting
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Printer className="w-3.5 h-3.5" />
+              }
+              {reconnecting
+                ? 'Conectando...'
+                : printerConnected
+                ? (autoPrintOn ? 'Impr. ativa' : 'Impr. pausada')
+                : 'Reconectar'
+              }
+            </button>
+          )}
+          <button
+            onClick={toggleSound}
+            title={soundOn ? 'Desativar som de notificação' : 'Ativar som de notificação'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+            style={soundOn
+              ? { background: 'color-mix(in srgb, var(--adm-primary) 12%, white)', color: 'var(--adm-primary)' }
+              : { background: '#f3f4f6', color: '#9ca3af' }
+            }
+          >
+            {soundOn ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+            {soundOn ? 'Som ativo' : 'Som'}
+          </button>
+        </div>
+      </div>
+
+      {/* Print toast */}
+      {printToast && (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium mb-3 transition-all"
+          style={printToast.ok
+            ? { background: '#dcfce7', color: '#15803d' }
+            : { background: '#fee2e2', color: '#b91c1c' }
           }
         >
-          {soundOn ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
-          {soundOn ? 'Som ativo' : 'Som'}
-        </button>
-      </div>
+          <Printer className="w-4 h-4 flex-shrink-0" />
+          {printToast.msg}
+        </div>
+      )}
 
       {/* Filtro de período */}
       <div className="flex gap-1.5 mb-5">
@@ -436,6 +587,19 @@ export function PedidosClient({
                               </span>
                             )}
                           </div>
+                          {printerConfigured && (
+                            <button
+                              onClick={() => handleManualPrint(order)}
+                              disabled={printingId === order.id}
+                              className="w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors disabled:opacity-50"
+                              title="Imprimir pedido"
+                            >
+                              {printingId === order.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <Printer className="w-3.5 h-3.5" />
+                              }
+                            </button>
+                          )}
                           <button
                             onClick={() => { setEditingOrder(order); setNewStatus(order.status) }}
                             className="w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
