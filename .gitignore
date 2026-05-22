@@ -37,5 +37,15 @@ next-env.d.ts
 # dropbox temp files
 *.tmp.*
 
-# claude code worktrees (local only)
+# claude code worktrees e settings locais
 .claude/worktrees/
+.claude/settings.local.json
+
+# obsidian (estado local do editor)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# imagens soltas na raiz (screenshots, etc.)
+*.PNG
+*.JPG
+*.JPEG

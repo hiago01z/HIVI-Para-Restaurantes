@@ -128,6 +128,9 @@
 | 2026-05-20 | Fix: "Painel ADM" em /conta causava crash para novas contas — link apontava para `/adm` sem `page.tsx`. Fix: link alterado para `/{slug}/adm/login` |
 | 2026-05-20 | Fix: notificação WhatsApp de entrega não chegava — causa 1: anon client bloqueado por RLS; causa 2: fire-and-forget cancelado pela Vercel antes de completar. Fix: service role + await |
 | 2026-05-22 | Feature: Adicionais (product add-ons) — grupos de opções por produto no ADM, modal de seleção no cardápio público, opções salvas no pedido, exibidas no ADM pedidos e meu-pedido. Migration 010 executada. |
+| 2026-05-22 | Feature: edição inline de grupos e itens de adicionais — botão lápis (azul) por grupo e por item abre formulário inline com Supabase UPDATE |
+| 2026-05-22 | Update: seção QR Code da landing page reescrita — título "Do QR code à cozinha em segundos", 4 passos (escaneia → monta pedido → garçom confirma → cozinha), passo final destacado em laranja |
+| 2026-05-22 | Feature: Fase 10 — Impressão Térmica — USB via WebUSB, Bluetooth via Web Bluetooth, rede/padrão via diálogo do sistema (window.print + iframe oculto + CSS @page). ESC/POS encoder em `lib/thermal-printer/escpos.ts`, gerenciamento de conexão em `lib/thermal-printer/printer.ts`, receipt HTML em `lib/thermal-printer/receipt-html.ts`. Setup em ADM Configurações, auto-impressão e botão 🖨️ por pedido no ADM Pedidos. Zero instalação em qualquer modo. |
 
 ---
 
@@ -136,10 +139,27 @@
 ### Fase 9 — Analytics e Relatórios
 - [ ] Dashboard com gráficos: receita por dia/semana, produtos mais vendidos, pedidos por período
 - [ ] Exportação de dados (CSV)
+- [ ] Ticket médio, horário de pico, comparativo semana a semana
 
-### Fase 10 — Impressão Automática
-- [ ] Integração com impressora térmica via WebUSB / ESC/POS
-- [ ] Configuração de formato do cupom
+### Fase 11 — PIX e Pagamentos Online
+- [ ] Geração de QR Code PIX estático e dinâmico por pedido
+- [ ] Integração com gateway de pagamento (MercadoPago / PagSeguro / Asaas)
+- [ ] Confirmação automática de pagamento via webhook
+
+### Fase 12 — Cupons e Descontos
+- [ ] Criação de cupons no ADM (código, valor/percentual, validade, limite de uso)
+- [ ] Campo de cupom na tela de pedido do cliente
+- [ ] Relatório de uso de cupons
+
+### Fase 13 — Fidelidade e Clientes
+- [ ] Cadastro opcional do cliente (nome, telefone, histórico de pedidos)
+- [ ] Programa de pontos: X pedidos = desconto
+- [ ] Push notification via WhatsApp para clientes recorrentes
+
+### Fase 14 — Multi-unidade
+- [ ] Restaurante com múltiplas filiais sob o mesmo dono
+- [ ] Cardápio base compartilhado + customizações por unidade
+- [ ] Dashboard consolidado com métricas por unidade
 
 ---
 
@@ -170,7 +190,10 @@ Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 | 2026-05-18 | ADM do restaurante tem auth separada da conta HIVI | Funcionários não precisam de conta HIVI |
 | 2026-05-18 | Plano único inicial — Básico R$ 59,99/mês | Simplificar o lançamento; novos planos serão criados conforme features forem entregues |
 | 2026-05-19 | Dono do restaurante adicionado em restaurant_users no webhook | Permite acesso direto ao ADM com a sessão Google OAuth sem login separado |
-| 2026-05-19 | preview ao vivo via postMessage (iframe → PreviewListener) | Sem URL params, sem nova rota — atualiza CSS vars diretamente no iframe já carregado |
+| 2026-05-19 | Preview ao vivo via postMessage (iframe → PreviewListener) | Sem URL params, sem nova rota — atualiza CSS vars diretamente no iframe já carregado |
 | 2026-05-19 | Restaurante pausado → página específica (não 404) | UX: cliente entende que o restaurante existe mas está temporariamente fechado |
 | 2026-05-19 | ADM acessível mesmo quando restaurante pausado | Dono precisa poder reativar sem contato com suporte |
 | 2026-05-19 | Som de novo pedido via Web Audio API | Sem arquivo de áudio externo, zero dependência adicional |
+| 2026-05-22 | Adicionais usam `cartKey` = `productId__itemId1_itemId2` | Permite mesmo produto com opções diferentes como entradas separadas no carrinho |
+| 2026-05-22 | Impressão térmica via diálogo do sistema (browser mode) em vez de agente Node.js | Zero instalação para o dono do restaurante — usa impressoras já configuradas no OS |
+| 2026-05-22 | ESC/POS encoder próprio sem dependências externas | Controle total do formato, sem npm packages com problemas de compatibilidade browser |
