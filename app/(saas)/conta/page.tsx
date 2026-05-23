@@ -30,6 +30,7 @@ export default async function ContaPage({
   // Não expõe adm_password_hash ao client — extrai-o antes
   const lojas = (restaurantes ?? []).map(({ adm_password_hash, ...l }) => ({
     ...l,
+    plan: (l.plan ?? 'free') as 'free' | 'basic' | 'pro',
     has_adm_password: !!adm_password_hash,
     role: 'owner' as string,
   }))

@@ -67,7 +67,8 @@ function CriarLojaInner() {
           setLoading(false)
           return
         }
-        window.location.href = `/${data.slug}/adm/pedidos`
+        // Vai para /conta para configurar senha ADM antes de entrar no painel
+        window.location.href = '/conta'
         return
       }
 

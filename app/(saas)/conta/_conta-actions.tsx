@@ -12,7 +12,7 @@ type Loja = {
   is_active: boolean
   stripe_customer_id: string | null
   has_adm_password?: boolean
-  plan?: 'basic' | 'pro'
+  plan?: 'free' | 'basic' | 'pro'
 }
 
 type Props = {
@@ -30,6 +30,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   const [localLojas, setLocalLojas] = useState<Loja[]>(lojas)
   const [upgradingId, setUpgradingId]   = useState<string | null>(null)
   const [downgradingId, setDowngradingId] = useState<string | null>(null)
+  const [subscribingId, setSubscribingId] = useState<string | null>(null) // free → basic/pro
 
   function setLojaError(id: string, msg: string) {
     setActionError((prev) => ({ ...prev, [id]: msg }))
@@ -128,6 +129,27 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
     }
   }
 
+  async function handleSubscribe(loja: Loja, plan: 'basic' | 'pro') {
+    setSubscribingId(loja.id + '-' + plan)
+    try {
+      const res = await fetch('/api/stripe/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: loja.id, plan }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setLojaError(loja.id, data.error ?? 'Erro ao iniciar assinatura.')
+      }
+    } catch {
+      setLojaError(loja.id, 'Erro de conexão. Tente novamente.')
+    } finally {
+      setSubscribingId(null)
+    }
+  }
+
   async function openPortal() {
     setPortalLoading(true)
     try {
@@ -183,9 +205,11 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                   loja.plan === 'pro'
                     ? 'bg-orange-100 text-orange-700'
+                    : loja.plan === 'free'
+                    ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-500'
                 }`}>
-                  {loja.plan === 'pro' ? 'Pro ★' : 'Básico'}
+                  {loja.plan === 'pro' ? 'Pro ★' : loja.plan === 'free' ? 'Grátis' : 'Básico'}
                 </span>
                 {/* Badge de status */}
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${loja.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -231,8 +255,34 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
               </button>
             </div>
 
-            {/* Upgrade para Pro */}
-            {loja.plan !== 'pro' && (
+            {/* Plano Free: dois botões para assinar Básico ou Pro */}
+            {loja.plan === 'free' && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleSubscribe(loja, 'basic')}
+                  disabled={subscribingId !== null}
+                  className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-600 hover:bg-orange-100 disabled:opacity-50 transition-colors"
+                >
+                  {subscribingId === loja.id + '-basic'
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <TrendingUp className="w-3.5 h-3.5" />}
+                  {subscribingId === loja.id + '-basic' ? 'Abrindo...' : 'Básico — R$ 59,99/mês'}
+                </button>
+                <button
+                  onClick={() => handleSubscribe(loja, 'pro')}
+                  disabled={subscribingId !== null}
+                  className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-500 rounded-xl text-xs font-bold text-white hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                >
+                  {subscribingId === loja.id + '-pro'
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <TrendingUp className="w-3.5 h-3.5" />}
+                  {subscribingId === loja.id + '-pro' ? 'Abrindo...' : 'Pro ★ — R$ 99,99/mês'}
+                </button>
+              </div>
+            )}
+
+            {/* Plano Básico: upgrade para Pro */}
+            {loja.plan === 'basic' && (
               <button
                 onClick={() => handleUpgrade(loja)}
                 disabled={upgradingId === loja.id}
@@ -245,7 +295,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
               </button>
             )}
 
-            {/* Downgrade para Básico */}
+            {/* Plano Pro: downgrade para Básico */}
             {loja.plan === 'pro' && (
               <button
                 onClick={() => handleDowngrade(loja)}

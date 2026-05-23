@@ -24,8 +24,23 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      const { user_id, restaurant_name, slug, plan } = session.metadata!
+      const { user_id, restaurant_name, slug, plan, restaurant_id } = session.metadata!
 
+      // ── Upgrade de restaurante existente (free → basic/pro) ──
+      if (restaurant_id) {
+        await supabase
+          .from('restaurants')
+          .update({
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: session.subscription as string,
+            plan: plan === 'pro' ? 'pro' : 'basic',
+          })
+          .eq('id', restaurant_id)
+          .eq('owner_id', user_id)
+        break
+      }
+
+      // ── Novo restaurante via checkout pago ──
       const { error } = await supabase.from('restaurants').insert({
         owner_id: user_id,
         name: restaurant_name,
