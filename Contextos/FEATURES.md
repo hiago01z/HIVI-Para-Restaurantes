@@ -14,6 +14,7 @@ A vitrine pública da HIVI para atrair donos de restaurante.
 - **Como funciona**: passo a passo (contratar → configurar → publicar)
 - **Preços**: três cards de plano (Gratuito R$0, Básico R$ 59,99 e Pro R$ 99,99 — destacado como Recomendado) com feature lists completas. "Painel administrativo" (sem "completo") em todos os planos.
 - **Rodapé**: Como funciona, Preços, FAQ, Feedback, Entrar, Privacidade, Termos, Exclusão de dados, Copyright
+- Página `/unsubscribe` — landing para usuários que clicam no `List-Unsubscribe` de e-mails transacionais
 
 ### Área de Conta (`/conta`)
 Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
@@ -125,6 +126,9 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 - Badge Pago ✓ / Não Pago ✗ (clicável) + "Alterado por [nome]"
 - Botão ✏️ → modal alterar status (filtrado por cargo)
 - Botão 🖨️ → imprimir cupom deste pedido (se impressora configurada)
+- **Botão 📱 "Gerar QR Code PIX"** — visível para todos os membros; aparece em pedidos de **Mesa** (sempre) e pedidos de **Entrega** com `payment_method = 'pix'`; requer chave PIX configurada em Configurações
+  - Modal exibe QR Code gerado pelo `lib/pix.ts` com o valor exato do pedido, mais opção de copiar o código BR Code para colar no app bancário
+  - Se a chave PIX não estiver configurada, exibe aviso com link para Configurações
 - Expandir: lista de itens, adicionais selecionados, total
 - Campo "Observações" com badge amarelo 💬
 
@@ -227,6 +231,9 @@ Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes d
 
 ### Configurações (`/[slug]/adm/configuracoes`)
 
+**Dados do Restaurante:**
+- **Nome do restaurante** — editável pelo dono e gerente; persiste em todas as áreas (ADM header, cardápio público, e-mails, cupom ESC/POS)
+
 **Redes Sociais:**
 - Link do Instagram, Número do WhatsApp
 - Exibidos no rodapé do cardápio público
@@ -249,6 +256,14 @@ Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes d
 **QR Code da Loja:**
 - Gerar QR code apontando para `/[slug]`
 - Botão "Baixar QR Code" (PNG) para imprimir e colocar nas mesas
+
+**PIX (exclusivo do Dono — `role = owner`):**
+- Seletor de tipo de chave: CPF / CNPJ / E-mail / Telefone / Chave aleatória
+- Campo de chave com validação em tempo real por tipo (regex + formato BCB)
+- Telefone: prefixo `+55` adicionado automaticamente e protegido contra deleção
+- Botão **"Salvar chave PIX"** — envia `PATCH /api/adm/[slug]/settings` (403 para não-donos)
+- Botão **"Testar QR Code"** — gera QR code de R$ 0,10 para validar leitura no app bancário
+- Toda a seção fica `<fieldset disabled>` para gerentes/cozinheiros/garçons/entregadores
 
 **Impressora Térmica:**
 - Tipo de conexão:

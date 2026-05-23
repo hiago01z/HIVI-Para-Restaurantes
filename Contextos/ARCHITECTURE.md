@@ -16,7 +16,8 @@ hivi/
 │   │   ├── faq/page.tsx
 │   │   ├── feedback/page.tsx
 │   │   ├── privacidade/page.tsx
-│   │   └── termos/page.tsx
+│   │   ├── termos/page.tsx
+│   │   └── unsubscribe/page.tsx       # Landing para descadastro de e-mails (List-Unsubscribe)
 │   │
 │   ├── [slug]/                        # Grupo dinâmico: restaurante
 │   │   ├── layout.tsx                 # Tema dinâmico (CSS vars) + CartProvider
@@ -89,13 +90,15 @@ hivi/
 │   ├── supabase/
 │   │   ├── client.ts                  # Browser client (anon key)
 │   │   ├── server.ts                  # Server client (cookies)
-│   │   └── adm-restaurant.ts          # Helpers: getRestaurantBySlug, adminClient()
+│   │   └── adm-restaurant.ts          # Helpers: getAdmRestaurant(), getAdmRestaurantId() (service role)
 │   ├── adm-auth.ts                    # HMAC tokens + PBKDF2 (senhas ADM)
 │   ├── analytics-pdf.ts               # Geração PDF de analytics (jsPDF + autotable)
 │   ├── color-utils.ts                 # getContrastColor, computeLabelShadow
 │   ├── delivery-hours.ts              # Tipos DeliveryHoursConfig + checkDeliveryOpen()
+│   ├── pix.ts                         # Gerador BR Code EMV (PIX Banco Central) sem dependências externas
 │   ├── plan-limits.ts                 # getEffectiveLimits(plan, trial_ends_at)
 │   ├── rate-limit.ts                  # Rate limiting in-memory (sem Redis)
+│   ├── resend.ts                      # Resend SDK: 3 identidades (noreply/support/feedback), List-Unsubscribe
 │   ├── ultramsg.ts                    # Cliente UltraMSG (WhatsApp)
 │   └── thermal-printer/
 │       ├── escpos.ts                  # Encoder ESC/POS: CutMode, Charset, entrega
@@ -131,6 +134,8 @@ whatsapp_number          text
 whatsapp_notify_enabled  boolean NOT NULL DEFAULT true           -- migration 012
 delivery_enabled         boolean NOT NULL DEFAULT true           -- migration 013
 delivery_hours           jsonb                                    -- migration 008
+pix_key                  text                                     -- migration 016
+pix_key_type             text CHECK (pix_key_type IN ('cpf','cnpj','email','phone','evp'))  -- migration 016
 created_at               timestamptz DEFAULT now()
 ```
 
@@ -285,8 +290,9 @@ created_at      timestamptz DEFAULT now()
 | `012_whatsapp_notify_enabled.sql` | `whatsapp_notify_enabled BOOLEAN DEFAULT true` |
 | `013_delivery_enabled.sql` | `delivery_enabled BOOLEAN DEFAULT true` |
 | `014_free_plan.sql` | `plan` default → `'free'`, `trial_ends_at TIMESTAMPTZ`, `session_id TEXT` em `restaurant_users` |
+| `016_pix_key.sql` | `pix_key TEXT`, `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
 
-**Status em produção: todas as 14 migrations aplicadas.**
+**Status em produção: todas as 15 migrations aplicadas.**
 
 ---
 
@@ -353,7 +359,7 @@ created_at      timestamptz DEFAULT now()
 | POST | `/api/adm/[slug]/funcionarios` | Convida membro ou atualiza cargo/nome |
 | DELETE | `/api/adm/[slug]/funcionarios` | Remove membro (não pode remover owner) |
 | POST | `/api/adm/[slug]/member-password` | Define/reseta senha ADM de membro específico |
-| PATCH | `/api/adm/[slug]/settings` | Atualiza campos do restaurante via service role |
+| PATCH | `/api/adm/[slug]/settings` | Atualiza campos do restaurante via service role. Campos PIX (`pix_key`, `pix_key_type`) exigem `role = owner` (403 caso contrário). |
 | PATCH | `/api/adm/[slug]/theme` | Upsert completo de `restaurant_themes` via service role |
 
 ### WhatsApp
@@ -380,7 +386,7 @@ created_at      timestamptz DEFAULT now()
 - Funcionários não precisam de conta HIVI
 - **Senha por membro**: hash PBKDF2 (120.000 iterações, salt aleatório 16 bytes)
 - **Token**: `base64url(JSON) + "." + HMAC-SHA256`
-- **Payload**: `{ slug, role, name, memberId, ts }` — RBAC sem consulta ao banco
+- **Payload**: `{ slug, role, name, memberId, ts, sessionId }` — RBAC sem consulta ao banco
 - Cookie `hivi_adm_{slug}`, HttpOnly, Path=`/`, TTL 8h
 - Verificado no `adm/layout.tsx` (Node.js runtime — não Edge)
 - Dono pode ter senha em `restaurants.adm_password_hash` (legado) **ou** em `restaurant_users.adm_password_hash`
@@ -501,6 +507,61 @@ Dono em /conta → "Assinar plano"
 
 ---
 
+## Gerador de PIX BR Code (`lib/pix.ts`)
+
+Implementação do padrão EMV QR Code do Banco Central do Brasil **sem dependências externas**.
+
+### Funções exportadas
+
+| Função / Constante | Descrição |
+|---|---|
+| `generatePixPayload(options)` | Gera o BR Code completo (string) para QR Code estático |
+| `validatePixKey(type, value)` | Valida chave por tipo (regex BCB) |
+| `normalizePixKey(type, value)` | Normaliza para formato esperado (remove máscara, adiciona `+55`) |
+| `PIX_KEY_LABELS` | Mapa `PixKeyType → label` em PT-BR |
+| `PIX_KEY_PLACEHOLDERS` | Mapa `PixKeyType → placeholder` para inputs |
+
+### Detalhes técnicos
+
+- **CRC16-CCITT**: cada shift mascara para 16 bits (`& 0xffff`) — obrigatório em JavaScript por causa dos inteiros 32-bit internos
+- **Point of Initiation**: `11` (QR estático reutilizável) — não `12` (QR dinâmico/PSP que exigiria API do banco)
+- **Campos EMV** em ordem crescente de ID: `00` → `01` → `26` → `52` → `53` → `54` (valor) → `58` → `59` → `60` → `62` → `6304` + CRC
+- **Sanitização**: nome e cidade do lojista têm acentos removidos via NFD + regex antes de entrar no payload
+
+### Uso nos pedidos
+
+```tsx
+// Pedidos → modal PIX
+const payload = generatePixPayload({
+  key: pixKey,
+  merchantName: restaurantName,
+  amount: order.total,
+  txid: `HIVI${order.order_number}`,
+})
+// Renderiza com <QRCodeSVG value={payload} />
+```
+
+---
+
+## Sistema de E-mail (`lib/resend.ts`)
+
+Três identidades separadas para clareza e deliverability:
+
+| Identidade | Endereço | Uso |
+|---|---|---|
+| `FROM_NOREPLY` | `noreply@hivi-web.com` | E-mails automáticos: boas-vindas, convite de membro |
+| `FROM_SUPPORT` | `support@hivi-web.com` | `Reply-To` em todos os transacionais; atendimento manual |
+| `FROM_FEEDBACK` | `feedback@hivi-web.com` | Canal de feedback de usuários |
+
+Todos os e-mails transacionais incluem cabeçalhos de deliverability:
+- `List-Unsubscribe: <mailto:support@hivi-web.com?subject=unsubscribe>, <https://hivi-web.com/unsubscribe>`
+- `List-Unsubscribe-Post: List-Unsubscribe=One-Click`
+- `X-Entity-Ref-ID: <email-destino>` (previne duplicatas em alguns provedores)
+
+Funções: `sendWelcomeEmail()`, `sendMemberInviteEmail()`, `sendSupportEmail()`, `sendFeedbackEmail()`.
+
+---
+
 ## Variáveis de Ambiente
 
 | Variável | Serviço |
@@ -516,7 +577,9 @@ Dono em /conta → "Assinar plano"
 | `ULTRAMSG_INSTANCE_ID` | UltraMSG |
 | `ULTRAMSG_TOKEN` | UltraMSG |
 | `RESEND_API_KEY` | Resend |
-| `RESEND_FROM_EMAIL` | Resend |
+| `RESEND_FROM_NOREPLY` | `noreply@hivi-web.com` — e-mails automáticos (boas-vindas, convite) |
+| `RESEND_FROM_SUPPORT` | `support@hivi-web.com` — reply-to em todos os transacionais |
+| `RESEND_FROM_FEEDBACK` | `feedback@hivi-web.com` — canal de feedback |
 | `INTERNAL_API_SECRET` | Protege `/api/whatsapp/notify` |
 | `TEMPLATE_RESTAURANT_ID` | ID do restaurante template |
 | `NEXT_PUBLIC_APP_URL` | `https://hivi-web.com` |
