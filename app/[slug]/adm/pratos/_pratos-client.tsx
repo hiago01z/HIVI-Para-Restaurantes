@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { Plus, Pencil, Trash2, X, Loader2, Star, Search, ListPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
+import { type PlanLimits, isInTrial, trialDaysLeft } from '@/lib/plan-limits'
 
 type Category = { id: string; name: string }
 type Product = {
@@ -61,14 +62,26 @@ export function PratosClient({
   restaurantId,
   initialProducts,
   categories,
+  limits,
+  plan,
+  trialEndsAt,
 }: {
   restaurantId: string
   initialProducts: Product[]
   categories: Category[]
+  limits?: PlanLimits
+  plan?: string
+  trialEndsAt?: string | null
 }) {
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
   const [products, setProducts] = useState<Product[]>(initialProducts)
+
+  // Plan limits
+  const inTrial = isInTrial(trialEndsAt)
+  const daysLeft = trialDaysLeft(trialEndsAt)
+  const atProductLimit = !inTrial && plan === 'free' && limits?.maxProducts !== null && products.length >= (limits?.maxProducts ?? Infinity)
+  const canAddProduct = !atProductLimit
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<Form>(EMPTY_FORM)
@@ -229,13 +242,32 @@ export function PratosClient({
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Pratos / Bebidas</h1>
         <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl transition-all"
+          onClick={canAddProduct ? openCreate : undefined}
+          disabled={!canAddProduct}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
         >
           <Plus className="w-4 h-4" /> Novo item
         </button>
       </div>
+
+      {/* Banner trial */}
+      {inTrial && (
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium">
+          Periodo experimental: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'} com tudo do Pro
+        </div>
+      )}
+
+      {/* Banner limite gratuito */}
+      {atProductLimit && (
+        <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-sm text-orange-700">
+          Limite de {limits?.maxProducts} pratos atingido.{' '}
+          <a href="/conta" className="font-bold underline hover:text-orange-900">
+            Assine um plano
+          </a>{' '}
+          para pratos ilimitados.
+        </div>
+      )}
 
       {/* Erro de exclusão */}
       {deleteError && (
@@ -304,8 +336,11 @@ export function PratosClient({
                           {getCategoryName(product.category_id)}
                         </span>
                       )}
-                      {!product.is_available && (
+                      {!product.is_available && !atProductLimit && (
                         <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Indisponível</span>
+                      )}
+                      {!product.is_available && atProductLimit && (limits?.maxProducts !== null) && (
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">Bloqueado pelo plano</span>
                       )}
                     </div>
                   </div>
@@ -370,6 +405,7 @@ export function PratosClient({
           product={optsProduct}
           restaurantId={restaurantId}
           onClose={() => setOptsProductId(null)}
+          maxOptionGroups={(!inTrial && plan === 'free') ? (limits?.maxOptionGroupsPerProduct ?? null) : null}
         />
       )}
 
@@ -466,10 +502,12 @@ function OptionsManageModal({
   product,
   restaurantId,
   onClose,
+  maxOptionGroups,
 }: {
   product: Product
   restaurantId: string
   onClose: () => void
+  maxOptionGroups?: number | null
 }) {
   const supabase = createClient()
   const [groups, setGroups] = useState<OptionGroup[]>([])
@@ -840,6 +878,14 @@ function OptionsManageModal({
                 )
               })}
 
+              {/* Aviso limite de grupos (plano free) */}
+              {maxOptionGroups !== null && maxOptionGroups !== undefined && groups.length >= maxOptionGroups && !showGroupForm && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-sm text-orange-700">
+                  Limite de {maxOptionGroups} grupo de adicionais por produto no plano gratuito.{' '}
+                  <a href="/conta" className="font-bold underline hover:text-orange-900">Assine um plano</a> para grupos ilimitados.
+                </div>
+              )}
+
               {/* Add group form */}
               {showGroupForm ? (
                 <div className="border-2 border-dashed border-blue-200 rounded-2xl p-4 space-y-3 bg-blue-50/30">
@@ -898,7 +944,7 @@ function OptionsManageModal({
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : (maxOptionGroups === null || maxOptionGroups === undefined || groups.length < maxOptionGroups) && (
                 <button
                   onClick={() => setShowGroupForm(true)}
                   className="w-full py-3 text-sm font-bold border-2 border-dashed rounded-2xl transition-colors"

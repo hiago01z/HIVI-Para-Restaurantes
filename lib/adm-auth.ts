@@ -92,20 +92,22 @@ export function admCookieName(slug: string): string {
 
 export interface AdmTokenPayload {
   slug: string
-  role: string      // 'owner' | 'manager' | 'cook' | 'waiter' | 'delivery'
-  name: string      // nome do membro (para "Alterado por …")
-  memberId: string  // restaurant_users.id
-  ts: number        // timestamp de criação (ms)
+  role: string        // 'owner' | 'manager' | 'cook' | 'waiter' | 'delivery'
+  name: string        // nome do membro (para "Alterado por …")
+  memberId: string    // restaurant_users.id
+  ts: number          // timestamp de criação (ms)
+  sessionId?: string  // para single-device enforcement
 }
 
 export async function createAdmToken(
   slug: string,
   role: string,
   name: string,
-  memberId: string
+  memberId: string,
+  sessionId?: string
 ): Promise<string> {
   const ts = Date.now()
-  const payload: AdmTokenPayload = { slug, role, name, memberId, ts }
+  const payload: AdmTokenPayload = { slug, role, name, memberId, ts, ...(sessionId ? { sessionId } : {}) }
   const payloadStr = JSON.stringify(payload)
   // base64url (sem padding)
   const payloadB64 = btoa(payloadStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')

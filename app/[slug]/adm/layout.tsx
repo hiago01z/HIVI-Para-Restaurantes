@@ -4,6 +4,7 @@ import { cookies, headers } from 'next/headers'
 import { AdmNav } from './_components/adm-nav'
 import { getContrastColor } from '@/lib/color-utils'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
+import { getEffectiveLimits } from '@/lib/plan-limits'
 
 // Força busca no servidor a cada navegação — impede que o Next.js
 // sirva páginas ADM do cache client-side após logout.
@@ -54,11 +55,27 @@ export default async function AdmLayout({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, logo_url, plan')
+    .select('id, name, logo_url, plan, trial_ends_at')
     .eq('slug', slug)
     .single()
 
   if (!restaurant) notFound()
+
+  // Verifica session_id para single-device (apenas planos free ou trial expirado)
+  const limits = getEffectiveLimits(
+    (restaurant.plan ?? 'free') as 'free' | 'basic' | 'pro',
+    restaurant.trial_ends_at
+  )
+  if (limits.singleDevice && payload!.sessionId) {
+    const { data: memberData } = await supabase
+      .from('restaurant_users')
+      .select('session_id')
+      .eq('id', payload!.memberId)
+      .single()
+    if (memberData?.session_id !== payload!.sessionId) {
+      redirect(`/${slug}/adm/login?reason=session_expired`)
+    }
+  }
 
   const { data: theme } = await supabase
     .from('restaurant_themes')
@@ -97,7 +114,8 @@ export default async function AdmLayout({
         primaryColor={primary}
         memberRole={payload!.role}
         memberName={payload!.name}
-        plan={(restaurant.plan ?? 'basic') as 'basic' | 'pro'}
+        plan={(restaurant.plan ?? 'free') as 'free' | 'basic' | 'pro'}
+        trialEndsAt={restaurant.trial_ends_at ?? null}
       />
       <main className="pt-14">
         {children}

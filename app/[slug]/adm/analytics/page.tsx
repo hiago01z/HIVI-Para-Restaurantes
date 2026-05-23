@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 import { createClient } from '@supabase/supabase-js'
 import { AnalyticsClient } from './_analytics-client'
+import { getEffectiveLimits } from '@/lib/plan-limits'
 
 function admSupabase() {
   return createClient(
@@ -19,8 +20,12 @@ export default async function AnalyticsPage({
   const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
 
-  // Gating: somente plano Pro
-  if (restaurant.plan !== 'pro') {
+  // Gating: somente plano Pro ou em trial
+  const limits = getEffectiveLimits(
+    (restaurant.plan ?? 'free') as 'free' | 'basic' | 'pro',
+    restaurant.trial_ends_at
+  )
+  if (!limits.analyticsEnabled) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-5 text-center">
         <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-5">

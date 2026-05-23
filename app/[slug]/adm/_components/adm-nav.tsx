@@ -50,7 +50,8 @@ type Props = {
   primaryColor?: string
   memberRole?: string
   memberName?: string
-  plan?: 'basic' | 'pro'
+  plan?: 'free' | 'basic' | 'pro'
+  trialEndsAt?: string | null
 }
 
 export function AdmNav({
@@ -60,16 +61,21 @@ export function AdmNav({
   primaryColor = '#FF6B00',
   memberRole = 'owner',
   memberName,
-  plan = 'basic',
+  plan = 'free',
+  trialEndsAt,
 }: Props) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Analytics visível para pro ou durante trial
+  const inTrial = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
+  const analyticsVisible = plan === 'pro' || inTrial
 
   // Filtra itens de nav que o cargo atual pode acessar e que o plano permite
   const navItems = ALL_NAV_ITEMS.filter(
     (item) =>
       (PAGE_ROLES[item.href] ?? []).includes(memberRole) &&
-      (!item.proOnly || plan === 'pro')
+      (!item.proOnly || analyticsVisible)
   )
 
   async function handleSignout() {

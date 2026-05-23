@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { Plus, Pencil, Trash2, X, Loader2, ChevronUp, ChevronDown } from 'lucide-react'
 import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
+import { type PlanLimits, isInTrial, trialDaysLeft } from '@/lib/plan-limits'
 
 type Category = {
   id: string
@@ -16,13 +17,25 @@ type Category = {
 export function CategoriasClient({
   restaurantId,
   initialCategories,
+  limits,
+  plan,
+  trialEndsAt,
 }: {
   restaurantId: string
   initialCategories: Category[]
+  limits?: PlanLimits
+  plan?: string
+  trialEndsAt?: string | null
 }) {
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
   const [categories, setCategories] = useState<Category[]>(initialCategories)
+
+  // Plan limits
+  const inTrial = isInTrial(trialEndsAt)
+  const daysLeft = trialDaysLeft(trialEndsAt)
+  const atCategoryLimit = !inTrial && plan === 'free' && limits?.maxCategories !== null && categories.length >= (limits?.maxCategories ?? Infinity)
+  const canAddCategory = !atCategoryLimit
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
@@ -151,13 +164,32 @@ export function CategoriasClient({
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Categorias</h1>
         <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl transition-all"
+          onClick={canAddCategory ? openCreate : undefined}
+          disabled={!canAddCategory}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: 'var(--adm-primary)', color: 'var(--adm-text-on-primary, #fff)' }}
         >
           <Plus className="w-4 h-4" /> Nova categoria
         </button>
       </div>
+
+      {/* Banner trial */}
+      {inTrial && (
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium">
+          Periodo experimental: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'} com tudo do Pro
+        </div>
+      )}
+
+      {/* Banner limite gratuito */}
+      {atCategoryLimit && (
+        <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-sm text-orange-700">
+          Limite de {limits?.maxCategories} categorias atingido.{' '}
+          <a href="/conta" className="font-bold underline hover:text-orange-900">
+            Assine um plano
+          </a>{' '}
+          para categorias ilimitadas.
+        </div>
+      )}
 
       {/* Erro de exclusão */}
       {deleteError && (

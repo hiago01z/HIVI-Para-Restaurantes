@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { sendWhatsAppMessage } from '@/lib/ultramsg'
+import { getEffectiveLimits } from '@/lib/plan-limits'
 
 const orderSchema = z.object({
   restaurantId: z.string().uuid(),
@@ -95,11 +96,16 @@ export async function POST(request: Request) {
 
         const { data: restaurant } = await serviceSupabase
           .from('restaurants')
-          .select('name, whatsapp_number, whatsapp_notify_enabled, slug')
+          .select('name, whatsapp_number, whatsapp_notify_enabled, slug, plan, trial_ends_at')
           .eq('id', restaurantId)
           .single()
 
-        if (restaurant?.whatsapp_number && restaurant.slug && restaurant.whatsapp_notify_enabled !== false) {
+        const planLimits = getEffectiveLimits(
+          (restaurant?.plan ?? 'free') as 'free' | 'basic' | 'pro',
+          restaurant?.trial_ends_at
+        )
+
+        if (restaurant?.whatsapp_number && restaurant.slug && restaurant.whatsapp_notify_enabled !== false && planLimits.whatsappEnabled) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
           const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
           const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

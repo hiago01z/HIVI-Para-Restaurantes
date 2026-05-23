@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
+import { getEffectiveLimits } from '@/lib/plan-limits'
 import { z } from 'zod'
 
 function adminClient() {
@@ -111,6 +112,31 @@ export async function POST(
 
   if (!restaurant) {
     return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
+  }
+
+  // Verifica limite de equipe do plano
+  const { data: restaurantPlan } = await supabase
+    .from('restaurants')
+    .select('plan, trial_ends_at')
+    .eq('id', restaurant.id)
+    .single()
+
+  const planLimits = getEffectiveLimits(
+    ((restaurantPlan?.plan ?? 'free') as 'free' | 'basic' | 'pro'),
+    restaurantPlan?.trial_ends_at
+  )
+
+  if (planLimits.maxTeamMembers !== null) {
+    const { count } = await supabase
+      .from('restaurant_users')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_id', restaurant.id)
+    if ((count ?? 0) >= planLimits.maxTeamMembers) {
+      return NextResponse.json(
+        { error: `Limite de ${planLimits.maxTeamMembers} membros atingido no plano gratuito. Assine um plano para equipe ilimitada.` },
+        { status: 403 }
+      )
+    }
   }
 
   // Verificar se usuário já existe

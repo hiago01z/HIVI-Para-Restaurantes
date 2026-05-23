@@ -96,7 +96,10 @@ export async function POST(
     authUser.user_metadata?.name ??
     parsed.data.email.split('@')[0]
 
-  const token = await createAdmToken(slug, member.role, displayName, member.id)
+  // Gera novo sessionId e invalida sessões anteriores (single-device)
+  const sessionId = crypto.randomUUID()
+  await supabase.from('restaurant_users').update({ session_id: sessionId }).eq('id', member.id)
+  const token = await createAdmToken(slug, member.role, displayName, member.id, sessionId)
   const cookieName = admCookieName(slug)
   const secure = process.env.NODE_ENV === 'production'
   const secureFlag = secure ? '; Secure' : ''

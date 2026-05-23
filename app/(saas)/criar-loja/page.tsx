@@ -22,7 +22,7 @@ function CriarLojaInner() {
   const [nome, setNome] = useState('')
   const [slug, setSlug] = useState('')
   const [slugEditado, setSlugEditado] = useState(false)
-  const [plano, setPlano] = useState<'basic' | 'pro'>('basic')
+  const [plano, setPlano] = useState<'free' | 'basic' | 'pro'>('free')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
   const [showCancelledInfo, setShowCancelledInfo] = useState(cancelled)
@@ -54,6 +54,24 @@ function CriarLojaInner() {
     setLoading(true)
 
     try {
+      if (plano === 'free') {
+        // Fluxo gratuito: cria restaurante diretamente
+        const res = await fetch('/api/restaurants/free', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantName: nome, slug }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setErro(data.error || 'Erro ao criar restaurante.')
+          setLoading(false)
+          return
+        }
+        window.location.href = `/${data.slug}/adm/pedidos`
+        return
+      }
+
+      // Fluxo pago: Stripe
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,6 +175,35 @@ function CriarLojaInner() {
         <div>
           <p className="block text-base font-bold text-gray-900 mb-3">Escolha seu plano</p>
           <div className="space-y-3">
+            {/* Plano Gratuito */}
+            <button
+              type="button"
+              onClick={() => setPlano('free')}
+              className={`w-full text-left rounded-2xl p-4 border-2 transition-all ${
+                plano === 'free'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    plano === 'free' ? 'border-orange-500' : 'border-gray-300'
+                  }`}>
+                    {plano === 'free' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                  </div>
+                  <span className="font-bold text-gray-900">Plano Gratuito</span>
+                </div>
+                <span className="font-black text-gray-700">Grátis<span className="text-xs font-medium text-gray-400">/mês</span></span>
+              </div>
+              <p className="text-xs text-gray-500 ml-6">
+                16 pratos, 4 categorias, 1 grupo de adicionais por prato, equipe de até 4 pessoas.
+              </p>
+              <p className="text-xs text-orange-600 font-semibold ml-6 mt-1">
+                Experimente 7 dias com tudo do Pro gratuitamente!
+              </p>
+            </button>
+
             {/* Plano Básico */}
             <button
               type="button"
@@ -224,12 +271,16 @@ function CriarLojaInner() {
           disabled={loading || !nome || !slug}
           className="w-full py-4 bg-orange-500 text-white font-black text-lg rounded-2xl hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Redirecionando...' : 'Ir para o pagamento →'}
+          {loading
+            ? (plano === 'free' ? 'Criando cardápio...' : 'Redirecionando...')
+            : (plano === 'free' ? 'Criar cardápio grátis →' : 'Ir para o pagamento →')}
         </button>
 
-        <p className="text-center text-sm text-gray-400">
-          Você será redirecionado para o Stripe, ambiente seguro de pagamento.
-        </p>
+        {plano !== 'free' && (
+          <p className="text-center text-sm text-gray-400">
+            Você será redirecionado para o Stripe, ambiente seguro de pagamento.
+          </p>
+        )}
       </form>
     </main>
   )

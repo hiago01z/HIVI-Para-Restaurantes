@@ -34,6 +34,7 @@ export async function POST(request: Request) {
         stripe_subscription_id: session.subscription as string,
         is_active: true,
         plan: plan === 'pro' ? 'pro' : 'basic',
+        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
 
       if (error) {
