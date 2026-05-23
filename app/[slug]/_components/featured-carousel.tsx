@@ -118,7 +118,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
   return (
     <>
-      <div className="mb-5">
+      <div>
         <div
           className="relative w-full aspect-square rounded-2xl overflow-hidden"
           onTouchStart={handleTouchStart}
