@@ -168,7 +168,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
 
         {/* Destaques — carrossel grande */}
         {featured.length > 0 && (
-          <section className="mb-6 mt-3">
+          <section className="mt-3 mb-2">
             <FeaturedCarousel products={featured} slug={slug} />
           </section>
         )}
@@ -176,12 +176,6 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
         {/* Categorias — padrão 2 pequenos + 1 grande */}
         {cats.length > 0 && (
           <section className="mb-8">
-            <h2
-              className="text-sm italic font-medium mb-3 tracking-widest uppercase"
-              style={{ fontFamily: 'var(--menu-font)', color: 'var(--menu-text-muted)', opacity: 0.7 }}
-            >
-              Categorias
-            </h2>
             <CategoriesGrid cats={cats} slug={slug} />
           </section>
         )}
