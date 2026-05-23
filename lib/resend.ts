@@ -3,7 +3,21 @@ import { createClient } from '@supabase/supabase-js'
 
 export const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi-web.com'
+/**
+ * Identidades de e-mail da HIVI
+ *
+ * noreply  → disparos automáticos (onboarding, avisos de trial)
+ *            Não tem inbox — respostas caem no support via reply_to
+ * support  → atendimento ao cliente — ImprovMX → hiagoalmeida852@gmail.com
+ * feedback → canal de feedback — ImprovMX → hiagoalmeida852@gmail.com
+ */
+const FROM_NOREPLY  = process.env.RESEND_FROM_NOREPLY  ?? 'noreply@hivi-web.com'
+const FROM_SUPPORT  = process.env.RESEND_FROM_SUPPORT  ?? 'support@hivi-web.com'
+export const FROM_FEEDBACK = process.env.RESEND_FROM_FEEDBACK ?? 'feedback@hivi-web.com'
+
+/** Reply-to padrão: respostas a e-mails automáticos chegam no suporte */
+const REPLY_TO = FROM_SUPPORT
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hivi-web.com'
 
 // ─── Helpers de layout ────────────────────────────────────────────────────────
@@ -155,16 +169,33 @@ function buildTrialEndingHtml(restaurantName: string, slug: string): string {
 
 // ─── Funções de envio ─────────────────────────────────────────────────────────
 
+/**
+ * Headers padrão para e-mails transacionais em volume.
+ * List-Unsubscribe é exigido pelo Gmail para remetentes de alto volume
+ * e melhora significativamente a reputação de entrega.
+ */
+function transactionalHeaders(to: string): Record<string, string> {
+  const encoded = encodeURIComponent(to)
+  const unsubUrl = `${APP_URL}/unsubscribe?email=${encoded}`
+  return {
+    'List-Unsubscribe': `<mailto:${FROM_SUPPORT}?subject=unsubscribe>, <${unsubUrl}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    'X-Entity-Ref-ID': `hivi-onboarding-${Date.now()}`,
+  }
+}
+
 export async function sendWelcomeEmail(
   to: string,
   restaurantName: string,
   slug: string,
 ) {
   return resend.emails.send({
-    from: `HIVI <${FROM}>`,
+    from: `HIVI <${FROM_NOREPLY}>`,
+    reply_to: REPLY_TO,
     to,
     subject: `${restaurantName} está no ar! 🎉 Veja seus primeiros passos`,
     html: buildWelcomeHtml(restaurantName, slug),
+    headers: transactionalHeaders(to),
   })
 }
 
@@ -174,10 +205,12 @@ export async function sendOnboardingD3Email(
   slug: string,
 ) {
   return resend.emails.send({
-    from: `HIVI <${FROM}>`,
+    from: `HIVI <${FROM_NOREPLY}>`,
+    reply_to: REPLY_TO,
     to,
     subject: `${restaurantName} — seu cardápio está configurado? ✅`,
     html: buildOnboardingD3Html(restaurantName, slug),
+    headers: transactionalHeaders(to),
   })
 }
 
@@ -187,10 +220,56 @@ export async function sendTrialEndingEmail(
   slug: string,
 ) {
   return resend.emails.send({
-    from: `HIVI <${FROM}>`,
+    from: `HIVI <${FROM_NOREPLY}>`,
+    reply_to: REPLY_TO,
     to,
     subject: `Seu trial termina amanhã — o que acontece com ${restaurantName}?`,
     html: buildTrialEndingHtml(restaurantName, slug),
+    headers: transactionalHeaders(to),
+  })
+}
+
+/**
+ * Envia um e-mail a partir do suporte (support@hivi-web.com).
+ * Use para respostas manuais, notificações de conta, etc.
+ */
+export async function sendSupportEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string
+  subject: string
+  html: string
+}) {
+  return resend.emails.send({
+    from: `HIVI Suporte <${FROM_SUPPORT}>`,
+    reply_to: FROM_SUPPORT,
+    to,
+    subject,
+    html,
+  })
+}
+
+/**
+ * Envia um e-mail a partir do canal de feedback (feedback@hivi-web.com).
+ * Use para pesquisas de satisfação, NPS, etc.
+ */
+export async function sendFeedbackEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string
+  subject: string
+  html: string
+}) {
+  return resend.emails.send({
+    from: `HIVI Feedback <${FROM_FEEDBACK}>`,
+    reply_to: FROM_FEEDBACK,
+    to,
+    subject,
+    html,
   })
 }
 

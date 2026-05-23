@@ -87,7 +87,7 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="text-xl font-black text-gray-900 mb-3">5. Seus direitos</h2>
             <p>
-              Você pode solicitar a qualquer momento a exclusão dos seus dados. Acesse sua conta em hivi-web.com/conta ou envie um e-mail para contato@hivi-web.com.
+              Você pode solicitar a qualquer momento a exclusão dos seus dados. Acesse sua conta em hivi-web.com/conta ou envie um e-mail para support@hivi-web.com.
             </p>
           </section>
 
@@ -101,7 +101,7 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="text-xl font-black text-gray-900 mb-3">7. Contato</h2>
             <p>
-              Dúvidas sobre privacidade? Entre em contato: <a href="mailto:contato@hivi-web.com" className="text-orange-500 hover:underline font-medium">contato@hivi-web.com</a>
+              Dúvidas sobre privacidade? Entre em contato: <a href="mailto:support@hivi-web.com" className="text-orange-500 hover:underline font-medium">support@hivi-web.com</a>
             </p>
           </section>
 
