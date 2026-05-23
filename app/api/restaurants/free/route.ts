@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { sendRestaurantCreatedEmail } from '@/lib/resend'
+import { queueOnboardingEmails } from '@/lib/resend'
 import { createAdmToken, admCookieName, COOKIE_MAX_AGE } from '@/lib/adm-auth'
 import { z } from 'zod'
 
@@ -153,13 +153,11 @@ export async function POST(request: Request) {
     }
   }
 
-  // Envia e-mail de boas-vindas via Resend
+  // Enfileira sequência de onboarding (boas-vindas, dia 3, dia 6)
   if (user.email) {
-    try {
-      await sendRestaurantCreatedEmail(user.email, restaurantName, slug)
-    } catch (emailErr) {
-      console.error('Erro ao enviar e-mail:', emailErr)
-    }
+    queueOnboardingEmails(newRestaurant.id, user.email).catch((err) =>
+      console.error('Erro ao enfileirar e-mails:', err)
+    )
   }
 
   // Auto-login ADM: o usuário já está autenticado via Supabase Auth (confiança maior),
