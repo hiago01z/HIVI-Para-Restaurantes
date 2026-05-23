@@ -96,7 +96,6 @@ export default async function PedidosPage({
       restaurantId={restaurantId}
       restaurantName={restaurantName}
       pixKey={pix_key ?? null}
-      pixKeyType={pix_key_type ?? null}
       initialOrders={orders ?? []}
       isToday={isToday}
       slug={slug}
