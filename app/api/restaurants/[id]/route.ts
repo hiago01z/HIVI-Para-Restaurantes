@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
 
 // PATCH /api/restaurants/[id] — toggle is_active
 export async function PATCH(
@@ -32,7 +33,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/restaurants/[id] — excluir restaurante
+// DELETE /api/restaurants/[id] — excluir restaurante e cancelar assinatura Stripe
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -43,6 +44,26 @@ export async function DELETE(
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+    // Busca subscription_id antes de excluir
+    const { data: restaurant } = await supabase
+      .from('restaurants')
+      .select('stripe_subscription_id')
+      .eq('id', id)
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!restaurant) return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
+
+    // Cancela a assinatura no Stripe (se existir)
+    if (restaurant.stripe_subscription_id) {
+      try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+        await stripe.subscriptions.cancel(restaurant.stripe_subscription_id)
+      } catch {
+        // Não bloqueia a exclusão se a subscription já foi cancelada ou não existe
+      }
+    }
 
     const { error } = await supabase
       .from('restaurants')
