@@ -2,6 +2,8 @@ import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
 
+export const revalidate = 0 // nunca serve versão cacheada
+
 const FREE_FEATURES = [
   'Cardápio digital público com link e QR code',
   'Painel administrativo completo',
