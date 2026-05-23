@@ -45,7 +45,7 @@ export default async function PedidosPage({
 
   const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
-  const { id: restaurantId, name: restaurantName, pix_key, pix_key_type } = restaurant
+  const { id: restaurantId, name: restaurantName, pix_key } = restaurant
 
   // Extrai cargo do token ADM para filtros de RBAC no cliente
   const cookieStore = await cookies()
