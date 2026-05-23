@@ -287,10 +287,13 @@ export default async function LandingPage() {
             <ul className="text-sm text-gray-700 space-y-2.5 mb-7 flex-1">
               {[
                 'Cardápio digital público',
-                'Painel administrativo completo',
+                'Painel administrativo',
                 'QR code de mesa',
+                'Upload de fotos e banners',
                 'Até 16 pratos e 4 categorias',
                 '1 grupo de adicionais por prato',
+                'Impressão térmica',
+                'Notificação sonora de novo pedido',
                 'Equipe de até 4 pessoas',
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2.5">
@@ -323,7 +326,7 @@ export default async function LandingPage() {
             <ul className="text-sm text-gray-700 space-y-2.5 mb-7 flex-1">
               {[
                 'Cardápio digital público',
-                'Painel administrativo completo',
+                'Painel administrativo',
                 'QR code de mesa',
                 'Adicionais e opções por prato',
                 'Impressão térmica',

@@ -198,7 +198,7 @@ function CriarLojaInner() {
                 <span className="font-black text-gray-700">Grátis<span className="text-xs font-medium text-gray-400">/mês</span></span>
               </div>
               <p className="text-xs text-gray-500 ml-6">
-                16 pratos, 4 categorias, 1 grupo de adicionais por prato, equipe de até 4 pessoas.
+                16 pratos, 4 categorias, 1 grupo de adicionais por prato, upload de fotos, impressão térmica, equipe de até 4 pessoas.
               </p>
               <p className="text-xs text-orange-600 font-semibold ml-6 mt-1">
                 Experimente 7 dias com tudo do Pro gratuitamente!

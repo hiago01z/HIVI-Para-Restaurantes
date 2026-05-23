@@ -6,18 +6,21 @@ export const revalidate = 0 // nunca serve versão cacheada
 
 const FREE_FEATURES = [
   'Cardápio digital público com link e QR code',
-  'Painel administrativo completo',
+  'Painel administrativo',
   'QR code de mesa para pedidos',
   'Gestão de pedidos em tempo real',
+  'Upload de fotos e banners',
   'Até 16 pratos e 4 categorias',
   '1 grupo de adicionais por prato',
+  'Impressão térmica (USB, Bluetooth, sistema)',
+  'Notificação sonora de novo pedido',
   'Personalização de tema e cores',
   'Equipe de até 4 pessoas',
 ]
 
 const BASIC_FEATURES = [
   'Cardápio digital público com link e QR code',
-  'Painel administrativo completo',
+  'Painel administrativo',
   'QR code de mesa para pedidos',
   'Gestão de pedidos em tempo real',
   'Categorias e pratos ilimitados',
@@ -191,7 +194,7 @@ export default function PrecosPage() {
             {[
               {
                 q: 'O plano gratuito é realmente grátis para sempre?',
-                a: 'Sim. O plano gratuito não tem prazo de expiração. Você pode usar 16 pratos, 4 categorias, 1 grupo de adicionais por prato e equipe de até 4 pessoas indefinidamente.',
+                a: 'Sim. O plano gratuito não tem prazo de expiração. Você pode usar 16 pratos, 4 categorias, 1 grupo de adicionais por prato, upload de fotos, impressão térmica e equipe de até 4 pessoas indefinidamente.',
               },
               {
                 q: 'O que são os 7 dias grátis do Pro?',
