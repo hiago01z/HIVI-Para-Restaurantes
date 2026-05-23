@@ -107,6 +107,7 @@
 - [x] **EXECUTADO 2026-05-20**: Migration 008 — coluna `delivery_hours` jsonb em restaurants
 - [x] **EXECUTADO 2026-05-23**: Migration 012 — coluna `whatsapp_notify_enabled` boolean em restaurants
 - [x] **EXECUTADO 2026-05-23**: Migration 013 — coluna `delivery_enabled` boolean em restaurants
+- [ ] **PENDENTE — EXECUTAR ANTES DE IR PARA PRODUÇÃO**: Migration 014 — `plan` default=free, `trial_ends_at` TIMESTAMPTZ em restaurants, `session_id` TEXT em restaurant_users. SQL em `supabase/migrations/014_free_plan.sql`
 
 ### Fase 8 — Polimento e Testes
 - [x] **2026-05-20**: Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
@@ -153,6 +154,8 @@
 | 2026-05-23 | Feature: opção de desativar entregas — migration 013 (delivery_enabled BOOLEAN DEFAULT TRUE), toggle em ADM Configurações → Entregas, botão de entrega some do cardápio quando desativado |
 | 2026-05-23 | Fix crítico: status e pagamento de pedidos não salvavam para funcionários sem sessão Supabase Auth — /api/orders/[id]/status e /api/orders/[id]/payment-status migrados para adminClient() (service role) |
 | 2026-05-23 | Cleanup: 16 arquivos .tmp removidos da pasta app/, migration duplicada 007_payment_status.sql renomeada para 006b_payment_status.sql |
+| 2026-05-23 | Fix: exclusão de cardápio agora cancela assinatura Stripe automaticamente — DELETE /api/restaurants/[id] busca stripe_subscription_id e chama stripe.subscriptions.cancel() antes de deletar no banco |
+| 2026-05-23 | Feature: Plano Gratuito com trial de 7 dias — lib/plan-limits.ts (getEffectiveLimits), limites: 16 pratos, 4 categorias, 1 adicional/prato, 4 membros, sem WhatsApp, sem Analytics, login único por dispositivo (session_id). Trial: 7 dias com tudo do Pro para novos restaurantes. Soft-lock em excesso (pausados, nunca deletados). Banners de trial e de limite no ADM. POST /api/restaurants/free para criação sem Stripe. /criar-loja com card do plano free. Migration 014 criada. |
 
 ---
 
@@ -226,3 +229,6 @@ Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 | 2026-05-23 | Downgrade sem proration_behavior: 'none' | Plano muda imediatamente na subscription; próxima fatura = R$59,99 sem cobranças intermediárias |
 | 2026-05-23 | ADM theme isolation via isAdmPath early return | Mais simples que CSS specificity — não renderiza o wrapper de tema para rotas ADM |
 | 2026-05-23 | Todas as escritas ADM via API routes com service role key | ADM usa HMAC cookie (não Supabase Auth) → RLS bloquearia silenciosamente qualquer UPDATE/INSERT com createClient(). Padrão: authorize(slug) + adminClient() em todas as rotas ADM |
+| 2026-05-23 | Login único por dispositivo (free): session_id em restaurant_users, comparado no layout.tsx a cada page load | Simples e sem middleware extra — adm/layout.tsx busca session_id do DB e compara com o token; mismatch → redirect login?reason=session_expired |
+| 2026-05-23 | Soft-lock em plano free: excesso de pratos auto-pausado no server component (page.tsx) | Sem cron job — pausado no próximo acesso ADM após expirar trial. Pratos nunca deletados, apenas is_available=false |
+| 2026-05-23 | Trial de 7 dias para todos os novos restaurantes | Novos clientes experimentam o Pro completo antes de cair no free — reduz churn e aumenta conversão |
