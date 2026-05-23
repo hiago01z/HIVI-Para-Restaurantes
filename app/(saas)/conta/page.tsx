@@ -23,7 +23,7 @@ export default async function ContaPage({
   // ── Restaurantes onde o usuário é DONO ───────────────────────
   const { data: restaurantes } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash, plan')
+    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash, plan, trial_ends_at')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -31,6 +31,7 @@ export default async function ContaPage({
   const lojas = (restaurantes ?? []).map(({ adm_password_hash, ...l }) => ({
     ...l,
     plan: (l.plan ?? 'free') as 'free' | 'basic' | 'pro',
+    trial_ends_at: l.trial_ends_at ?? null,
     has_adm_password: !!adm_password_hash,
     role: 'owner' as string,
   }))

@@ -13,6 +13,13 @@ type Loja = {
   stripe_customer_id: string | null
   has_adm_password?: boolean
   plan?: 'free' | 'basic' | 'pro'
+  trial_ends_at?: string | null
+}
+
+function trialDaysLeft(trialEndsAt: string | null | undefined): number {
+  if (!trialEndsAt) return 0
+  const diff = new Date(trialEndsAt).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
 type Props = {
@@ -195,6 +202,27 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
 
         return (
           <div key={loja.id} className="bg-white rounded-2xl p-5 shadow-sm">
+            {/* Banner de trial */}
+            {(() => {
+              const days = trialDaysLeft(loja.trial_ends_at)
+              if (days <= 0) return null
+              const urgent = days <= 2
+              return (
+                <div className={`rounded-xl px-3 py-2 mb-3 flex items-center justify-between gap-2 ${
+                  urgent
+                    ? 'bg-red-50 border border-red-200'
+                    : 'bg-orange-50 border border-orange-200'
+                }`}>
+                  <span className={`text-xs font-semibold ${urgent ? 'text-red-700' : 'text-orange-700'}`}>
+                    🎉 Trial Pro ativo
+                  </span>
+                  <span className={`text-xs font-black ${urgent ? 'text-red-600' : 'text-orange-600'}`}>
+                    {days === 1 ? 'Último dia!' : `${days} dias restantes`}
+                  </span>
+                </div>
+              )
+            })()}
+
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="font-bold text-gray-900">{loja.name}</p>
