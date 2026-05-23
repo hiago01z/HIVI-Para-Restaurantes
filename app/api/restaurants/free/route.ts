@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { sendRestaurantCreatedEmail } from '@/lib/resend'
+import { createAdmToken, admCookieName, COOKIE_MAX_AGE } from '@/lib/adm-auth'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -69,12 +70,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro ao buscar restaurante criado.' }, { status: 500 })
   }
 
-  // Adicionar dono em restaurant_users (role=owner)
-  await supabase.from('restaurant_users').insert({
-    restaurant_id: newRestaurant.id,
-    user_id: user.id,
-    role: 'owner',
-  })
+  // Adicionar dono em restaurant_users (role=owner) — captura o ID para o token ADM
+  const sessionId = crypto.randomUUID()
+  const { data: newMember } = await supabase
+    .from('restaurant_users')
+    .insert({
+      restaurant_id: newRestaurant.id,
+      user_id: user.id,
+      role: 'owner',
+      session_id: sessionId,
+    })
+    .select('id')
+    .single()
 
   // Criar tema padrão
   await supabase.from('restaurant_themes').insert({
@@ -155,5 +162,27 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ slug }, { status: 201 })
+  // Auto-login ADM: o usuário já está autenticado via Supabase Auth (confiança maior),
+  // então geramos o cookie ADM diretamente sem exigir senha.
+  const response = NextResponse.json({ slug }, { status: 201 })
+
+  if (newMember?.id) {
+    const displayName =
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      user.email?.split('@')[0] ??
+      'Dono'
+
+    const token = await createAdmToken(slug, 'owner', displayName, newMember.id, sessionId)
+    const cookieName = admCookieName(slug)
+    const secure = process.env.NODE_ENV === 'production'
+    const secureFlag = secure ? '; Secure' : ''
+
+    response.headers.append(
+      'Set-Cookie',
+      `${cookieName}=${token}; Path=/; HttpOnly; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`
+    )
+  }
+
+  return response
 }
