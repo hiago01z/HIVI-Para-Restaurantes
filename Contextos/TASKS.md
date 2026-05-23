@@ -107,7 +107,7 @@
 - [x] **EXECUTADO 2026-05-20**: Migration 008 — coluna `delivery_hours` jsonb em restaurants
 - [x] **EXECUTADO 2026-05-23**: Migration 012 — coluna `whatsapp_notify_enabled` boolean em restaurants
 - [x] **EXECUTADO 2026-05-23**: Migration 013 — coluna `delivery_enabled` boolean em restaurants
-- [ ] **PENDENTE — EXECUTAR ANTES DE IR PARA PRODUÇÃO**: Migration 014 — `plan` default=free, `trial_ends_at` TIMESTAMPTZ em restaurants, `session_id` TEXT em restaurant_users. SQL em `supabase/migrations/014_free_plan.sql`
+- [x] **EXECUTADO 2026-05-23**: Migration 014 — `plan` default=free, `trial_ends_at` TIMESTAMPTZ em restaurants, `session_id` TEXT em restaurant_users
 
 ### Fase 8 — Polimento e Testes
 - [x] **2026-05-20**: Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
