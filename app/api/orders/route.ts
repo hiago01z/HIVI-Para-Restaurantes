@@ -115,9 +115,13 @@ export async function POST(request: Request) {
             return `  • ${i.quantity}x ${i.product_name}${opts ? '\n' + opts : ''}`
           }).join('\n')
 
-          // Link wa.me para o staff enviar confirmação ao cliente (curto, sem mensagem pré-preenchida)
+          // Link wa.me com mensagem de confirmação pré-preenchida para o staff enviar ao cliente
+          const confirmMsg =
+            `✅ Olá, ${customerName}! Seu pedido foi confirmado 🎉\n\n` +
+            `Estamos preparando agora. Em breve um entregador sairá para sua casa.\n\n` +
+            `📍 Acompanhe em tempo real:\n${trackingUrl}`
           const waLine = customerPhone
-            ? `\n\n💬 *Confirmar ao cliente:* https://wa.me/${customerPhone}`
+            ? `\n\n💬 *Enviar confirmação ao cliente:*\nhttps://wa.me/${customerPhone}?text=${encodeURIComponent(confirmMsg)}`
             : ''
 
           const restaurantMsg =
@@ -128,8 +132,7 @@ export async function POST(request: Request) {
             `💳 Pagamento: ${paymentLabel}\n` +
             `💰 Total: ${totalFormatted}\n\n` +
             `📦 Itens:\n${itemsList}` +
-            waLine +
-            `\n\n🔗 ${trackingUrl}`
+            waLine
 
           // await garante que o fetch completa antes de o Vercel encerrar a função
           await sendWhatsAppMessage(restaurant.whatsapp_number, restaurantMsg)
