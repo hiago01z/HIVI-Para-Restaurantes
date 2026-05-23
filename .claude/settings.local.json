@@ -23,7 +23,15 @@
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('jsqr:', p.dependencies?.jsqr || p.devDependencies?.jsqr || 'NOT FOUND'\\)\")",
       "mcp__aaa6eb48-d9c5-493c-92e4-b333a7edde9a__generate-design",
       "Bash(npx next *)",
-      "Bash(find /mnt/c/Users/Escritorio/Dropbox/HIVI/app -name \"*.tsx\" | sort)"
+      "Bash(find /mnt/c/Users/Escritorio/Dropbox/HIVI/app -name \"*.tsx\" | sort)",
+      "Bash(node -e \"const j = require\\('jspdf'\\); console.log\\(Object.keys\\(j\\)\\)\")",
+      "Bash(git commit *)",
+      "Bash(mkdir \"C:\\\\Users\\\\Escritorio\\\\Dropbox\\\\HIVI\\\\app\\\\api\\\\adm\\\\[slug]\\\\settings\")",
+      "Bash(mkdir \"C:\\\\Users\\\\Escritorio\\\\Dropbox\\\\HIVI\\\\app\\\\api\\\\adm\\\\[slug]\\\\theme\")",
+      "Bash(dir /b /s *.tmp)",
+      "Bash(dir /b /s *.bak)",
+      "Bash(dir /b /s *.orig)",
+      "Bash(dir /s /b \"*.tmp\")"
     ]
   }
 }

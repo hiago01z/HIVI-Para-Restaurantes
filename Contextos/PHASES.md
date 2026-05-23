@@ -154,7 +154,12 @@
 - [x] Filtros de período nos pedidos (Hoje/Ontem/7 dias)
 - [x] QR scanner real na aba "Ler QR Code" (jsQR + canvas)
 - [x] Pré-preenchimento de entrega (localStorage com dados do último pedido)
-- [x] Migrations 005–009 executadas no Supabase
+- [x] Migrations 005–013 executadas no Supabase
+- [x] Toggle "Notificar novo pedido" via WhatsApp nas configurações (migration 012)
+- [x] Toggle para desativar entregas — restaurantes só mesa (migration 013)
+- [x] Tutorial de convite de membro de equipe no formulário de convite
+- [x] Link WhatsApp "Enviar confirmação ao cliente" com mensagem pré-preenchida
+- [x] **Fix crítico pré-produção:** todas as escritas ADM (status, pagamento, configurações, tema) migradas para service role key — RLS bloqueava silenciosamente funcionários sem sessão Supabase Auth
 
 ---
 

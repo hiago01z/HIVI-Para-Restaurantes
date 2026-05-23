@@ -1,8 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
+
+function adminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 const statusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']),
@@ -21,7 +28,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Status inválido' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    // Usa service role — funcionários ADM não têm sessão Supabase Auth,
+    // então o RLS bloquearia silenciosamente o UPDATE com createClient()
+    const supabase = adminClient()
 
     // Busca o pedido para obter o slug do restaurante (necessário para verificar o ADM)
     const { data: orderCheck } = await supabase

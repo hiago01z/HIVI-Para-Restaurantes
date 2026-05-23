@@ -78,6 +78,7 @@ adm_password_hash        text                             -- senha legada do don
 instagram_url            text
 whatsapp_number          text
 whatsapp_notify_enabled  boolean NOT NULL DEFAULT true    -- migration 012
+delivery_enabled         boolean NOT NULL DEFAULT true    -- migration 013
 delivery_hours           jsonb                            -- migration 008
 created_at               timestamptz DEFAULT now()
 ```
@@ -270,6 +271,8 @@ created_at      timestamptz DEFAULT now()
 | POST | `/api/adm/[slug]/funcionarios` | Convida membro por e-mail (Supabase invite) ou atualiza cargo |
 | DELETE | `/api/adm/[slug]/funcionarios` | Remove membro (não pode remover owner) |
 | POST | `/api/adm/[slug]/member-password` | Define/reseta senha ADM de um membro |
+| PATCH | `/api/adm/[slug]/settings` | Atualiza campos do restaurante: instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, logo_url |
+| PATCH | `/api/adm/[slug]/theme` | Upsert completo do tema (restaurant_themes) |
 
 ### WhatsApp
 | Método | Rota | Descrição |
@@ -296,6 +299,7 @@ created_at      timestamptz DEFAULT now()
 - Cookie `hivi_adm_{slug}`, HttpOnly, Path=`/`, TTL 8h
 - Verificado no `adm/layout.tsx` (Node.js runtime, não Edge)
 - Dono pode ter senha em `restaurants.adm_password_hash` (legado via /conta) **ou** em `restaurant_users.adm_password_hash`
+- **Padrão obrigatório para todas as rotas ADM:** `authorize(slug)` verifica o cookie HMAC; depois usa `adminClient()` (service role) para todas as operações no banco — o RLS do Supabase bloquearia silenciosamente qualquer write feito com `createClient()` (anon key) por usuários sem sessão Supabase Auth
 
 ## Middleware (`middleware.ts`)
 

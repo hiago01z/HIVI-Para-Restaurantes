@@ -145,6 +145,12 @@
 | 2026-05-23 | Update: descrições de cargos no formulário de convite corrigidas para refletir permissões reais |
 | 2026-05-23 | Fix: legibilidade das impressões — receipt-html: fonte Arial 11pt peso 600 (era Courier New 9pt), negrito 800, pedido #17pt, total 13pt, hr sólido 1.5px; escpos: bold em todos os campos (tipo, cliente, end, tel, pgto, obs, rodapé) |
 | 2026-05-23 | Feature: toggle "Notificar novo pedido" na seção WhatsApp das Configurações — migration 012 (whatsapp_notify_enabled BOOLEAN DEFAULT TRUE); api/orders verifica campo antes de disparar |
+| 2026-05-23 | Feature: tutorial de convite de membro de equipe — caixa azul no formulário de convite explicando o fluxo (convidar → login HIVI → Painel ADM → senha) |
+| 2026-05-23 | Fix: todas as configurações ADM não salvavam (WhatsApp, Instagram, tema, status, horários, logo, banner) — causa: createClient() bloqueado por RLS sem sessão Supabase Auth. Fix: API routes /api/adm/[slug]/settings (PATCH) e /api/adm/[slug]/theme (PATCH) com service role key |
+| 2026-05-23 | Fix: link "Enviar confirmação ao cliente" no WhatsApp restaurado com mensagem pré-preenchida — wa.me?text=... com saudação, aviso de preparo e link de rastreamento |
+| 2026-05-23 | Feature: opção de desativar entregas — migration 013 (delivery_enabled BOOLEAN DEFAULT TRUE), toggle em ADM Configurações → Entregas, botão de entrega some do cardápio quando desativado |
+| 2026-05-23 | Fix crítico: status e pagamento de pedidos não salvavam para funcionários sem sessão Supabase Auth — /api/orders/[id]/status e /api/orders/[id]/payment-status migrados para adminClient() (service role) |
+| 2026-05-23 | Cleanup: 16 arquivos .tmp removidos da pasta app/, migration duplicada 007_payment_status.sql renomeada para 006b_payment_status.sql |
 
 ---
 
@@ -217,3 +223,4 @@ Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 | 2026-05-23 | PDF analytics com import dinâmico de jsPDF | Evita SSR crash — jsPDF é client-only; `await import('jspdf')` dentro de async function |
 | 2026-05-23 | Downgrade sem proration_behavior: 'none' | Plano muda imediatamente na subscription; próxima fatura = R$59,99 sem cobranças intermediárias |
 | 2026-05-23 | ADM theme isolation via isAdmPath early return | Mais simples que CSS specificity — não renderiza o wrapper de tema para rotas ADM |
+| 2026-05-23 | Todas as escritas ADM via API routes com service role key | ADM usa HMAC cookie (não Supabase Auth) → RLS bloquearia silenciosamente qualquer UPDATE/INSERT com createClient(). Padrão: authorize(slug) + adminClient() em todas as rotas ADM |

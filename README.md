@@ -71,6 +71,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | Pedido de entrega | Formulário completo → WhatsApp automático para o restaurante |
 | Observações | Campo de obs em ambos os fluxos (mesa e entrega) |
 | Horário de entregas | Bloqueio automático do botão de entrega fora do horário configurado |
+| Entregas desativadas | Quando `delivery_enabled=false`, botão de entrega some completamente do cardápio |
 | Acompanhamento em tempo real | `/meu-pedido/[id]` com status via Supabase Realtime |
 | Banner ativo | Exibe o pedido em andamento em todas as páginas do cardápio |
 | Temas dinâmicos | CSS vars por restaurante (4 temas pré-definidos + personalização) |
@@ -89,7 +90,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | **Categorias** | CRUD + reordenação, crop de imagem |
 | **Funcionários** | Convidar por e-mail (Supabase invite), cargo, nome de exibição, senha ADM individual, remover |
 | **Analytics** ⭐ Pro | Receita/pedidos por dia, top produtos, pedidos por tipo, horário de pico, KPIs, comparativo semanal, exportação CSV e PDF |
-| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste, logo, banner, tema completo com prévia ao vivo, horário de entregas, impressora térmica (USB/BT/Sistema), QR code download |
+| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste, logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, impressora térmica (USB/BT/Sistema), QR code download |
 | **Notificação sonora** | Beep duplo (Web Audio API), toggle ativo/pausado no header |
 | **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Via Sistema (window.print); auto-impressão; reimpressão manual por pedido |
 
@@ -224,12 +225,14 @@ supabase/
     ├── 004_storage_policies.sql
     ├── 005_label_columns_and_role_fix.sql
     ├── 006_qr_session_order_id_and_rls_fixes.sql
+    ├── 006b_payment_status.sql
     ├── 007_member_auth_and_rbac.sql
     ├── 008_delivery_hours.sql
     ├── 009_payment_changed_by.sql
     ├── 010_product_options.sql
     ├── 011_pro_plan.sql
-    └── 012_whatsapp_notify_enabled.sql
+    ├── 012_whatsapp_notify_enabled.sql
+    └── 013_delivery_enabled.sql
 ```
 
 ---
@@ -240,7 +243,7 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (basic/pro), whatsapp_number, whatsapp_notify_enabled, delivery_hours, stripe_*, adm_password_hash |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (basic/pro), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, stripe_*, adm_password_hash |
 | `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash |
 | `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
 | `categories` | Categorias do cardápio: nome, imagem, display_order |
@@ -315,6 +318,8 @@ Todas as tabelas têm RLS ativo. Políticas principais:
 | `POST` | `/api/adm/[slug]/funcionarios` | Convida membro (Supabase invite) ou atualiza cargo. |
 | `DELETE` | `/api/adm/[slug]/funcionarios` | Remove membro da equipe. |
 | `POST` | `/api/adm/[slug]/member-password` | Define/reseta senha ADM de um membro específico. |
+| `PATCH` | `/api/adm/[slug]/settings` | Atualiza configurações do restaurante (whatsapp, instagram, status, delivery_enabled, horários, logo). Requer token ADM + service role. |
+| `PATCH` | `/api/adm/[slug]/theme` | Upsert completo do tema visual. Requer token ADM + service role. |
 
 ### WhatsApp
 
@@ -347,6 +352,7 @@ O projeto tem **dois sistemas de autenticação independentes**:
 - Payload: `{ slug, role, name, memberId, ts }` — RBAC sem consulta extra ao banco
 - Cookie `hivi_adm_{slug}`, HttpOnly, Path=`/`, TTL 8h
 - Verificado no `adm/layout.tsx` (Node.js runtime, não Edge)
+- **Regra crítica:** todas as rotas ADM usam `adminClient()` (service role key) após verificar o token. O `createClient()` (anon key) seria bloqueado silenciosamente pelo RLS pois funcionários não têm sessão Supabase Auth
 - Dono pode ter senha em `restaurants.adm_password_hash` (legado via /conta) **ou** em `restaurant_users.adm_password_hash` (senha individual mais recente)
 - Sessão expirada → redirecionamento automático para login ao receber 401
 
