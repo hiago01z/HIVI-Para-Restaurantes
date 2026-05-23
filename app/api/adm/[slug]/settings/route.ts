@@ -25,6 +25,7 @@ async function authorize(slug: string): Promise<boolean> {
 }
 
 const patchSchema = z.object({
+  name:                    z.string().min(1).max(100).optional(),
   instagram_url:           z.string().nullable().optional(),
   whatsapp_number:         z.string().nullable().optional(),
   whatsapp_notify_enabled: z.boolean().optional(),

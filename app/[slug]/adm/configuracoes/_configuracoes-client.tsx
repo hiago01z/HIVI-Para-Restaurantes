@@ -138,6 +138,31 @@ export function ConfiguracoesClient({
     return res.ok
   }
 
+  // Nome do restaurante
+  const [restaurantName, setRestaurantName] = useState(restaurant.name)
+  const [nameSaving, setNameSaving] = useState(false)
+  const [nameSaved, setNameSaved] = useState(false)
+  const [nameError, setNameError] = useState('')
+
+  async function saveName() {
+    if (!restaurantName.trim()) { setNameError('O nome não pode estar vazio.'); return }
+    setNameSaving(true)
+    setNameError('')
+    try {
+      const ok = await patchSettings({ name: restaurantName.trim() })
+      if (ok) {
+        setNameSaved(true)
+        setTimeout(() => setNameSaved(false), 2000)
+      } else {
+        setNameError('Erro ao salvar. Tente novamente.')
+      }
+    } catch {
+      setNameError('Erro de conexão. Tente novamente.')
+    } finally {
+      setNameSaving(false)
+    }
+  }
+
   // Ativar/desativar entregas
   const [deliveryEnabled, setDeliveryEnabled] = useState(restaurant.delivery_enabled)
   const [deliveryEnabledSaving, setDeliveryEnabledSaving] = useState(false)
@@ -547,6 +572,46 @@ export function ConfiguracoesClient({
       {/* Carrega fontes decorativas para o preview inline do ADM */}
       <style>{`@import url('${GOOGLE_FONTS_URL}');`}</style>
       <h1 className="text-2xl font-bold tracking-tight text-gray-900">Configurações</h1>
+
+      {/* ── Informações Gerais ── */}
+      <Section title="Informações Gerais">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Nome do restaurante
+            </label>
+            <input
+              type="text"
+              value={restaurantName}
+              onChange={(e) => { setRestaurantName(e.target.value); setNameError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && saveName()}
+              maxLength={100}
+              placeholder="Nome do seu restaurante"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Aparece no cardápio público, pedidos e painel.
+            </p>
+          </div>
+          {nameError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{nameError}</p>
+          )}
+          <button
+            onClick={saveName}
+            disabled={nameSaving || restaurantName.trim() === restaurant.name}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-opacity disabled:opacity-50"
+            style={{ background: 'var(--adm-primary)' }}
+          >
+            {nameSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : nameSaved ? (
+              <><Check className="w-4 h-4" /> Salvo!</>
+            ) : (
+              'Salvar nome'
+            )}
+          </button>
+        </div>
+      </Section>
 
       {/* ── Status do restaurante ── */}
       <Section title="Status do Cardápio">
