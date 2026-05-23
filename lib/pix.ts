@@ -13,10 +13,15 @@ function crc16(str: string): string {
   for (let i = 0; i < str.length; i++) {
     crc ^= str.charCodeAt(i) << 8
     for (let j = 0; j < 8; j++) {
-      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1
+      // Máscara 0xffff obrigatória a cada iteração — JS usa 32 bits internamente
+      if (crc & 0x8000) {
+        crc = ((crc << 1) ^ 0x1021) & 0xffff
+      } else {
+        crc = (crc << 1) & 0xffff
+      }
     }
   }
-  return ((crc & 0xffff).toString(16).toUpperCase().padStart(4, '0'))
+  return crc.toString(16).toUpperCase().padStart(4, '0')
 }
 
 // ─── Campo EMV: ID (2 chars) + Length (2 digits) + Value ─────────────────────
@@ -64,7 +69,7 @@ export function generatePixPayload({
   // Monta payload sem CRC
   const payload =
     field('00', '01') +                              // Payload Format Indicator
-    field('01', '12') +                              // Point of Initiation (12 = uso múltiplo)
+    field('01', '11') +                              // Point of Initiation (11 = QR estático reutilizável)
     mai +                                             // Merchant Account Info
     field('52', '0000') +                            // Merchant Category Code
     field('53', '986') +                             // Transaction Currency (BRL)
