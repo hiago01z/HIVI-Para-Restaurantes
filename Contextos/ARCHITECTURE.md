@@ -65,40 +65,54 @@ hivi/
 
 ### `restaurants` — Restaurantes (tenants)
 ```sql
-id                     uuid PRIMARY KEY DEFAULT gen_random_uuid()
-owner_id               uuid REFERENCES auth.users(id)   -- dono (conta HIVI)
-name                   text NOT NULL
-slug                   text UNIQUE NOT NULL              -- usado na URL /[slug]
-logo_url               text
-is_active              boolean DEFAULT true              -- pausar/ativar loja
-stripe_customer_id     text
-stripe_subscription_id text
-plan                   text DEFAULT 'basic'
-instagram_url          text
-whatsapp_number        text                             -- número para UltraMSG
-created_at             timestamptz DEFAULT now()
+id                       uuid PRIMARY KEY DEFAULT gen_random_uuid()
+owner_id                 uuid REFERENCES auth.users(id)
+name                     text NOT NULL
+slug                     text UNIQUE NOT NULL
+logo_url                 text
+is_active                boolean DEFAULT true
+stripe_customer_id       text
+stripe_subscription_id   text
+plan                     text DEFAULT 'basic' CHECK (plan IN ('basic','pro'))  -- migration 011
+adm_password_hash        text                             -- senha legada do dono (via /conta)
+instagram_url            text
+whatsapp_number          text
+whatsapp_notify_enabled  boolean NOT NULL DEFAULT true    -- migration 012
+delivery_hours           jsonb                            -- migration 008
+created_at               timestamptz DEFAULT now()
 ```
 
 ### `restaurant_users` — Funcionários do restaurante
 ```sql
-id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
-restaurant_id   uuid REFERENCES restaurants(id) ON DELETE CASCADE
-user_id         uuid REFERENCES auth.users(id)
-role            text CHECK (role IN ('owner','admin','waiter'))
-created_at      timestamptz DEFAULT now()
+id               uuid PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id    uuid REFERENCES restaurants(id) ON DELETE CASCADE
+user_id          uuid REFERENCES auth.users(id)
+role             text CHECK (role IN ('owner','manager','cook','waiter','delivery'))
+name             text                                     -- nome de exibição no ADM
+adm_password_hash text                                   -- senha ADM individual do membro
+created_at       timestamptz DEFAULT now()
 ```
 
 ### `restaurant_themes` — Tema visual do restaurante
 ```sql
-id               uuid PRIMARY KEY DEFAULT gen_random_uuid()
-restaurant_id    uuid REFERENCES restaurants(id) ON DELETE CASCADE UNIQUE
-primary_color    text DEFAULT '#FF6B00'
-secondary_color  text DEFAULT '#1A0A00'
-background_color text DEFAULT '#2C1A0E'
-font_family      text DEFAULT 'serif'
-font_size_base   text DEFAULT '16px'
-banner_url       text
-updated_at       timestamptz DEFAULT now()
+id                    uuid PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id         uuid REFERENCES restaurants(id) ON DELETE CASCADE UNIQUE
+primary_color         text DEFAULT '#FF6B00'
+secondary_color       text DEFAULT '#1A0A00'
+background_color      text DEFAULT '#2C1A0E'
+font_family           text DEFAULT 'serif'
+font_size_base        text DEFAULT '16px'
+text_color            text DEFAULT '#FFFFFF'
+icon_color            text DEFAULT '#FF6B00'
+banner_url            text
+label_font            text DEFAULT 'dancing-script'
+label_color           text DEFAULT '#ffffff'
+label_effect          text DEFAULT 'offset'
+label_stroke_color    text DEFAULT '#000000'
+label_stroke_size     int DEFAULT 50
+label_offset_distance int DEFAULT 50
+label_offset_angle    int DEFAULT -45
+updated_at            timestamptz DEFAULT now()
 ```
 
 ### `categories` — Categorias do cardápio
@@ -154,13 +168,37 @@ updated_at      timestamptz DEFAULT now()
 
 ### `order_items` — Itens do pedido
 ```sql
-id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
-order_id        uuid REFERENCES orders(id) ON DELETE CASCADE
-product_id      uuid REFERENCES products(id)
-product_name    text NOT NULL                    -- snapshot do nome no momento
-product_price   numeric(10,2) NOT NULL           -- snapshot do preço
-quantity        int NOT NULL DEFAULT 1
-notes           text
+id               uuid PRIMARY KEY DEFAULT gen_random_uuid()
+order_id         uuid REFERENCES orders(id) ON DELETE CASCADE
+product_id       uuid REFERENCES products(id)
+product_name     text NOT NULL
+product_price    numeric(10,2) NOT NULL
+quantity         int NOT NULL DEFAULT 1
+notes            text
+selected_options jsonb                           -- migration 010: adicionais escolhidos
+```
+
+### `product_option_groups` — Grupos de adicionais por produto (migration 010)
+```sql
+id             uuid PRIMARY KEY DEFAULT gen_random_uuid()
+product_id     uuid REFERENCES products(id) ON DELETE CASCADE
+name           text NOT NULL
+description    text
+min_selections int NOT NULL DEFAULT 0
+max_selections int NOT NULL DEFAULT 1
+sort_order     int NOT NULL DEFAULT 0
+created_at     timestamptz NOT NULL DEFAULT now()
+```
+
+### `product_option_items` — Itens de cada grupo (migration 010)
+```sql
+id             uuid PRIMARY KEY DEFAULT gen_random_uuid()
+group_id       uuid REFERENCES product_option_groups(id) ON DELETE CASCADE
+name           text NOT NULL
+price_addition numeric(10,2) NOT NULL DEFAULT 0
+is_available   boolean NOT NULL DEFAULT true
+sort_order     int NOT NULL DEFAULT 0
+created_at     timestamptz NOT NULL DEFAULT now()
 ```
 
 ### `qr_sessions` — Sessões de QR code de pedido (cliente → garçom)
@@ -199,9 +237,11 @@ created_at      timestamptz DEFAULT now()
 ### Stripe
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/stripe/checkout` | Cria sessão de checkout (valida slug + auth) |
-| POST | `/api/stripe/webhook` | Eventos Stripe: cria restaurante, ativa/desativa, envia e-mail Resend |
-| POST | `/api/stripe/portal` | Cria sessão do Billing Portal (gerenciar assinatura) |
+| POST | `/api/stripe/checkout` | Cria sessão de checkout (`plan: basic|pro`) |
+| POST | `/api/stripe/webhook` | Eventos Stripe: cria restaurante, salva `plan`, ativa/desativa, envia e-mail |
+| POST | `/api/stripe/portal` | Abre portal de gerenciamento da assinatura |
+| POST | `/api/stripe/upgrade` | Upgrade Basic → Pro via Stripe subscription update (`proration_behavior: 'none'`) |
+| POST | `/api/stripe/downgrade` | Downgrade Pro → Básico (`proration_behavior: 'none'`) |
 
 ### Restaurantes
 | Método | Rota | Descrição |
@@ -221,19 +261,48 @@ created_at      timestamptz DEFAULT now()
 | POST | `/api/qrcode/session` | Cliente cria qr_session com itens do carrinho (TTL 15 min) |
 | POST | `/api/qrcode/confirm` | Garçom confirma sessão → cria pedido `type=table` |
 
+### ADM do Restaurante
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/api/adm/[slug]/login` | Login com e-mail + senha ADM — retorna cookie HMAC |
+| POST | `/api/adm/[slug]/logout` | Logout do painel ADM |
+| GET | `/api/adm/[slug]/funcionarios` | Lista membros enriquecidos com email/avatar do Supabase Auth |
+| POST | `/api/adm/[slug]/funcionarios` | Convida membro por e-mail (Supabase invite) ou atualiza cargo |
+| DELETE | `/api/adm/[slug]/funcionarios` | Remove membro (não pode remover owner) |
+| POST | `/api/adm/[slug]/member-password` | Define/reseta senha ADM de um membro |
+
 ### WhatsApp
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/whatsapp/notify` | Envio interno via UltraMSG |
+| POST | `/api/whatsapp/notify` | Envio interno via UltraMSG (protegido por X-Internal-Secret) |
+| POST | `/api/whatsapp/test` | Testa configuração de WhatsApp do restaurante |
 
 ---
 
-## Middleware de Autenticação
+## Autenticação ADM do Restaurante
 
-`middleware.ts` intercepta toda rota `/[slug]/adm/*`:
-1. Verifica sessão Supabase
-2. Verifica se o usuário é `restaurant_user` do restaurante com aquele `slug`
-3. Redireciona para `/[slug]/adm/login` se não autenticado
+**Dois sistemas independentes** coexistem:
+
+### 1. Conta HIVI (Google OAuth via Supabase)
+- Rotas: `/conta`, `/criar-loja`, `/entrar`
+- Cookie gerenciado pelo Supabase SSR
+- Middleware protege `saasProtected = ['/conta', '/criar-loja']`
+
+### 2. ADM do Restaurante (HMAC + PBKDF2 — `lib/adm-auth.ts`)
+- Funcionários não precisam de conta HIVI
+- Senha por membro: hash PBKDF2 (120.000 iterações, salt aleatório 16 bytes)
+- Token: `base64url(JSON payload) + "." + HMAC-SHA256`
+- Payload: `{ slug, role, name, memberId, ts }` — RBAC sem consulta ao banco
+- Cookie `hivi_adm_{slug}`, HttpOnly, Path=`/`, TTL 8h
+- Verificado no `adm/layout.tsx` (Node.js runtime, não Edge)
+- Dono pode ter senha em `restaurants.adm_password_hash` (legado via /conta) **ou** em `restaurant_users.adm_password_hash`
+
+## Middleware (`middleware.ts`)
+
+Intercepta todas as rotas não estáticas:
+- Protege `/conta` e `/criar-loja` via sessão Supabase (redireciona para `/entrar`)
+- Injeta header `x-pathname` para layouts server-side detectarem se é rota ADM
+- Proteção das rotas ADM (`/[slug]/adm/*`) feita no `adm/layout.tsx` (não no middleware Edge) para garantir que o runtime HMAC seja Node.js
 
 ---
 
@@ -248,11 +317,14 @@ created_at      timestamptz DEFAULT now()
 | `STRIPE_WEBHOOK_SECRET` | Stripe | ✅ Configurada |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe | ✅ Configurada |
 | `STRIPE_PRICE_BASIC` | Stripe | ✅ Configurada |
+| `STRIPE_PRICE_PRO` | Stripe | ✅ Configurada |
 | `ULTRAMSG_INSTANCE_ID` | UltraMSG | ✅ Configurada |
 | `ULTRAMSG_TOKEN` | UltraMSG | ✅ Configurada |
-| `RESEND_API_KEY` | Resend | ⬜ Pendente |
-| `RESEND_FROM_EMAIL` | Resend | ⬜ Pendente |
-| `NEXT_PUBLIC_APP_URL` | App | ✅ Configurada (`https://hivi.vercel.app`) |
+| `RESEND_API_KEY` | Resend | ✅ Configurada |
+| `RESEND_FROM_EMAIL` | Resend | ✅ Configurada |
+| `INTERNAL_API_SECRET` | App | ✅ Configurada (protege /api/whatsapp/notify) |
+| `TEMPLATE_RESTAURANT_ID` | App | ✅ Configurada (restaurante template para novos cadastros) |
+| `NEXT_PUBLIC_APP_URL` | App | ✅ Configurada (`https://hivi-web.com`) |
 | Google OAuth | Supabase Dashboard | ✅ Configurado |
 
 > Guia detalhado de obtenção de cada chave: [`Contextos/SETUP_KEYS.md`](./SETUP_KEYS.md)

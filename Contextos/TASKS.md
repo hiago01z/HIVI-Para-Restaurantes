@@ -134,6 +134,18 @@
 | 2026-05-22 | Feature: Plano Pro (R$99,99/mês) — migration 011 (`plan` column em restaurants), checkout/webhook suportam `plan` básico|pro, API POST /api/stripe/upgrade (upgrade Basic→Pro via Stripe subscription update), AdmNav exibe link Analytics apenas para Pro, badge de plano e botão upgrade em /conta, seletor de plano em /criar-loja, páginas /precos e landing atualizadas com dois planos. |
 | 2026-05-22 | Feature: Fase 9 — Analytics e Relatórios (exclusivo Plano Pro) — página /[slug]/adm/analytics com gráfico de receita por dia (AreaChart), pedidos por dia (BarChart), top 5 produtos (barras CSS + receita), pedidos por tipo (PieChart), distribuição por horário (BarChart), KPIs (receita total, pedidos, ticket médio, horário de pico), comparativo semanal com variação %, exportação CSV com BOM UTF-8. Seletor de período 7d/30d. recharts instalado. |
 
+| 2026-05-23 | Feature: Exportação de relatório PDF no Analytics (Plano Pro) — jsPDF + jspdf-autotable, seções: header laranja, 4 KPIs, comparativo semanal, top 10 produtos, pedidos por tipo, receita por dia, distribuição horária, rodapé em todas as páginas. Botão ao lado do CSV. |
+| 2026-05-23 | Feature: API POST /api/stripe/downgrade — downgrade Pro → Básico com proration_behavior: 'none'; atualiza plano imediatamente no banco |
+| 2026-05-23 | Feature: botão "Voltar para Básico" em /conta no mesmo padrão do botão upgrade; confirm() com aviso de perda do Analytics |
+| 2026-05-23 | Fix: upgrade Stripe exibia R$135,78 em vez de R$99,99 — proration_behavior alterado de 'create_prorations' para 'none' |
+| 2026-05-23 | Fix: flash marrom ao navegar para o Painel ADM — [slug]/layout.tsx retorna early sem tema para rotas isAdmPath |
+| 2026-05-23 | Fix: dono exibido como "sem senha" na página Equipe — page.tsx agora busca owner_id e adm_password_hash de restaurants; has_adm_password verifica os dois hashes |
+| 2026-05-23 | Fix: sessão ADM expirada mostrava "Não autorizado" estático — funcionarios-client agora redireciona para login ao receber 401 |
+| 2026-05-23 | Update: permissões de cargos — Garçom pode avançar até out_for_delivery, ver aba Entrega e marcar pago/não pago; Cozinheiro avança até Pronto; Entregador pode marcar pago/não pago |
+| 2026-05-23 | Update: descrições de cargos no formulário de convite corrigidas para refletir permissões reais |
+| 2026-05-23 | Fix: legibilidade das impressões — receipt-html: fonte Arial 11pt peso 600 (era Courier New 9pt), negrito 800, pedido #17pt, total 13pt, hr sólido 1.5px; escpos: bold em todos os campos (tipo, cliente, end, tel, pgto, obs, rodapé) |
+| 2026-05-23 | Feature: toggle "Notificar novo pedido" na seção WhatsApp das Configurações — migration 012 (whatsapp_notify_enabled BOOLEAN DEFAULT TRUE); api/orders verifica campo antes de disparar |
+
 ---
 
 ## Pendente (Próximas Fases)
@@ -202,3 +214,6 @@ Todos os fluxos validados em produção. Plataforma operacional em hivi-web.com.
 | 2026-05-22 | Analytics gateado por plano (`plan === 'pro'`) em vez de por feature flag | Monetização: plan é a fonte da verdade, sem estado extra no client |
 | 2026-05-22 | Upgrade de plano via Stripe subscription update (troca de price) com proration | Upgrade transparente sem cancelar a assinatura — cliente paga apenas a diferença pro-rata |
 | 2026-05-22 | recharts para gráficos de analytics | Biblioteca React-native, SSR-compatível com `ResponsiveContainer`, sem canvas manual |
+| 2026-05-23 | PDF analytics com import dinâmico de jsPDF | Evita SSR crash — jsPDF é client-only; `await import('jspdf')` dentro de async function |
+| 2026-05-23 | Downgrade sem proration_behavior: 'none' | Plano muda imediatamente na subscription; próxima fatura = R$59,99 sem cobranças intermediárias |
+| 2026-05-23 | ADM theme isolation via isAdmPath early return | Mais simples que CSS specificity — não renderiza o wrapper de tema para rotas ADM |

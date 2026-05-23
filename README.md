@@ -82,25 +82,35 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 
 | Área | Funcionalidades |
 |---|---|
-| **Dashboard** | Métricas do dia (pedidos, em andamento, receita), acesso rápido, lista dos últimos pedidos |
-| **Pedidos** | Tabs por tipo (entrega / mesa / QR code), filtro por período (hoje/ontem/7 dias), realtime, alterar status, badge de pagamento (Pago/Não Pago), observações, audit trail "Alterado por" |
+| **Dashboard** | Métricas do dia (pedidos, em andamento, receita), últimos pedidos |
+| **Pedidos** | Tabs entrega/mesa/QR, filtro de período, realtime, alterar status, badge Pago/Não Pago com audit trail, observações, impressão por pedido |
 | **Leitor de QR Code** | Scanner via câmera (jsQR + canvas, iOS/Android) + fallback por foto |
-| **Pratos** | CRUD completo, marcar/desmarcar destaque, upload de imagem com crop |
-| **Categorias** | CRUD + reordenação drag-like, upload de imagem com crop |
-| **Funcionários** | Convidar por e-mail, definir cargo, definir nome de exibição, remover |
-| **Configurações** | Status do cardápio, redes sociais, WhatsApp + teste de notificação, logo, banner, tema completo, prévia ao vivo via iframe, horário de entregas, QR code da loja (download PNG), link para gerenciar equipe |
-| **Senha ADM** | Cada membro define sua própria senha via `/conta` ou pelo dono |
-| **Notificação sonora** | Beep duplo via Web Audio API ao chegar novo pedido (hoje) |
+| **Pratos** | CRUD completo, destaques, crop de imagem, **Adicionais** (grupos e itens com edição inline) |
+| **Categorias** | CRUD + reordenação, crop de imagem |
+| **Funcionários** | Convidar por e-mail (Supabase invite), cargo, nome de exibição, senha ADM individual, remover |
+| **Analytics** ⭐ Pro | Receita/pedidos por dia, top produtos, pedidos por tipo, horário de pico, KPIs, comparativo semanal, exportação CSV e PDF |
+| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste, logo, banner, tema completo com prévia ao vivo, horário de entregas, impressora térmica (USB/BT/Sistema), QR code download |
+| **Notificação sonora** | Beep duplo (Web Audio API), toggle ativo/pausado no header |
+| **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Via Sistema (window.print); auto-impressão; reimpressão manual por pedido |
 
 ### RBAC — Controle de Acesso por Cargo
 
-| Cargo | Permissões |
-|---|---|
-| `owner` | Acesso total |
-| `manager` | Acesso total, exceto pausar/excluir o restaurante |
-| `cook` | Pedidos (mesa + entrega), pode avançar status até "Pronto" |
-| `waiter` | Pedidos de mesa + leitor de QR code, pode confirmar pedidos |
-| `delivery` | Apenas pedidos de entrega, pode marcar saiu/entregue |
+| Cargo | Tabs visíveis | Status permitidos | Pagamento |
+|---|---|---|---|
+| `owner` | Entrega + Mesa + QR | Todos | ✅ |
+| `manager` | Entrega + Mesa + QR | Todos | ✅ |
+| `cook` | Entrega + Mesa | Aguardando → Pronto | ✅ |
+| `waiter` | **Entrega** + Mesa + QR | Aguardando → Saiu p/ entrega | ✅ |
+| `delivery` | Apenas Entrega | Saiu p/ entrega → Entregue | ✅ |
+
+### Planos
+
+| Plano | Preço | Inclui |
+|---|---|---|
+| **Básico** | R$ 59,99/mês | Tudo exceto Analytics |
+| **Pro** | R$ 99,99/mês | Básico + Analytics + PDF Report |
+
+Upgrade e downgrade via `/conta` sem cancelar a assinatura — troca o price na subscription do Stripe (`proration_behavior: 'none'`), próxima fatura já reflete o novo valor.
 
 ---
 
@@ -108,16 +118,18 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 
 | Tecnologia | Versão | Uso |
 |---|---|---|
-| Next.js (App Router) | 14.x | Framework principal — SSR, API Routes, middleware |
+| Next.js (App Router) | 14.2.x | Framework principal — SSR, API Routes, middleware |
 | React | 18 | UI |
 | TypeScript | 5 | Tipagem estática |
 | Tailwind CSS | 3 | Estilização |
 | Supabase | — | PostgreSQL, Auth (Google OAuth), Storage, Realtime |
-| Stripe | — | Checkout, webhooks, Customer Portal |
-| Resend | — | E-mails transacionais (boas-vindas, fatura) |
+| Stripe | — | Checkout, webhooks, Customer Portal, upgrade/downgrade de plano |
+| Resend | — | E-mails transacionais (boas-vindas) |
 | UltraMSG | — | WhatsApp automático para pedidos de entrega |
 | Vercel | — | Hospedagem, deploy automático via GitHub |
 | Zod | — | Validação de schemas nas API Routes |
+| `recharts` | — | Gráficos do Analytics (AreaChart, BarChart, PieChart) |
+| `jspdf` + `jspdf-autotable` | — | Geração de PDF do Analytics (dynamic import) |
 | `qrcode.react` | — | Geração de QR codes (SVG) |
 | `jsqr` | — | Leitura de QR codes via câmera/canvas |
 | `lucide-react` | — | Ícones |
@@ -192,16 +204,32 @@ lib/
 ├── rate-limit.ts               # Rate limiting in-memory
 └── ultramsg.ts                 # Cliente WhatsApp UltraMSG
 
+lib/
+├── adm-auth.ts             # HMAC tokens + PBKDF2 para senhas ADM
+├── color-utils.ts          # getContrastColor, computeLabelShadow
+├── delivery-hours.ts       # Tipos e lógica de horário de entregas
+├── rate-limit.ts           # Rate limiting in-memory
+├── ultramsg.ts             # Cliente UltraMSG
+├── analytics-pdf.ts        # Geração de PDF de analytics (jsPDF + autotable)
+└── thermal-printer/
+    ├── escpos.ts           # Encoder ESC/POS puro (sem dependências)
+    ├── printer.ts          # Gerenciamento de conexão USB/BT/Browser
+    └── receipt-html.ts     # HTML de cupom para modo "Via sistema"
+
 supabase/
 └── migrations/
     ├── 001_initial_schema.sql
-    ├── 002_storage_policies.sql (ou similar)
-    ├── 003_...
+    ├── 002_theme_extra_colors.sql
+    ├── 003_adm_password.sql
     ├── 004_storage_policies.sql
-    ├── 005_label_columns.sql
-    ├── 006_order_id_qr_sessions.sql
-    ├── 007_payment_status.sql
-    └── 008_delivery_hours.sql
+    ├── 005_label_columns_and_role_fix.sql
+    ├── 006_qr_session_order_id_and_rls_fixes.sql
+    ├── 007_member_auth_and_rbac.sql
+    ├── 008_delivery_hours.sql
+    ├── 009_payment_changed_by.sql
+    ├── 010_product_options.sql
+    ├── 011_pro_plan.sql
+    └── 012_whatsapp_notify_enabled.sql
 ```
 
 ---
@@ -212,14 +240,16 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante (slug, nome, logo, status, whatsapp, stripe_customer_id, delivery_hours) |
-| `restaurant_users` | Membros da equipe (role, name, adm_password_hash, user_id) |
-| `restaurant_themes` | Tema visual (cores, fonte, tamanho, banner, CSS vars do label) |
-| `categories` | Categorias do cardápio (nome, imagem, ordem) |
-| `products` | Pratos/bebidas (nome, preço, imagem, destaque, categoria) |
-| `orders` | Pedidos (type, status, payment_status, customer_*, notes, total) |
-| `order_items` | Itens de cada pedido |
-| `qr_sessions` | Sessões QR de mesa (TTL 15 min, order_data JSON, confirmed, order_id) |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (basic/pro), whatsapp_number, whatsapp_notify_enabled, delivery_hours, stripe_*, adm_password_hash |
+| `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash |
+| `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
+| `categories` | Categorias do cardápio: nome, imagem, display_order |
+| `products` | Pratos/bebidas: nome, preço, imagem, is_featured, is_available, category_id |
+| `product_option_groups` | Grupos de adicionais por produto: nome, min/max seleções, sort_order |
+| `product_option_items` | Itens de cada grupo: nome, price_addition, is_available, sort_order |
+| `orders` | Pedidos: type (table/delivery), status (7 estados), payment_status, payment_changed_by, status_changed_by, customer_*, notes, total |
+| `order_items` | Itens de cada pedido com snapshot de nome/preço + selected_options JSONB |
+| `qr_sessions` | Sessões QR de mesa: TTL 15 min, order_data JSON, confirmed, order_id |
 
 ### RLS (Row Level Security)
 
@@ -246,9 +276,11 @@ Todas as tabelas têm RLS ativo. Políticas principais:
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/api/stripe/checkout` | Cria sessão de checkout (plano básico R$ 59,99/mês) |
-| `POST` | `/api/stripe/webhook` | Recebe eventos Stripe (cria restaurante, ativa/desativa) |
+| `POST` | `/api/stripe/checkout` | Cria sessão de checkout (`plan: basic\|pro`) |
+| `POST` | `/api/stripe/webhook` | Recebe eventos Stripe: cria restaurante, salva plano, ativa/desativa, envia e-mail |
 | `POST` | `/api/stripe/portal` | Abre portal de gerenciamento do cliente |
+| `POST` | `/api/stripe/upgrade` | Upgrade Basic → Pro via subscription update (`proration_behavior: 'none'`) |
+| `POST` | `/api/stripe/downgrade` | Downgrade Pro → Básico (`proration_behavior: 'none'`) |
 
 ### Restaurantes
 
@@ -308,13 +340,15 @@ O projeto tem **dois sistemas de autenticação independentes**:
 - Cookie gerenciado pelo Supabase SSR
 - Protegido via middleware (`saasProtected = ['/conta', '/criar-loja']`)
 
-### 2. ADM do Restaurante (HMAC + PBKDF2)
+### 2. ADM do Restaurante (HMAC + PBKDF2 — `lib/adm-auth.ts`)
 - Funcionários não precisam de conta HIVI
-- Senha definida por membro (hash PBKDF2, 120.000 iterações)
+- Senha por membro: hash PBKDF2 (120.000 iterações, salt aleatório 16 bytes)
 - Token: `base64url(JSON payload) + "." + HMAC-SHA256`
 - Payload: `{ slug, role, name, memberId, ts }` — RBAC sem consulta extra ao banco
-- Cookie httpOnly no path `/`, nome `hivi_adm_{slug}`, TTL 8h
-- Verificado no `adm/layout.tsx` a cada request (Node.js runtime, não Edge)
+- Cookie `hivi_adm_{slug}`, HttpOnly, Path=`/`, TTL 8h
+- Verificado no `adm/layout.tsx` (Node.js runtime, não Edge)
+- Dono pode ter senha em `restaurants.adm_password_hash` (legado via /conta) **ou** em `restaurant_users.adm_password_hash` (senha individual mais recente)
+- Sessão expirada → redirecionamento automático para login ao receber 401
 
 ---
 
@@ -332,7 +366,8 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_BASIC_PRICE_ID=price_...
+STRIPE_PRICE_BASIC=price_...
+STRIPE_PRICE_PRO=price_...
 
 # Resend (e-mails)
 RESEND_API_KEY=re_...
@@ -357,12 +392,13 @@ INTERNAL_API_SECRET=segredo_aleatorio
 | Variável | Status |
 |---|---|
 | Supabase (URL, Anon Key, Service Role) | ✅ Configurado |
-| Stripe (Secret, Webhook, Price ID) | ✅ Configurado |
+| Stripe (Secret, Webhook, Price Basic, Price Pro) | ✅ Configurado |
 | UltraMSG (Instance ID, Token) | ✅ Configurado |
 | Google OAuth | ✅ Configurado no painel Supabase |
-| Resend (API Key) | ✅ Configurado |
+| Resend (API Key, From Email) | ✅ Configurado |
 | `NEXT_PUBLIC_APP_URL` | ✅ `https://hivi-web.com` |
 | `TEMPLATE_RESTAURANT_ID` | ✅ Configurado |
+| `INTERNAL_API_SECRET` | ✅ Configurado |
 
 ---
 
@@ -396,13 +432,19 @@ Execute as migrations em ordem no **SQL Editor do Supabase** (Dashboard → SQL 
 | Arquivo | Conteúdo |
 |---|---|
 | `001_initial_schema.sql` | Todas as tabelas base + RLS inicial |
-| `002` – `004` | Storage policies, ajustes de RLS |
-| `005_label_columns.sql` | Colunas `label_*` em `restaurant_themes` + correção de constraint de role |
-| `006_order_id_qr_sessions.sql` | Coluna `order_id` em `qr_sessions` + correções de políticas |
-| `007_payment_status.sql` | Coluna `payment_status` em `orders` (`paid`/`unpaid`, default `unpaid`) |
+| `002_theme_extra_colors.sql` | Colunas extras de tema |
+| `003_adm_password.sql` | Coluna `adm_password_hash` em `restaurants` |
+| `004_storage_policies.sql` | Bucket `restaurant-images` + 4 RLS policies de storage |
+| `005_label_columns_and_role_fix.sql` | Colunas `label_*` em `restaurant_themes` + constraint de role corrigida |
+| `006_qr_session_order_id_and_rls_fixes.sql` | Coluna `order_id` em `qr_sessions` + correções de políticas |
+| `007_member_auth_and_rbac.sql` | Colunas `name` + `adm_password_hash` em `restaurant_users`, `status_changed_by` em `orders`, constraint 5 cargos |
 | `008_delivery_hours.sql` | Coluna `delivery_hours` jsonb em `restaurants` |
+| `009_payment_changed_by.sql` | Coluna `payment_changed_by` em `orders` |
+| `010_product_options.sql` | Tabelas `product_option_groups`, `product_option_items` + `selected_options` em `order_items` |
+| `011_pro_plan.sql` | Coluna `plan TEXT DEFAULT 'basic' CHECK (basic\|pro)` em `restaurants` |
+| `012_whatsapp_notify_enabled.sql` | Coluna `whatsapp_notify_enabled BOOLEAN DEFAULT true` em `restaurants` |
 
-Status das migrations em produção: **todas executadas**.
+**Status em produção: todas as 12 migrations executadas.**
 
 ---
 
@@ -422,11 +464,35 @@ O projeto está hospedado na **Vercel** com deploy automático via push na branc
 ### Validação E2E — concluída em 2026-05-20
 
 Todos os fluxos testados e validados em produção:
-- [x] Configurar Stripe Billing Portal em `dashboard.stripe.com/settings/billing/portal`
-- [x] Cadastro → pagamento Stripe → criação automática de cardápio
-- [x] Login ADM, temas, equipe, pedidos (entrega + mesa + QR code)
+- [x] Cadastro → pagamento Stripe → criação automática de cardápio (com template)
+- [x] Login ADM, temas, equipe (RBAC completo), pedidos (entrega + mesa + QR code)
 - [x] WhatsApp automático, pausa/reativação, exclusão, múltiplos cardápios
 - [x] Cancelamento de assinatura via Stripe Billing Portal
+- [x] Upgrade Basic → Pro e downgrade Pro → Basic via /conta
+- [x] Analytics (gráficos, KPIs, CSV, PDF) — exclusivo Pro
+- [x] Impressão térmica (Via sistema + USB + Bluetooth)
+- [x] Adicionais (grupos e itens, seleção no cardápio, persistência no pedido)
+
+---
+
+## Estado Atual — 2026-05-23
+
+**Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–12 concluídas.
+
+### Implementado e funcionando
+- ✅ Cadastro, billing (Stripe), dois planos (Basic/Pro), upgrade/downgrade
+- ✅ Cardápio digital público com temas, adicionais, horário de entregas
+- ✅ Painel ADM completo: pedidos, pratos, categorias, funcionários (RBAC 5 cargos)
+- ✅ Analytics com gráficos, KPIs, CSV e PDF (Plano Pro)
+- ✅ Impressão térmica: USB, Bluetooth, Via sistema (zero instalação)
+- ✅ WhatsApp automático com toggle de notificação
+- ✅ Todas as 12 migrations aplicadas em produção
+
+### Próximas funcionalidades planejadas
+- 🔲 PIX e pagamentos online integrados
+- 🔲 Cupons e descontos
+- 🔲 Fidelidade e histórico de clientes
+- 🔲 Multi-unidade (filiais)
 
 ---
 

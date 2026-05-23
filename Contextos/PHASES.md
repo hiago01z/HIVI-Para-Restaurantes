@@ -172,6 +172,7 @@
 - [x] Comparativo semanal (semana atual vs anterior) com variação %
 - [x] Seletor de período: 7 dias / 30 dias
 - [x] Exportação CSV (todos os pedidos do período, com BOM UTF-8 para Excel)
+- [x] Exportação PDF (`lib/analytics-pdf.ts`) — jsPDF + jspdf-autotable (dynamic import); seções: header laranja, KPIs, comparativo semanal, top 10, pedidos por tipo, receita por dia, distribuição horária, rodapé paginado
 
 ---
 
@@ -192,6 +193,9 @@
 - [x] `/precos`: dois cards de plano com feature list completa
 - [x] Landing page `/`: seção de preços com dois planos side-by-side
 - [x] `/conta`: badge de plano por restaurante + botão "Fazer upgrade para Pro"
+- [x] API `POST /api/stripe/downgrade` — downgrade Pro → Básico (`proration_behavior: 'none'`)
+- [x] Botão "Voltar para Básico" em `/conta` com confirm() e aviso de perda do Analytics
+- [x] Fix: upgrade exibia R$135,78 — `proration_behavior` corrigido para `'none'` em ambas as rotas
 
 ---
 
