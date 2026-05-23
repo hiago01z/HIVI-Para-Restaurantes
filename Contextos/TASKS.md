@@ -105,6 +105,8 @@
 - [x] **EXECUTADO 2026-05-20**: Migration 006 — order_id em qr_sessions + public_read_active policy (IS NOT FALSE) + políticas de escrita para role 'manager'
 - [x] **EXECUTADO 2026-05-20**: Migration 007 — name + adm_password_hash em restaurant_users, status_changed_by em orders, constraint de role atualizada ('owner'|'manager'|'cook'|'waiter'|'delivery')
 - [x] **EXECUTADO 2026-05-20**: Migration 008 — coluna `delivery_hours` jsonb em restaurants
+- [x] **EXECUTADO 2026-05-23**: Migration 012 — coluna `whatsapp_notify_enabled` boolean em restaurants
+- [x] **EXECUTADO 2026-05-23**: Migration 013 — coluna `delivery_enabled` boolean em restaurants
 
 ### Fase 8 — Polimento e Testes
 - [x] **2026-05-20**: Testar fluxo completo: cadastro → pagamento → ADM → cardápio público
