@@ -183,7 +183,17 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       {/* Formulário de convite */}
       {showInvite && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
-          <h2 className="font-semibold text-gray-900 text-sm mb-4">Convidar novo membro</h2>
+          <h2 className="font-semibold text-gray-900 text-sm mb-3">Convidar novo membro</h2>
+
+          {/* Tutorial */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4">
+            <p className="text-xs font-semibold text-blue-700 mb-1.5">Como funciona</p>
+            <ol className="text-xs text-blue-700 space-y-1 list-none">
+              <li className="flex gap-2"><span className="font-bold">1.</span><span>Adicione o e-mail e cargo do membro abaixo e clique em <strong>Enviar convite</strong>.</span></li>
+              <li className="flex gap-2"><span className="font-bold">2.</span><span>O membro acessa <strong>hivi-web.com</strong> e faz login com o Gmail ou e-mail adicionado.</span></li>
+              <li className="flex gap-2"><span className="font-bold">3.</span><span>Na área de conta, o painel deste restaurante já aparece — é só clicar em <strong>Painel ADM</strong> e definir uma senha ADM.</span></li>
+            </ol>
+          </div>
 
           <div className="space-y-3 mb-4">
             <div>
