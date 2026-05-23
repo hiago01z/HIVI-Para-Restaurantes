@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
 import { QRCodeSVG } from 'qrcode.react'
-import { generatePixPayload, type PixKeyType } from '@/lib/pix'
+import { generatePixPayload } from '@/lib/pix'
 
 type SelectedOption = {
   group_id: string
@@ -103,7 +103,6 @@ type Props = {
   restaurantId: string
   restaurantName: string
   pixKey: string | null
-  pixKeyType: string | null
   initialOrders: Order[]
   isToday: boolean
   slug: string
@@ -125,7 +124,7 @@ const PERIODO_LABEL: Record<Periodo, string> = {
 }
 
 export function PedidosClient({
-  restaurantId, restaurantName, pixKey, pixKeyType, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
+  restaurantId, restaurantName, pixKey, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
 }: Props) {
   const router = useRouter()
   const allowedTabs = TAB_ALLOWED[memberRole] ?? ['delivery', 'table', 'qr']
