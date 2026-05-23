@@ -1,9 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { PedidosClient } from './_pedidos-client'
 import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
+
+function admSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 type Periodo = 'hoje' | 'ontem' | '7dias'
 
@@ -54,7 +61,10 @@ export default async function PedidosPage({
   const memberRole = payload?.role ?? 'owner'
   const memberName = payload?.name ?? ''
 
-  const supabase = await createClient()
+  // Usa service role — o token ADM já foi validado no layout.
+  // Isso garante que qualquer cargo (dono, gerente, cozinheiro, etc.)
+  // consiga ler os pedidos mesmo sem sessão Supabase Auth.
+  const supabase = admSupabase()
 
   const { start, end, isToday } = getDateRange(periodo)
 

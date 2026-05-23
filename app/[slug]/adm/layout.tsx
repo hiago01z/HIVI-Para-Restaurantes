@@ -2,6 +2,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
 import { AdmNav } from './_components/adm-nav'
+import { AlreadyLoggedIn } from './login/_already-logged-in'
 import { getContrastColor } from '@/lib/color-utils'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 import { getEffectiveLimits } from '@/lib/plan-limits'
@@ -29,14 +30,28 @@ export default async function AdmLayout({
   const valid = payload !== null
 
   if (isLoginPage) {
-    // Já autenticado: vai direto para o painel
-    if (valid) redirect(`/${slug}/adm/pedidos`)
     // Não autenticado: renderiza só o formulário de login, sem nav ADM.
-    // O wrapper fixed cobre o background do tema do restaurante (menu-root)
-    // e garante que a tela de login seja sempre visível.
+    if (!valid) {
+      return (
+        <div style={{ position: 'fixed', inset: 0, background: '#111827', zIndex: 50, overflowY: 'auto' }}>
+          {children}
+        </div>
+      )
+    }
+
+    // Já autenticado: mostra quem está logado com opção de continuar ou trocar
+    const ROLE_LABEL: Record<string, string> = {
+      owner: 'Dono', manager: 'Gerente', cook: 'Cozinheiro',
+      waiter: 'Garçom', delivery: 'Entregador',
+    }
     return (
       <div style={{ position: 'fixed', inset: 0, background: '#111827', zIndex: 50, overflowY: 'auto' }}>
-        {children}
+        <AlreadyLoggedIn
+          slug={slug}
+          memberName={payload!.name}
+          roleLabel={ROLE_LABEL[payload!.role] ?? payload!.role}
+          panelUrl={`/${slug}/adm/pedidos`}
+        />
       </div>
     )
   }

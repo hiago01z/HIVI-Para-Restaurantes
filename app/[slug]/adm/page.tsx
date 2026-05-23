@@ -1,7 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { DashboardClient } from './_components/dashboard-client'
 import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
+
+function admSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export default async function AdmDashboardPage({
   params,
@@ -12,7 +19,9 @@ export default async function AdmDashboardPage({
   const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
 
-  const supabase = await createClient()
+  // Service role — token ADM validado no layout; todos os cargos
+  // devem conseguir ver o dashboard sem sessão Supabase Auth.
+  const supabase = admSupabase()
 
   // Pedidos de hoje
   const todayStart = new Date()
