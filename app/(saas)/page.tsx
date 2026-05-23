@@ -271,10 +271,45 @@ export default async function LandingPage() {
         <h2 className="font-display text-[2rem] font-bold text-center text-gray-950 mb-10 leading-tight">
           Preços
         </h2>
-        <div className="max-w-2xl mx-auto grid sm:grid-cols-2 gap-5">
+        <div className="max-w-4xl mx-auto grid sm:grid-cols-3 gap-5">
+
+          {/* Plano Gratuito */}
+          <div className="border-2 border-gray-200 rounded-3xl p-7 flex flex-col">
+            <p className="font-display font-semibold text-gray-500 text-base text-center mb-1 italic">
+              Plano Gratuito
+            </p>
+            <div className="text-center my-5">
+              <div>
+                <span className="font-display text-5xl font-bold text-gray-950">Grátis</span>
+              </div>
+              <span className="text-sm text-gray-400 mt-1 block font-medium">para sempre · sem cartão</span>
+            </div>
+            <ul className="text-sm text-gray-700 space-y-2.5 mb-7 flex-1">
+              {[
+                'Cardápio digital público',
+                'Painel administrativo completo',
+                'QR code de mesa',
+                'Até 16 pratos e 4 categorias',
+                '1 grupo de adicionais por prato',
+                'Equipe de até 4 pessoas',
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-2.5">
+                  <span className="text-orange-500 font-bold flex-shrink-0">✓</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/criar-conta"
+              className="block w-full py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-2xl text-base text-center hover:bg-orange-50 transition-colors"
+            >
+              Começar grátis
+            </Link>
+            <p className="text-center text-xs text-gray-400 mt-2">🎉 7 dias com tudo do Pro ao criar</p>
+          </div>
 
           {/* Plano Básico */}
-          <div className="border-2 border-gray-200 rounded-3xl p-7">
+          <div className="border-2 border-gray-200 rounded-3xl p-7 flex flex-col">
             <p className="font-display font-semibold text-gray-500 text-base text-center mb-1 italic">
               Plano Básico
             </p>
@@ -285,7 +320,7 @@ export default async function LandingPage() {
               </div>
               <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
-            <ul className="text-sm text-gray-700 space-y-2.5 mb-7">
+            <ul className="text-sm text-gray-700 space-y-2.5 mb-7 flex-1">
               {[
                 'Cardápio digital público',
                 'Painel administrativo completo',
@@ -310,7 +345,7 @@ export default async function LandingPage() {
           </div>
 
           {/* Plano Pro */}
-          <div className="border-2 border-orange-500 rounded-3xl p-7 shadow-xl relative">
+          <div className="border-2 border-orange-500 rounded-3xl p-7 shadow-xl relative flex flex-col">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
               <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
                 Recomendado
@@ -326,7 +361,7 @@ export default async function LandingPage() {
               </div>
               <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
-            <ul className="text-sm text-gray-700 space-y-2.5 mb-7">
+            <ul className="text-sm text-gray-700 space-y-2.5 mb-7 flex-1">
               <li className="flex items-center gap-2.5">
                 <span className="text-orange-500 font-bold flex-shrink-0">★</span>
                 <span className="font-semibold text-gray-800">Tudo do Básico, mais:</span>
