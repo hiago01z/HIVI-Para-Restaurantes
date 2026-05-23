@@ -70,7 +70,7 @@ const STATUS_ALLOWED: Record<string, string[]> = {
   owner:    ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
   manager:  ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
   cook:     ['pending', 'confirmed', 'preparing', 'ready', 'cancelled'],
-  waiter:   ['pending', 'confirmed'],
+  waiter:   ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'cancelled'],
   delivery: ['out_for_delivery', 'delivered', 'cancelled'],
 }
 
@@ -79,7 +79,7 @@ const TAB_ALLOWED: Record<string, string[]> = {
   owner:    ['delivery', 'table', 'qr'],
   manager:  ['delivery', 'table', 'qr'],
   cook:     ['delivery', 'table'],
-  waiter:   ['table', 'qr'],
+  waiter:   ['delivery', 'table', 'qr'],
   delivery: ['delivery'],
 }
 

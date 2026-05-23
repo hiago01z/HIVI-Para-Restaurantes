@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { UserPlus, Trash2, Loader2, Users, Crown, ShieldCheck, ChefHat, Bike, HandPlatter } from 'lucide-react'
 import Image from 'next/image'
 
@@ -43,21 +44,21 @@ const ROLE_OPTIONS = [
     label: 'Cozinheiro',
     icon: ChefHat,
     color: 'text-purple-600 bg-purple-50',
-    desc: 'Pedidos de mesa e entrega. Pode avançar status até "Pronto".',
+    desc: 'Pedidos de mesa e entrega. Pode avançar status de Aguardando até Pronto.',
   },
   {
     value: 'waiter',
     label: 'Garçom',
     icon: HandPlatter,
     color: 'text-green-600 bg-green-50',
-    desc: 'Pedidos de mesa e leitura de QR Code. Pode confirmar pedidos.',
+    desc: 'Mesa, entrega e QR Code. Pode avançar status de Aguardando até Saiu p/ entrega e marcar pago/não pago.',
   },
   {
     value: 'delivery',
     label: 'Entregador',
     icon: Bike,
     color: 'text-yellow-600 bg-yellow-50',
-    desc: 'Apenas pedidos de entrega. Pode marcar como saiu/entregue.',
+    desc: 'Apenas pedidos de entrega. Pode marcar como saiu/entregue e pago/não pago.',
   },
 ]
 
@@ -70,6 +71,7 @@ function formatDate(dateStr: string) {
 }
 
 export function FuncionariosClient({ slug, initialMembers }: Props) {
+  const router = useRouter()
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -96,6 +98,10 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       const data = await res.json()
 
       if (!res.ok) {
+        if (res.status === 401) {
+          router.push(`/${slug}/adm/login`)
+          return
+        }
         setInviteError(data.error ?? 'Erro ao convidar')
         return
       }
@@ -135,6 +141,8 @@ export function FuncionariosClient({ slug, initialMembers }: Props) {
       })
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== memberId))
+      } else if (res.status === 401) {
+        router.push(`/${slug}/adm/login`)
       } else {
         setRemoveError('Erro ao remover membro. Tente novamente.')
         setTimeout(() => setRemoveError(''), 4000)

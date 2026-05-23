@@ -176,26 +176,26 @@ export function encodeOrder(
   const orderNum = `PEDIDO #${String(order.order_number).padStart(4, '0')}`
   b.push(...CMD_DBL_ON, ...lineStr(orderNum, 'ascii'), ...CMD_DBL_OFF, LF)
 
-  // Type + datetime
+  // Type + datetime (bold)
   b.push(...CMD_LEFT)
   const typeLabel = order.type === 'table'
     ? `Mesa ${order.table_number ?? '-'}`
     : 'Delivery'
-  b.push(...row(typeLabel, formatDateTime(order.created_at), width, charset))
+  b.push(...CMD_BOLD_ON, ...row(typeLabel, formatDateTime(order.created_at), width, charset), ...CMD_BOLD_OFF)
 
   if (order.customer_name) {
-    b.push(...lineStr(`Cliente: ${order.customer_name}`, charset))
+    b.push(...CMD_BOLD_ON, ...lineStr(`Cliente: ${order.customer_name}`, charset), ...CMD_BOLD_OFF)
   }
 
-  // Delivery details
+  // Delivery details (bold)
   if (order.type === 'delivery') {
-    if (order.address)        b.push(...lineStr(`End: ${order.address}`, charset))
-    if (order.customer_phone) b.push(...lineStr(`Tel: ${order.customer_phone}`, charset))
+    if (order.address)        b.push(...CMD_BOLD_ON, ...lineStr(`End: ${order.address}`, charset), ...CMD_BOLD_OFF)
+    if (order.customer_phone) b.push(...CMD_BOLD_ON, ...lineStr(`Tel: ${order.customer_phone}`, charset), ...CMD_BOLD_OFF)
     if (order.payment_method) {
       const payStr = order.payment_method === 'dinheiro'
         ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for)})` : ''}`
         : order.payment_method === 'cartao' ? 'Pgto: Cartao' : 'Pgto: Pix'
-      b.push(...lineStr(payStr, charset))
+      b.push(...CMD_BOLD_ON, ...lineStr(payStr, charset), ...CMD_BOLD_OFF)
     }
   }
 
@@ -220,13 +220,13 @@ export function encodeOrder(
   // Total
   b.push(...CMD_BOLD_ON, ...row('TOTAL', formatPrice(order.total), width, charset), ...CMD_BOLD_OFF)
 
-  // Notes
+  // Notes (bold)
   if (order.notes) {
-    b.push(LF, ...lineStr(`Obs: ${order.notes}`, charset))
+    b.push(LF, ...CMD_BOLD_ON, ...lineStr(`Obs: ${order.notes}`, charset), ...CMD_BOLD_OFF)
   }
 
   // Footer
-  b.push(LF, ...CMD_CENTER, ...lineStr('HIVI - Cardapio Digital', 'ascii'), LF, LF)
+  b.push(LF, ...CMD_CENTER, ...CMD_BOLD_ON, ...lineStr('HIVI - Cardapio Digital', 'ascii'), ...CMD_BOLD_OFF, LF, LF)
 
   // Cut
   if (cutMode === 'partial') b.push(...CMD_CUT_PARTIAL)

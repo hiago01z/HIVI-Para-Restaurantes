@@ -80,9 +80,10 @@ export function buildReceiptHtml(
   * { box-sizing: border-box; margin: 0; padding: 0; overflow-wrap: break-word; word-break: break-word; }
   html { width: ${pageMm}; }
   body {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 9pt;
-    line-height: 1.45;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    font-weight: 600;
+    line-height: 1.5;
     color: #000;
     background: #fff;
     width: ${bodyMm};
@@ -91,16 +92,16 @@ export function buildReceiptHtml(
     padding: 2mm 0;
   }
   .center { text-align: center; }
-  .bold { font-weight: 700; }
-  .big  { font-size: 13pt; font-weight: 700; text-align: center; margin: 2px 0; }
+  .bold { font-weight: 800; }
+  .big  { font-size: 17pt; font-weight: 800; text-align: center; margin: 3px 0; letter-spacing: 0.5px; }
   .row  { display: flex; justify-content: space-between; gap: 4px; page-break-inside: avoid; }
   .row .l { flex: 1; word-break: break-word; overflow-wrap: break-word; }
   .row .r { flex-shrink: 0; white-space: nowrap; }
-  .option  { padding-left: 4mm; font-size: 8pt; color: #000; }
-  hr { border: none; border-top: 1px dashed #000; margin: 3px 0; }
-  .total { font-size: 11pt; }
-  .notes { font-size: 8pt; margin-top: 4px; padding: 2px 0; }
-  .footer { text-align: center; font-size: 8pt; color: #000; margin-top: 6px; }
+  .option  { padding-left: 4mm; font-size: 10pt; font-weight: 600; color: #000; }
+  hr { border: none; border-top: 1.5px solid #000; margin: 4px 0; }
+  .total { font-size: 13pt; }
+  .notes { font-size: 10pt; font-weight: 600; margin-top: 4px; padding: 2px 0; }
+  .footer { text-align: center; font-size: 9pt; font-weight: 600; color: #000; margin-top: 6px; }
   @media print {
     body { width: ${bodyMm}; max-width: ${bodyMm}; }
   }
