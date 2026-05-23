@@ -21,6 +21,8 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   if (!restaurant) notFound()
 
+  const whatsappNotifyEnabled = (restaurant.whatsapp_notify_enabled as boolean | null) ?? true
+
   // is_active disponível diretamente na query acima
   const activeData = { is_active: restaurant.is_active as boolean | null }
   const supabase = await createClient()
@@ -47,7 +49,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         logo_url: restaurant.logo_url,
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
-        whatsapp_notify_enabled: (restaurant.whatsapp_notify_enabled as boolean | null) ?? true,
+        whatsapp_notify_enabled: whatsappNotifyEnabled,
         is_active: activeData?.is_active ?? true,
         delivery_hours: (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS,
       }}

@@ -267,10 +267,10 @@ export function ConfiguracoesClient({
         .eq('id', restaurant.id)
       if (error) {
         setSocialError('Erro ao salvar. Tente novamente.')
-      } else {
-        setSocialSaved(true)
-        setTimeout(() => setSocialSaved(false), 2000)
+        return
       }
+      setSocialSaved(true)
+      setTimeout(() => setSocialSaved(false), 2000)
     } catch {
       setSocialError('Erro de conexão. Tente novamente.')
     } finally {
