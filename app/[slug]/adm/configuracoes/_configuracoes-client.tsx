@@ -11,6 +11,14 @@ import {
   type PrinterConfig, type ConnectionType,
 } from '@/lib/thermal-printer/printer'
 import { QRCodeSVG } from 'qrcode.react'
+import {
+  type PixKeyType,
+  validatePixKey,
+  normalizePixKey,
+  generatePixPayload,
+  PIX_KEY_LABELS,
+  PIX_KEY_PLACEHOLDERS,
+} from '@/lib/pix'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
   type DeliveryHoursConfig,
@@ -30,6 +38,8 @@ type Restaurant = {
   is_active: boolean
   delivery_enabled: boolean
   delivery_hours: DeliveryHoursConfig
+  pix_key: string | null
+  pix_key_type: PixKeyType | null
 }
 
 type Theme = {
@@ -106,10 +116,12 @@ export function ConfiguracoesClient({
   restaurant,
   theme: initialTheme,
   staffCount,
+  currentRole,
 }: {
   restaurant: Restaurant
   theme: Theme
   staffCount: number
+  currentRole: string
 }) {
   const router = useRouter()
   // Supabase browser client — usado APENAS para upload de imagens no Storage
@@ -161,6 +173,47 @@ export function ConfiguracoesClient({
     } finally {
       setNameSaving(false)
     }
+  }
+
+  // PIX
+  const isOwner = currentRole === 'owner'
+  const [pixKeyType, setPixKeyType] = useState<PixKeyType>(restaurant.pix_key_type ?? 'evp')
+  const [pixKey, setPixKey]         = useState(restaurant.pix_key ?? '')
+  const [pixSaving, setPixSaving]   = useState(false)
+  const [pixSaved, setPixSaved]     = useState(false)
+  const [pixError, setPixError]     = useState('')
+  const [pixTestPayload, setPixTestPayload] = useState<string | null>(null)
+  const [pixCopied, setPixCopied]   = useState(false)
+
+  const pixValid = pixKey.trim() !== '' && validatePixKey(pixKeyType, pixKey)
+
+  async function savePix() {
+    if (!pixValid) { setPixError('Chave PIX inválida para o tipo selecionado.'); return }
+    setPixSaving(true); setPixError('')
+    try {
+      const normalized = normalizePixKey(pixKeyType, pixKey)
+      const ok = await patchSettings({ pix_key: normalized, pix_key_type: pixKeyType })
+      if (ok) { setPixKey(normalized); setPixSaved(true); setTimeout(() => setPixSaved(false), 2000) }
+      else setPixError('Erro ao salvar. Tente novamente.')
+    } catch { setPixError('Erro de conexão.') }
+    finally { setPixSaving(false) }
+  }
+
+  function generateTestQr() {
+    const payload = generatePixPayload({
+      key: normalizePixKey(pixKeyType, pixKey),
+      merchantName: restaurant.name,
+      amount: 0.10,
+      txid: 'TESTE',
+      description: 'Teste HIVI',
+    })
+    setPixTestPayload(payload)
+  }
+
+  async function copyPixPayload(payload: string) {
+    await navigator.clipboard.writeText(payload)
+    setPixCopied(true)
+    setTimeout(() => setPixCopied(false), 2000)
   }
 
   // Ativar/desativar entregas
@@ -611,6 +664,125 @@ export function ConfiguracoesClient({
             )}
           </button>
         </div>
+      </Section>
+
+      {/* ── PIX ── */}
+      <Section title={
+        <span className="flex items-center gap-2">
+          PIX
+          {!isOwner && (
+            <span className="flex items-center gap-1 text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              🔒 Apenas o dono pode editar
+            </span>
+          )}
+          {isOwner && restaurant.pix_key && (
+            <span className="text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ Configurado</span>
+          )}
+        </span>
+      }>
+        <fieldset disabled={!isOwner} className={!isOwner ? 'opacity-50 cursor-not-allowed select-none' : ''}>
+          <div className="space-y-4">
+            {/* Tipo de chave */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de chave</label>
+              <select
+                value={pixKeyType}
+                onChange={(e) => { setPixKeyType(e.target.value as PixKeyType); setPixKey(''); setPixError('') }}
+                disabled={!isOwner}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+              >
+                {(Object.keys(PIX_KEY_LABELS) as PixKeyType[]).map((t) => (
+                  <option key={t} value={t}>{PIX_KEY_LABELS[t]}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Chave */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Chave PIX ({PIX_KEY_LABELS[pixKeyType]})
+              </label>
+              <input
+                type={pixKeyType === 'email' ? 'email' : 'text'}
+                value={pixKey}
+                onChange={(e) => { setPixKey(e.target.value); setPixError('') }}
+                placeholder={PIX_KEY_PLACEHOLDERS[pixKeyType]}
+                disabled={!isOwner}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+              />
+              {pixKey && !pixValid && (
+                <p className="text-xs text-amber-600 mt-1">
+                  {pixKeyType === 'cpf'   && 'CPF inválido. Use o formato 000.000.000-00'}
+                  {pixKeyType === 'cnpj'  && 'CNPJ inválido. Use o formato 00.000.000/0001-00'}
+                  {pixKeyType === 'email' && 'E-mail inválido.'}
+                  {pixKeyType === 'phone' && 'Telefone inválido. Use +55 11 99999-9999'}
+                  {pixKeyType === 'evp'   && 'Chave aleatória inválida. Copie exatamente do seu banco.'}
+                </p>
+              )}
+              {pixKey && pixValid && (
+                <p className="text-xs text-green-600 mt-1">✓ Chave válida</p>
+              )}
+            </div>
+
+            {pixError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{pixError}</p>
+            )}
+
+            {/* Botões */}
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={savePix}
+                disabled={!isOwner || pixSaving || !pixValid}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-opacity disabled:opacity-50"
+                style={{ background: 'var(--adm-primary)' }}
+              >
+                {pixSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : pixSaved ? <><Check className="w-4 h-4" /> Salvo!</> : 'Salvar chave PIX'}
+              </button>
+
+              <button
+                onClick={generateTestQr}
+                disabled={!isOwner || !pixValid}
+                title="Gera um QR code de R$ 0,10 para testar"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Testar QR Code (R$ 0,10)
+              </button>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Modal do QR de teste */}
+        {pixTestPayload && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPixTestPayload(null)}>
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+              <p className="text-sm font-bold text-gray-900 mb-1">QR Code PIX — Teste</p>
+              <p className="text-xs text-gray-500 mb-4">Valor: <strong>R$ 0,10</strong> · Chave: {PIX_KEY_LABELS[pixKeyType]}</p>
+              <div className="flex justify-center mb-4">
+                <QRCodeSVG value={pixTestPayload} size={200} />
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                <p className="text-xs text-gray-500 mb-1 font-medium">Copia e Cola:</p>
+                <p className="text-xs text-gray-700 break-all font-mono leading-relaxed">{pixTestPayload}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => copyPixPayload(pixTestPayload)}
+                  className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
+                >
+                  {pixCopied ? '✓ Copiado!' : 'Copiar código'}
+                </button>
+                <button
+                  onClick={() => setPixTestPayload(null)}
+                  className="flex-1 py-2 rounded-xl text-sm font-medium text-white"
+                  style={{ background: 'var(--adm-primary)' }}
+                >
+                  Fechar
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">Clique fora para fechar</p>
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* ── Status do restaurante ── */}
@@ -1580,7 +1752,7 @@ export function ConfiguracoesClient({
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-widest mb-4">{title}</h2>

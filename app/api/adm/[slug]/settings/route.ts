@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { verifyAdmToken, admCookieName } from '@/lib/adm-auth'
+import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 import { z } from 'zod'
 
 function adminClient() {
@@ -17,11 +17,11 @@ function adminClient() {
   )
 }
 
-async function authorize(slug: string): Promise<boolean> {
+async function authorize(slug: string) {
   const cookieStore = await cookies()
   const token = cookieStore.get(admCookieName(slug))?.value
-  if (!token) return false
-  return verifyAdmToken(slug, token)
+  if (!token) return null
+  return getAdmTokenPayload(slug, token)
 }
 
 const patchSchema = z.object({
@@ -33,6 +33,8 @@ const patchSchema = z.object({
   delivery_enabled:        z.boolean().optional(),
   delivery_hours:          z.any().optional(),
   logo_url:                z.string().nullable().optional(),
+  pix_key:                 z.string().nullable().optional(),
+  pix_key_type:            z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
 })
 
 export async function PATCH(
@@ -41,7 +43,8 @@ export async function PATCH(
 ) {
   const { slug } = await params
 
-  if (!(await authorize(slug))) {
+  const admPayload = await authorize(slug)
+  if (!admPayload) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
@@ -49,6 +52,13 @@ export async function PATCH(
   const parsed = patchSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+  }
+
+  // PIX restrito ao owner
+  const pixFields = ['pix_key', 'pix_key_type'] as const
+  const touchingPix = pixFields.some((f) => parsed.data[f] !== undefined)
+  if (touchingPix && admPayload.role !== 'owner') {
+    return NextResponse.json({ error: 'Apenas o dono pode configurar o PIX.' }, { status: 403 })
   }
 
   const supabase = adminClient()

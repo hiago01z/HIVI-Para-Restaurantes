@@ -1,8 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { ConfiguracoesClient } from './_configuracoes-client'
 import { DEFAULT_DELIVERY_HOURS, type DeliveryHoursConfig } from '@/lib/delivery-hours'
+import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
+import type { PixKeyType } from '@/lib/pix'
 
 export default async function ConfiguracoesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -13,9 +16,15 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Lê role do token ADM para controle de acesso no client
+  const cookieStore = await cookies()
+  const token = cookieStore.get(admCookieName(slug))?.value
+  const admPayload = token ? await getAdmTokenPayload(slug, token) : null
+  const currentRole = admPayload?.role ?? 'waiter'
+
   const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, pix_key, pix_key_type')
     .eq('slug', slug)
     .single()
 
@@ -42,6 +51,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   return (
     <ConfiguracoesClient
+      currentRole={currentRole}
       restaurant={{
         id: restaurant.id,
         name: restaurant.name,
@@ -53,6 +63,8 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         is_active: activeData?.is_active ?? true,
         delivery_enabled: (restaurant.delivery_enabled as boolean | null) ?? true,
         delivery_hours: (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS,
+        pix_key: (restaurant.pix_key as string | null) ?? null,
+        pix_key_type: (restaurant.pix_key_type as PixKeyType | null) ?? null,
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',
