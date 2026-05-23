@@ -666,24 +666,27 @@ export function PedidosClient({
                             {order.change_for && ` (troco p/ ${formatPrice(order.change_for)})`}
                           </p>
                         )}
-                        {order.payment_method === 'pix' && pixKey && (
-                          <button
-                            onClick={() => openPixModal(order)}
-                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border text-green-700 border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                            Gerar QR Code PIX
-                          </button>
-                        )}
-                        {order.payment_method === 'pix' && !pixKey && (
-                          <p className="text-xs text-amber-600 mt-1">⚠️ Configure a chave PIX em Configurações para gerar QR code.</p>
-                        )}
                       </div>
                     )}
 
                     {order.type === 'table' && order.table_number && (
                       <p className="text-sm text-gray-600"><span className="font-medium">Mesa:</span> {order.table_number}</p>
                     )}
+
+                    {/* Botão PIX — disponível para entrega e mesa, todos os membros */}
+                    {order.payment_method === 'pix' && pixKey && (
+                      <button
+                        onClick={() => openPixModal(order)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border text-green-700 border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        Gerar QR Code PIX
+                      </button>
+                    )}
+                    {order.payment_method === 'pix' && !pixKey && (
+                      <p className="text-xs text-amber-600">⚠️ Configure a chave PIX em Configurações para gerar QR code.</p>
+                    )}
+
                     {order.notes && (
                       <p className="text-xs text-gray-500 mt-1 italic bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-1.5">
                         💬 {order.notes}
