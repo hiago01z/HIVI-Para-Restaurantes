@@ -17,11 +17,11 @@
 | 10 | Adicionais (Product Add-ons) | ✅ Concluído |
 | 11 | Impressão Térmica | ✅ Concluído |
 | 12 | Plano Pro + Billing Multi-plano | ✅ Concluído |
-| 13 | PIX e Pagamentos Online | 🔲 Pendente |
-| 14 | Cupons e Descontos | 🔲 Pendente |
-| 13 | Cupons e Descontos | 🔲 Pendente |
-| 14 | Fidelidade e Clientes | 🔲 Pendente |
-| 15 | Multi-unidade | 🔲 Pendente |
+| 13 | Plano Gratuito + Trial | ✅ Concluído |
+| 14 | PIX e Pagamentos Online | 🔲 Pendente |
+| 15 | Cupons e Descontos | 🔲 Pendente |
+| 16 | Fidelidade e Clientes | 🔲 Pendente |
+| 17 | Multi-unidade | 🔲 Pendente |
 
 ---
 
@@ -247,7 +247,27 @@
 
 ---
 
-## Fase 12 — PIX e Pagamentos Online 🔲
+## Fase 13 — Plano Gratuito + Trial ✅
+
+> Concluído em 2026-05-23.
+
+- [x] Migration `014_free_plan.sql` — `trial_ends_at TIMESTAMPTZ` em `restaurants`, `session_id TEXT` em `restaurant_users`, `plan` default alterado para `'free'`
+- [x] `lib/plan-limits.ts` — `getEffectiveLimits(plan, trial_ends_at)` retorna `PRO_LIMITS` durante trial, limites do plano Free após
+- [x] Limites do Plano Gratuito: 16 pratos, 4 categorias, 1 grupo de adicionais por prato, equipe de 4 (1 owner + 3), sem WhatsApp automático, sem Analytics
+- [x] `POST /api/restaurants/free` — cria restaurante sem Stripe: plan='free', trial_ends_at=now()+7d, auto-gera cookie ADM para primeiro acesso
+- [x] `POST /api/stripe/subscribe` — Stripe Checkout Session para restaurante free existente (upgrade free → pago)
+- [x] Trial de 7 dias: todos os novos restaurantes free recebem PRO_LIMITS por 7 dias
+- [x] Soft-lock: ao expirar trial, pratos em excesso são auto-pausados (`is_available=false`) no carregamento do server component `pratos/page.tsx` — nunca deletados
+- [x] Login único por dispositivo (session_id): login route gera novo `session_id`, persiste em DB e inclui no HMAC token; `adm/layout.tsx` compara a cada page load; mismatch → redirect `login?reason=session_expired`
+- [x] Banner de trial no ADM (pratos e categorias) — mostra dias restantes e link de upgrade
+- [x] Trial countdown exibido em `/conta` por card de restaurante
+- [x] `/criar-loja`: card do Plano Gratuito adicionado (sem Stripe, criação imediata)
+- [x] `/precos` e landing page: seção de preços com 3 planos (Gratuito, Básico, Pro)
+- [x] Texto "Painel administrativo" (não "completo") em todos os planos
+
+---
+
+## Fase 14 — PIX e Pagamentos Online 🔲
 
 - [ ] Geração de QR Code PIX estático por restaurante (chave PIX configurada no ADM)
 - [ ] Geração de QR Code PIX dinâmico por pedido (valor exato)
@@ -257,7 +277,7 @@
 
 ---
 
-## Fase 13 — Cupons e Descontos 🔲
+## Fase 15 — Cupons e Descontos 🔲 (era Fase 13)
 
 - [ ] ADM: criação de cupons (código, valor fixo ou percentual, validade, limite de usos)
 - [ ] Cardápio público: campo de cupom na tela de pedido
@@ -266,7 +286,7 @@
 
 ---
 
-## Fase 14 — Fidelidade e Clientes 🔲
+## Fase 16 — Fidelidade e Clientes 🔲
 
 - [ ] Cadastro opcional do cliente (nome, WhatsApp, histórico)
 - [ ] Programa de pontos: X pedidos = desconto
@@ -275,7 +295,7 @@
 
 ---
 
-## Fase 15 — Multi-unidade 🔲
+## Fase 17 — Multi-unidade 🔲
 
 - [ ] Restaurante com múltiplas filiais sob o mesmo dono
 - [ ] Cardápio base compartilhado + customizações por unidade
