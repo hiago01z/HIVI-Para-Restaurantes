@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import { Loader2, Upload, Download, Instagram, Phone, Check, Send, AlertCircle, Clock, Printer } from 'lucide-react'
 import {
   loadConfig, saveConfig, clearConfig, DEFAULT_CONFIG, DEFAULT_AGENT_URL,
@@ -109,9 +110,32 @@ export function ConfiguracoesClient({
   theme: Theme
   staffCount: number
 }) {
-  // useRef garante que o cliente Supabase é criado apenas uma vez (novo objeto a cada render causaria re-renders desnecessários)
+  const router = useRouter()
+  // Supabase browser client — usado APENAS para upload de imagens no Storage
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
+
+  // Helper: chama a API de settings do ADM (bypassa RLS via service role)
+  async function patchSettings(fields: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch(`/api/adm/${restaurant.slug}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (res.status === 401) { router.push(`/${restaurant.slug}/adm/login`); return false }
+    return res.ok
+  }
+
+  // Helper: chama a API de tema do ADM
+  async function patchTheme(fields: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch(`/api/adm/${restaurant.slug}/theme`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (res.status === 401) { router.push(`/${restaurant.slug}/adm/login`); return false }
+    return res.ok
+  }
 
   // Horário de entregas
   const [deliveryHours, setDeliveryHours] = useState<DeliveryHoursConfig>(
@@ -125,15 +149,12 @@ export function ConfiguracoesClient({
     setHoursSaving(true)
     setHoursError('')
     try {
-      const { error } = await supabase
-        .from('restaurants')
-        .update({ delivery_hours: deliveryHours })
-        .eq('id', restaurant.id)
-      if (error) {
-        setHoursError('Erro ao salvar. Tente novamente.')
-      } else {
+      const ok = await patchSettings({ delivery_hours: deliveryHours })
+      if (ok) {
         setHoursSaved(true)
         setTimeout(() => setHoursSaved(false), 2000)
+      } else {
+        setHoursError('Erro ao salvar. Tente novamente.')
       }
     } catch {
       setHoursError('Erro de conexão. Tente novamente.')
@@ -237,14 +258,11 @@ export function ConfiguracoesClient({
     setStatusSaving(true)
     setStatusError('')
     try {
-      const { error } = await supabase
-        .from('restaurants')
-        .update({ is_active: newValue })
-        .eq('id', restaurant.id)
-      if (error) {
-        setStatusError('Erro ao alterar status. Tente novamente.')
-      } else {
+      const ok = await patchSettings({ is_active: newValue })
+      if (ok) {
         setIsActive(newValue)
+      } else {
+        setStatusError('Erro ao alterar status. Tente novamente.')
       }
     } catch {
       setStatusError('Erro de conexão. Tente novamente.')
@@ -257,20 +275,17 @@ export function ConfiguracoesClient({
     setSocialSaving(true)
     setSocialError('')
     try {
-      const { error } = await supabase
-        .from('restaurants')
-        .update({
-          instagram_url: instagram.trim() || null,
-          whatsapp_number: whatsapp.trim() || null,
-          whatsapp_notify_enabled: wppNotify,
-        })
-        .eq('id', restaurant.id)
-      if (error) {
+      const ok = await patchSettings({
+        instagram_url: instagram.trim() || null,
+        whatsapp_number: whatsapp.trim() || null,
+        whatsapp_notify_enabled: wppNotify,
+      })
+      if (ok) {
+        setSocialSaved(true)
+        setTimeout(() => setSocialSaved(false), 2000)
+      } else {
         setSocialError('Erro ao salvar. Tente novamente.')
-        return
       }
-      setSocialSaved(true)
-      setTimeout(() => setSocialSaved(false), 2000)
     } catch {
       setSocialError('Erro de conexão. Tente novamente.')
     } finally {
@@ -311,31 +326,28 @@ export function ConfiguracoesClient({
     setThemeSaving(true)
     setThemeError('')
     try {
-      const { error } = await supabase
-        .from('restaurant_themes')
-        .upsert({
-          restaurant_id:       restaurant.id,
-          primary_color:       theme.primary_color,
-          secondary_color:     theme.secondary_color,
-          background_color:    theme.background_color,
-          font_family:         theme.font_family,
-          font_size_base:      theme.font_size_base,
-          banner_url:          theme.banner_url,
-          text_color:          theme.text_color,
-          icon_color:          theme.icon_color,
-          label_font:          theme.label_font,
-          label_color:         theme.label_color,
-          label_effect:        theme.label_effect,
-          label_stroke_color:  theme.label_stroke_color,
-          label_stroke_size:   theme.label_stroke_size,
-          label_offset_distance: theme.label_offset_distance,
-          label_offset_angle:  theme.label_offset_angle,
-        }, { onConflict: 'restaurant_id' })
-      if (error) {
-        setThemeError('Erro ao salvar tema. Tente novamente.')
-      } else {
+      const ok = await patchTheme({
+        primary_color:          theme.primary_color,
+        secondary_color:        theme.secondary_color,
+        background_color:       theme.background_color,
+        font_family:            theme.font_family,
+        font_size_base:         theme.font_size_base,
+        banner_url:             theme.banner_url,
+        text_color:             theme.text_color,
+        icon_color:             theme.icon_color,
+        label_font:             theme.label_font,
+        label_color:            theme.label_color,
+        label_effect:           theme.label_effect,
+        label_stroke_color:     theme.label_stroke_color,
+        label_stroke_size:      theme.label_stroke_size,
+        label_offset_distance:  theme.label_offset_distance,
+        label_offset_angle:     theme.label_offset_angle,
+      })
+      if (ok) {
         setThemeSaved(true)
         setTimeout(() => setThemeSaved(false), 2000)
+      } else {
+        setThemeError('Erro ao salvar tema. Tente novamente.')
       }
     } catch {
       setThemeError('Erro de conexão. Tente novamente.')
@@ -370,7 +382,7 @@ export function ConfiguracoesClient({
       if (error) return
       const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
       setLogoPreview(data.publicUrl)
-      await supabase.from('restaurants').update({ logo_url: data.publicUrl }).eq('id', restaurant.id)
+      await patchSettings({ logo_url: data.publicUrl })
     } finally {
       setLogoLoading(false)
     }
@@ -389,9 +401,7 @@ export function ConfiguracoesClient({
       const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
       setBannerPreview(data.publicUrl)
       setTheme((prev) => ({ ...prev, banner_url: data.publicUrl }))
-      await supabase
-        .from('restaurant_themes')
-        .upsert({ restaurant_id: restaurant.id, banner_url: data.publicUrl }, { onConflict: 'restaurant_id' })
+      await patchTheme({ banner_url: data.publicUrl })
     } finally {
       setBannerLoading(false)
     }
@@ -400,9 +410,7 @@ export function ConfiguracoesClient({
   async function removeBanner() {
     setBannerPreview(null)
     setTheme((prev) => ({ ...prev, banner_url: null }))
-    await supabase
-      .from('restaurant_themes')
-      .upsert({ restaurant_id: restaurant.id, banner_url: null }, { onConflict: 'restaurant_id' })
+    await patchTheme({ banner_url: null })
   }
 
   // ── Impressora térmica ─────────────────────────────────────────────────────
@@ -787,7 +795,7 @@ export function ConfiguracoesClient({
         </div>
         {logoPreview && (
           <button
-            onClick={() => { setLogoPreview(null); supabase.from('restaurants').update({ logo_url: null }).eq('id', restaurant.id) }}
+            onClick={() => { setLogoPreview(null); patchSettings({ logo_url: null }) }}
             className="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors"
           >
             Remover logo
