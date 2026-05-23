@@ -17,11 +17,11 @@ function admSupabase() {
   )
 }
 
-/** Returns { id, name, plan, trial_ends_at } for any restaurant by slug, regardless of is_active. */
+/** Returns restaurant data for ADM pages, regardless of is_active. */
 export async function getAdmRestaurant(slug: string) {
   const { data } = await admSupabase()
     .from('restaurants')
-    .select('id, name, plan, trial_ends_at')
+    .select('id, name, plan, trial_ends_at, pix_key, pix_key_type')
     .eq('slug', slug)
     .single()
 

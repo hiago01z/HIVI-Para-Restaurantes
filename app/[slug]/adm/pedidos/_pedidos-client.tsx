@@ -16,6 +16,8 @@ import type { PrintOrder } from '@/lib/thermal-printer/escpos'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
+import { QRCodeSVG } from 'qrcode.react'
+import { generatePixPayload, type PixKeyType } from '@/lib/pix'
 
 type SelectedOption = {
   group_id: string
@@ -100,6 +102,8 @@ type Periodo = 'hoje' | 'ontem' | '7dias'
 type Props = {
   restaurantId: string
   restaurantName: string
+  pixKey: string | null
+  pixKeyType: string | null
   initialOrders: Order[]
   isToday: boolean
   slug: string
@@ -121,7 +125,7 @@ const PERIODO_LABEL: Record<Periodo, string> = {
 }
 
 export function PedidosClient({
-  restaurantId, restaurantName, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
+  restaurantId, restaurantName, pixKey, pixKeyType, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
 }: Props) {
   const router = useRouter()
   const allowedTabs = TAB_ALLOWED[memberRole] ?? ['delivery', 'table', 'qr']
@@ -129,6 +133,29 @@ export function PedidosClient({
 
   const [orders, setOrders] = useState<Order[]>(initialOrders)
   const [tab, setTab] = useState<string>(allowedTabs[0] ?? 'delivery')
+
+  // Modal QR Code PIX
+  const [pixModal, setPixModal] = useState<{ order: Order; payload: string } | null>(null)
+  const [pixCopied, setPixCopied] = useState(false)
+
+  function openPixModal(order: Order) {
+    if (!pixKey) return
+    const payload = generatePixPayload({
+      key: pixKey,
+      merchantName: restaurantName,
+      amount: order.total,
+      txid: `HIVI${order.order_number}`,
+      description: `Pedido #${order.order_number}`,
+    })
+    setPixModal({ order, payload })
+    setPixCopied(false)
+  }
+
+  async function copyPix(text: string) {
+    await navigator.clipboard.writeText(text)
+    setPixCopied(true)
+    setTimeout(() => setPixCopied(false), 2000)
+  }
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [newStatus, setNewStatus] = useState('')
@@ -640,6 +667,18 @@ export function PedidosClient({
                             {order.change_for && ` (troco p/ ${formatPrice(order.change_for)})`}
                           </p>
                         )}
+                        {order.payment_method === 'pix' && pixKey && (
+                          <button
+                            onClick={() => openPixModal(order)}
+                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border text-green-700 border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                            Gerar QR Code PIX
+                          </button>
+                        )}
+                        {order.payment_method === 'pix' && !pixKey && (
+                          <p className="text-xs text-amber-600 mt-1">⚠️ Configure a chave PIX em Configurações para gerar QR code.</p>
+                        )}
                       </div>
                     )}
 
@@ -765,6 +804,41 @@ export function PedidosClient({
               {statusLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {statusLoading ? 'Salvando...' : 'Confirmar'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal QR Code PIX ── */}
+      {pixModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPixModal(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm font-bold text-gray-900 mb-0.5">QR Code PIX</p>
+            <p className="text-xs text-gray-500 mb-4">
+              Pedido <strong>#{pixModal.order.order_number}</strong> · <strong>{formatPrice(pixModal.order.total)}</strong>
+            </p>
+            <div className="flex justify-center mb-4">
+              <QRCodeSVG value={pixModal.payload} size={200} />
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 mb-4 text-left">
+              <p className="text-xs text-gray-500 mb-1 font-medium">Copia e Cola:</p>
+              <p className="text-xs text-gray-700 break-all font-mono leading-relaxed">{pixModal.payload}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyPix(pixModal.payload)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
+              >
+                {pixCopied ? '✓ Copiado!' : 'Copiar código'}
+              </button>
+              <button
+                onClick={() => setPixModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+                style={{ background: 'var(--adm-primary)' }}
+              >
+                Fechar
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-3">Clique fora para fechar</p>
           </div>
         </div>
       )}
