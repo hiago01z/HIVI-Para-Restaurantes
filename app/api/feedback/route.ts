@@ -36,8 +36,8 @@ export async function POST(request: Request) {
     }
 
     const { name, email, type, message } = parsed.data
-    const to = process.env.FEEDBACK_TO_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi-web.com'
-    const from = process.env.RESEND_FROM_EMAIL ?? 'noreply@hivi-web.com'
+    const to = process.env.FEEDBACK_TO_EMAIL ?? 'hiagoalmeida852@gmail.com'
+    const from = 'noreply@hivi-web.com'
 
     const { error } = await resend.emails.send({
       from,
