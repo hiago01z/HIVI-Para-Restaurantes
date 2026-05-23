@@ -518,6 +518,7 @@ export function ConfiguracoesClient({
     setPrinterConnected(false)
     setPrinterCfg(DEFAULT_CONFIG)
     setPrinterError('')
+    setAgentStatus('unknown')
   }
 
   function downloadQr() {

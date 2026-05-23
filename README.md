@@ -92,7 +92,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | **Analytics** ⭐ Pro | Receita/pedidos por dia, top produtos, pedidos por tipo, horário de pico, KPIs, comparativo semanal, exportação CSV e PDF |
 | **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste, logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, impressora térmica (USB/BT/Sistema), QR code download |
 | **Notificação sonora** | Beep duplo (Web Audio API), toggle ativo/pausado no header |
-| **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Via Sistema (window.print); auto-impressão; reimpressão manual por pedido |
+| **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Rede TCP (agente local), Via Sistema (window.print); cut mode; charset Latin-1 para acentos; auto-impressão; reimpressão manual por pedido |
 
 ### RBAC — Controle de Acesso por Cargo
 
@@ -101,17 +101,20 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | `owner` | Entrega + Mesa + QR | Todos | ✅ |
 | `manager` | Entrega + Mesa + QR | Todos | ✅ |
 | `cook` | Entrega + Mesa | Aguardando → Pronto | ✅ |
-| `waiter` | **Entrega** + Mesa + QR | Aguardando → Saiu p/ entrega | ✅ |
+| `waiter` | Entrega + Mesa + QR | Aguardando → Saiu p/ entrega | ✅ |
 | `delivery` | Apenas Entrega | Saiu p/ entrega → Entregue | ✅ |
 
 ### Planos
 
 | Plano | Preço | Inclui |
 |---|---|---|
-| **Básico** | R$ 59,99/mês | Tudo exceto Analytics |
-| **Pro** | R$ 99,99/mês | Básico + Analytics + PDF Report |
+| **Gratuito** | R$ 0 — para sempre | Até 16 pratos, 4 categorias, 1 adicional/prato, equipe de 4, sem WhatsApp automático, sem Analytics. 7 dias de trial com tudo do Pro ao criar. Login único por dispositivo (session_id). |
+| **Básico** | R$ 59,99/mês | Tudo do Free ilimitado + WhatsApp automático + equipe ilimitada |
+| **Pro** | R$ 99,99/mês | Tudo do Básico + Analytics completo (gráficos, KPIs, CSV, PDF) |
 
 Upgrade e downgrade via `/conta` sem cancelar a assinatura — troca o price na subscription do Stripe (`proration_behavior: 'none'`), próxima fatura já reflete o novo valor.
+
+Restaurantes criados no plano Gratuito usam `POST /api/restaurants/free` (sem Stripe) e têm `trial_ends_at = now() + 7 days`. Durante o trial, `getEffectiveLimits()` retorna `PRO_LIMITS`. Após o trial, pratos em excesso são auto-pausados (`is_available=false`) no carregamento da página ADM — nunca deletados (soft-lock).
 
 ---
 
@@ -209,12 +212,13 @@ lib/
 ├── adm-auth.ts             # HMAC tokens + PBKDF2 para senhas ADM
 ├── color-utils.ts          # getContrastColor, computeLabelShadow
 ├── delivery-hours.ts       # Tipos e lógica de horário de entregas
+├── plan-limits.ts          # getEffectiveLimits(plan, trial_ends_at) — limites por plano + trial
 ├── rate-limit.ts           # Rate limiting in-memory
 ├── ultramsg.ts             # Cliente UltraMSG
 ├── analytics-pdf.ts        # Geração de PDF de analytics (jsPDF + autotable)
 └── thermal-printer/
-    ├── escpos.ts           # Encoder ESC/POS puro (sem dependências)
-    ├── printer.ts          # Gerenciamento de conexão USB/BT/Browser
+    ├── escpos.ts           # Encoder ESC/POS puro (CutMode, Charset Latin-1/ASCII, entrega)
+    ├── printer.ts          # Conexão USB/BT/Rede/Browser + checkNetworkAgent
     └── receipt-html.ts     # HTML de cupom para modo "Via sistema"
 
 supabase/
@@ -232,7 +236,8 @@ supabase/
     ├── 010_product_options.sql
     ├── 011_pro_plan.sql
     ├── 012_whatsapp_notify_enabled.sql
-    └── 013_delivery_enabled.sql
+    ├── 013_delivery_enabled.sql
+    └── 014_free_plan.sql
 ```
 
 ---
@@ -243,8 +248,8 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (basic/pro), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, stripe_*, adm_password_hash |
-| `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, trial_ends_at, stripe_*, adm_password_hash |
+| `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash, session_id (login único por dispositivo no plano free) |
 | `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
 | `categories` | Categorias do cardápio: nome, imagem, display_order |
 | `products` | Pratos/bebidas: nome, preço, imagem, is_featured, is_available, category_id |
@@ -279,7 +284,8 @@ Todas as tabelas têm RLS ativo. Políticas principais:
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/api/stripe/checkout` | Cria sessão de checkout (`plan: basic\|pro`) |
+| `POST` | `/api/stripe/checkout` | Cria sessão de checkout (`plan: basic\|pro`) para novos restaurantes pagos |
+| `POST` | `/api/stripe/subscribe` | Cria Stripe Checkout Session para restaurante free existente (upgrade free → pago) |
 | `POST` | `/api/stripe/webhook` | Recebe eventos Stripe: cria restaurante, salva plano, ativa/desativa, envia e-mail |
 | `POST` | `/api/stripe/portal` | Abre portal de gerenciamento do cliente |
 | `POST` | `/api/stripe/upgrade` | Upgrade Basic → Pro via subscription update (`proration_behavior: 'none'`) |
@@ -289,8 +295,9 @@ Todas as tabelas têm RLS ativo. Políticas principais:
 
 | Método | Rota | Descrição |
 |---|---|---|
+| `POST` | `/api/restaurants/free` | Cria restaurante no plano Gratuito (sem Stripe). Gera slug, define plan='free', trial_ends_at=now()+7d, auto-gera cookie ADM para primeiro acesso. |
 | `PATCH` | `/api/restaurants/[id]` | Pausar/ativar (`is_active`) |
-| `DELETE` | `/api/restaurants/[id]` | Excluir restaurante e cancelar assinatura Stripe |
+| `DELETE` | `/api/restaurants/[id]` | Excluir restaurante e cancelar assinatura Stripe automaticamente |
 | `POST` | `/api/restaurants/[id]/adm-password` | Definir/resetar senha ADM do dono |
 
 ### Pedidos
@@ -355,6 +362,7 @@ O projeto tem **dois sistemas de autenticação independentes**:
 - **Regra crítica:** todas as rotas ADM usam `adminClient()` (service role key) após verificar o token. O `createClient()` (anon key) seria bloqueado silenciosamente pelo RLS pois funcionários não têm sessão Supabase Auth
 - Dono pode ter senha em `restaurants.adm_password_hash` (legado via /conta) **ou** em `restaurant_users.adm_password_hash` (senha individual mais recente)
 - Sessão expirada → redirecionamento automático para login ao receber 401
+- **Login único por dispositivo (Plano Gratuito):** login gera novo `session_id`, persiste em DB; `adm/layout.tsx` compara `session_id` do token com o do banco a cada page load. Mismatch → redirect `/login?reason=session_expired`
 
 ---
 
@@ -374,6 +382,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_PRICE_BASIC=price_...
 STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_FREE=  # vazio — plano gratuito não usa Stripe
 
 # Resend (e-mails)
 RESEND_API_KEY=re_...
@@ -449,8 +458,10 @@ Execute as migrations em ordem no **SQL Editor do Supabase** (Dashboard → SQL 
 | `010_product_options.sql` | Tabelas `product_option_groups`, `product_option_items` + `selected_options` em `order_items` |
 | `011_pro_plan.sql` | Coluna `plan TEXT DEFAULT 'basic' CHECK (basic\|pro)` em `restaurants` |
 | `012_whatsapp_notify_enabled.sql` | Coluna `whatsapp_notify_enabled BOOLEAN DEFAULT true` em `restaurants` |
+| `013_delivery_enabled.sql` | Coluna `delivery_enabled BOOLEAN DEFAULT true` em `restaurants` |
+| `014_free_plan.sql` | `trial_ends_at TIMESTAMPTZ` em `restaurants`, `session_id TEXT` em `restaurant_users`, `plan` default alterado para `'free'` |
 
-**Status em produção: todas as 12 migrations executadas.**
+**Status em produção: todas as 14 migrations executadas.**
 
 ---
 
@@ -476,8 +487,12 @@ Todos os fluxos testados e validados em produção:
 - [x] Cancelamento de assinatura via Stripe Billing Portal
 - [x] Upgrade Basic → Pro e downgrade Pro → Basic via /conta
 - [x] Analytics (gráficos, KPIs, CSV, PDF) — exclusivo Pro
-- [x] Impressão térmica (Via sistema + USB + Bluetooth)
+- [x] Impressão térmica (Via sistema + USB + Bluetooth + Rede TCP)
 - [x] Adicionais (grupos e itens, seleção no cardápio, persistência no pedido)
+- [x] Plano Gratuito: criação sem Stripe, trial de 7 dias, soft-lock de pratos, login único por dispositivo
+- [x] Exclusão de cardápio cancela assinatura Stripe automaticamente
+- [x] Toggle de entregas (restaurantes só mesa) — oculta botão de entrega no cardápio
+- [x] Configurações ADM (tema, settings) salvas via API routes com service role (fix de RLS)
 
 ---
 
@@ -486,13 +501,16 @@ Todos os fluxos testados e validados em produção:
 **Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–12 concluídas.
 
 ### Implementado e funcionando
-- ✅ Cadastro, billing (Stripe), dois planos (Basic/Pro), upgrade/downgrade
+- ✅ Três planos: Gratuito (com trial de 7 dias), Básico (R$59,99) e Pro (R$99,99)
+- ✅ Plano Gratuito: criação sem Stripe, soft-lock, login único por dispositivo (session_id)
+- ✅ Upgrade free→pago e upgrade/downgrade Basic↔Pro via Stripe (sem cancelar assinatura)
 - ✅ Cardápio digital público com temas, adicionais, horário de entregas
 - ✅ Painel ADM completo: pedidos, pratos, categorias, funcionários (RBAC 5 cargos)
 - ✅ Analytics com gráficos, KPIs, CSV e PDF (Plano Pro)
-- ✅ Impressão térmica: USB, Bluetooth, Via sistema (zero instalação)
-- ✅ WhatsApp automático com toggle de notificação
-- ✅ Todas as 12 migrations aplicadas em produção
+- ✅ Impressão térmica: USB, Bluetooth, Rede TCP (agente local), Via sistema; charset Latin-1; cut mode configurável
+- ✅ WhatsApp automático com toggle de notificação (Planos Básico e Pro)
+- ✅ Exclusão de cardápio cancela assinatura Stripe automaticamente
+- ✅ Todas as 14 migrations aplicadas em produção
 
 ### Próximas funcionalidades planejadas
 - 🔲 PIX e pagamentos online integrados

@@ -12,22 +12,28 @@ A vitrine pública da HIVI para atrair donos de restaurante.
 - **Benefícios**: cards com vantagens do cardápio online
 - **Quem usa aprova**: depoimentos de clientes HIVI
 - **Como funciona**: passo a passo (contratar → configurar → publicar)
-- **Preços**: dois cards de plano (Básico R$ 59,99 e Pro R$ 99,99 — destacado como Recomendado) com feature lists completas
+- **Preços**: três cards de plano (Gratuito R$0, Básico R$ 59,99 e Pro R$ 99,99 — destacado como Recomendado) com feature lists completas. "Painel administrativo" (sem "completo") em todos os planos.
 - **Rodapé**: Como funciona, Preços, FAQ, Feedback, Entrar, Privacidade, Termos, Exclusão de dados, Copyright
 
 ### Área de Conta (`/conta`)
 Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 **Funcionalidades:**
-- Listar todas as lojas do usuário com **badge de plano** (Básico / Pro ★) e status (Ativa / Pausada)
+- Listar todos os cardápios do usuário (próprios + como membro de equipe) com badge de plano (Gratuito / Básico / Pro ★), status (Ativa / Pausada) e cargo (para membros de equipe)
+- Trial countdown exibido por card de restaurante no plano Gratuito (dias restantes)
+- Banners de limite (pratos, categorias, membros) quando plano gratuito está no limite
 - Ações por loja:
-  - **Ver loja** → abre `/[slug]` (cardápio público)
-  - **Painel Administrativo** → vai para `/[slug]/adm`
-  - **Pausar/Ativar loja** → toggle de `is_active`
-  - **Excluir loja** → confirmação → soft delete
-  - **Fazer upgrade para Pro** → botão visível para cardápios no plano Básico → checkout Stripe ou upgrade via subscription update
-- **Criar nova loja** → seletor de plano (Básico R$59,99 / Pro R$99,99) → fluxo de checkout Stripe
-- Configurações de conta: nome, e-mail
+  - **Ver cardápio** → abre `/[slug]` (cardápio público)
+  - **Painel ADM** → vai para `/[slug]/adm` (disponível para membros de equipe)
+  - **Pausar/Ativar** → toggle de `is_active` (só donos/gerentes)
+  - **Excluir** → confirmação → cancela assinatura Stripe automaticamente
+  - **Fazer upgrade para Pro** → visível para plano Básico → `POST /api/stripe/upgrade`
+  - **Voltar para Básico** → visível para plano Pro → `POST /api/stripe/downgrade`
+  - **Assinar plano** → visível para plano Gratuito → `POST /api/stripe/subscribe`
+- **Criar nova loja** → seletor de plano (Gratuito grátis / Básico R$59,99 / Pro R$99,99)
+  - Gratuito: `POST /api/restaurants/free` — cria imediatamente com trial 7 dias e redireciona direto para o ADM
+  - Pagos: Stripe Checkout Session → webhook cria o restaurante
+- Senha ADM pessoal: membros definem sua senha em `/conta` (seção "Minha senha do painel")
 
 ---
 
@@ -145,12 +151,12 @@ Painel do dono do restaurante na plataforma HIVI (não é o ADM do restaurante).
 
 **RBAC — o que cada cargo vê/pode:**
 
-| Cargo | Tabs visíveis | Status selecionáveis |
-|---|---|---|
-| Dono / Gerente | Entrega + Mesa + QR | Todos |
-| Cozinheiro | Entrega + Mesa | pending, confirmed, preparing, ready, cancelled |
-| Garçom | Mesa + QR | pending, confirmed |
-| Entregador | Entrega | out_for_delivery, delivered, cancelled |
+| Cargo | Tabs visíveis | Status selecionáveis | Pagamento |
+|---|---|---|---|
+| `owner` / `manager` | Entrega + Mesa + QR | Todos | ✅ |
+| `cook` (Cozinheiro) | Entrega + Mesa | pending → ready + cancelled | ✅ |
+| `waiter` (Garçom) | Entrega + Mesa + QR | pending → out_for_delivery | ✅ |
+| `delivery` (Entregador) | Apenas Entrega | out_for_delivery → delivered + cancelled | ✅ |
 
 ---
 
@@ -245,11 +251,17 @@ Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes d
 - Botão "Baixar QR Code" (PNG) para imprimir e colocar nas mesas
 
 **Impressora Térmica:**
-- Tipo de conexão: 🔌 Cabo USB (WebUSB) / 📶 Bluetooth (Web Bluetooth) / 🖨️ Via sistema (window.print)
+- Tipo de conexão:
+  - 🔌 **Cabo USB** (WebUSB — Chrome desktop)
+  - 📶 **Bluetooth** (Web Bluetooth — Chrome desktop/mobile; Nordic UART, SUNMI, Xprinter, Peripage, genéricos)
+  - 🌐 **Rede TCP** (agente local `hivi-print-agent.js`; URL do agente configurável; botão "Verificar agente")
+  - 🖨️ **Via sistema** (`window.print()` + iframe — qualquer browser, impressora no OS)
 - Largura do papel: 58 mm (32 col) ou 80 mm (48 col)
+- **Corte de papel**: parcial / completo / nenhum
+- **Codificação**: ASCII (seguro, sem acentos) ou Latin-1/Win-1252 (ã ç é á — impressoras compatíveis)
 - Toggle auto-imprimir ao confirmar pedido
-- Botão "Conectar" (USB/BT abre seletor do Chrome; Via sistema sempre pronto)
-- Botão "Imprimir teste" (envia cupom de teste para a impressora)
+- Botão "Conectar" (USB/BT abre seletor do Chrome; Rede/Sistema sempre prontos)
+- Botão "Imprimir teste" (envia cupom de teste)
 - Configuração salva em `localStorage` — persiste entre sessões
 
 **Gerenciar Funcionários:**
@@ -261,75 +273,111 @@ Cada prato pode ter múltiplos **grupos de opções**. O cliente escolhe antes d
 
 ## 4. Impressão Térmica
 
-> Zero instalação em qualquer modo.
+> Zero instalação em qualquer modo (sem drivers, sem software proprietário).
 
 ### Modos de conexão
 
-| Modo | Como funciona | Requisito |
+| Modo | Tipo | Como funciona | Requisito |
+|---|---|---|---|
+| 🔌 Cabo USB | `usb` | WebUSB API — Chrome abre seletor USB | Chrome desktop, impressora USB (classe 7 ou vendor-specific) |
+| 📶 Bluetooth | `bluetooth` | Web Bluetooth API — Chrome abre seletor BT | Chrome desktop/mobile, BT ativo; suporta Nordic UART, SUNMI, Xprinter, Peripage, genéricos |
+| 🌐 Rede TCP | `network` | HTTP → agente local `hivi-print-agent.js` → TCP porta 9100 | Node.js instalado, `node hivi-print-agent.js` rodando |
+| 🖨️ Via sistema | `browser` | `window.print()` + iframe oculto + CSS `@page` | Qualquer browser, impressora configurada no OS |
+
+### Opções avançadas
+
+| Opção | Valores | Detalhe |
 |---|---|---|
-| 🔌 Cabo USB | WebUSB API — Chrome abre seletor de dispositivos USB | Chrome desktop, impressora USB |
-| 📶 Bluetooth | Web Bluetooth API — Chrome abre seletor BT | Chrome desktop/mobile, BT ativo |
-| 🖨️ Via sistema | `window.print()` + iframe oculto + CSS `@page` | Qualquer browser, impressora configurada no OS |
+| Largura do papel | 58 mm (32 col) / 80 mm (48 col) | Define layout do cupom ESC/POS e CSS `@page` |
+| Corte de papel | parcial / completo / nenhum | ESC/POS `GS V 01` / `GS V 00` / sem comando |
+| Codificação | ASCII / Latin-1 (Win-1252) | Latin-1 preserva ã ç é á em impressoras que suportam `ESC t 16` |
 
-### Formato do cupom
+### Formato do cupom ESC/POS
 
-- Cabeçalho: nome do restaurante + número do pedido (fonte dupla)
-- Corpo: tipo (Mesa N / Delivery) + data/hora + nome do cliente
-- Itens: `Nx Nome` alinhado com preço à direita
+- Cabeçalho: nome do restaurante (negrito) + `PEDIDO #XXXX` (fonte dupla)
+- Tipo + data/hora + nome do cliente
+- Para entregas: endereço, telefone, forma de pagamento, troco
+- Itens: `Nx Nome` alinhado com preço à direita (negrito)
 - Adicionais: `  + Nome` com preço adicional
-- Rodapé: TOTAL em negrito + observações + assinatura HIVI
-- Corte de papel automático (ESC/POS `GS V 01`)
+- Total em negrito + observações
+- Rodapé: assinatura HIVI
+- Corte automático conforme configuração
 
 ### Configuração (ADM → Configurações → Impressora Térmica)
 
-1. Selecionar tipo de conexão
-2. Selecionar largura do papel (58 mm / 80 mm)
-3. Para USB/BT: clicar "Conectar" → browser abre seletor
-4. Para Via sistema: já pronto — testar direto
+1. Selecionar tipo de conexão (USB / Bluetooth / Rede / Via sistema)
+2. Para **Rede**: informar URL do agente (padrão `http://localhost:6557`) → clicar "Verificar agente"
+3. Para **USB/BT**: clicar "Conectar" → browser abre seletor
+4. Selecionar largura do papel, corte e codificação
 5. Clicar "Imprimir teste" para confirmar
 6. Habilitar "Auto-imprimir ao confirmar pedido"
 
 ### Comportamento no painel de pedidos
 
-- Header: badge 🖨️ mostra estado (Impr. ativa / pausada / Reconectar)
+- Header: badge 🖨️ mostra estado (ativa / pausada / Reconectar)
 - Novo pedido via Realtime → auto-imprime se conectado e ativo
 - Botão 🖨️ por card → reimprimir manualmente a qualquer momento
 - Toast verde/vermelho confirma sucesso ou exibe erro de impressão
+
+### Agente TCP local (`public/hivi-print-agent.js`)
+```bash
+node hivi-print-agent.js       # Sobe em http://localhost:6557
+```
+- `GET /status` → `{ ok: true }` — usado pelo botão "Verificar agente"
+- `POST /print` (Content-Type: application/octet-stream) → encaminha bytes ESC/POS para a impressora via TCP porta 9100
 
 ---
 
 ## 5. Planos e Billing
 
+### Plano Gratuito — R$ 0 (para sempre)
+
+Para restaurantes que querem experimentar sem compromisso:
+- Cardápio digital público, QR code de mesa, pedidos em tempo real
+- Adicionais (1 grupo por prato)
+- Até **16 pratos**, **4 categorias**, **4 membros na equipe**
+- Impressão térmica (todos os modos)
+- Personalização de tema, logo, banner, fonte
+- **Sem** WhatsApp automático, **sem** Analytics
+- Login único por dispositivo (`session_id`) — logar em outro device desconecta o anterior
+- **Trial de 7 dias com tudo do Pro** ao criar o restaurante — `trial_ends_at = now() + 7d`
+- Soft-lock após trial: pratos em excesso viram `is_available=false` automaticamente (nunca deletados)
+
 ### Plano Básico — R$ 59,99/mês
 
-Tudo que o restaurante precisa para operar:
+Tudo que o restaurante precisa para operar sem limites:
 - Cardápio digital público, QR code de mesa, pedidos em tempo real
-- Adicionais e grupos de opções por prato
-- Impressão térmica (USB, Bluetooth, sistema)
+- Adicionais e grupos de opções ilimitados por prato
+- Pratos, categorias e membros **ilimitados**
+- Impressão térmica (todos os modos)
 - Personalização de tema, logo, banner, fonte
-- Gerenciamento de equipe com RBAC (5 cargos)
-- Integração WhatsApp automática
-- Horário de funcionamento de entregas
+- **Gerenciamento de equipe com RBAC** (5 cargos: dono/gerente/cozinheiro/garçom/entregador)
+- **Integração WhatsApp automática** com toggle por restaurante
+- Horário de funcionamento de entregas / toggle de desativar entregas
+- Login em múltiplos dispositivos simultaneamente
 
 ### Plano Pro — R$ 99,99/mês
 
 Tudo do Básico + **Analytics e Relatórios**:
-- Gráfico de receita por dia (últimos 7 ou 30 dias)
-- Gráfico de pedidos por dia
+- Gráfico de receita por dia (últimos 7 ou 30 dias) — AreaChart
+- Gráfico de pedidos por dia — BarChart
 - Top 5 produtos mais vendidos (quantidade + receita)
-- Pedidos por tipo: mesa vs entrega (gráfico donut)
+- Pedidos por tipo: mesa vs entrega — PieChart donut
 - Distribuição de pedidos por horário (06h–23h)
 - KPIs: receita total, nº pedidos, ticket médio, horário de pico
-- Comparativo semanal com variação percentual
-- Exportação de todos os pedidos em CSV
+- Comparativo semanal com variação percentual (▲/▼)
+- Exportação em **CSV** (BOM UTF-8 para Excel) e **PDF** (jsPDF + autotable)
 
-### Upgrade Basic → Pro
+### Transições de plano (via `/conta`)
 
-Via `/conta`: botão "Fazer upgrade para Pro" por restaurante.
-- Se já tem assinatura Stripe: atualiza subscription (troca de price + proration)
-- Se não tem: novo checkout Stripe com price Pro
+| Transição | Rota | Mecanismo |
+|---|---|---|
+| Free → Básico/Pro | `POST /api/stripe/subscribe` | Novo Checkout Session Stripe |
+| Básico → Pro | `POST /api/stripe/upgrade` | Subscription update (`proration_behavior: 'none'`) |
+| Pro → Básico | `POST /api/stripe/downgrade` | Subscription update (`proration_behavior: 'none'`) |
+| Cancelar | Stripe Billing Portal | Cancela no fim do período atual |
 
-### Ambiente Stripe
+### Variáveis de ambiente Stripe
 
 | Variável | Descrição |
 |---|---|

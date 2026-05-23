@@ -156,6 +156,8 @@
 | 2026-05-23 | Cleanup: 16 arquivos .tmp removidos da pasta app/, migration duplicada 007_payment_status.sql renomeada para 006b_payment_status.sql |
 | 2026-05-23 | Fix: exclusão de cardápio agora cancela assinatura Stripe automaticamente — DELETE /api/restaurants/[id] busca stripe_subscription_id e chama stripe.subscriptions.cancel() antes de deletar no banco |
 | 2026-05-23 | Feature: Plano Gratuito com trial de 7 dias — lib/plan-limits.ts (getEffectiveLimits), limites: 16 pratos, 4 categorias, 1 adicional/prato, 4 membros, sem WhatsApp, sem Analytics, login único por dispositivo (session_id). Trial: 7 dias com tudo do Pro para novos restaurantes. Soft-lock em excesso (pausados, nunca deletados). Banners de trial e de limite no ADM. POST /api/restaurants/free para criação sem Stripe. /criar-loja com card do plano free. Migration 014 criada. |
+| 2026-05-23 | Feature: Impressão térmica via Rede TCP — 4º modo de conexão (`network`) em `printer.ts`; `printNetwork(data, agentUrl)` envia bytes ESC/POS para agente local via `POST /print`; `checkNetworkAgent(agentUrl)` verifica disponibilidade (timeout 3s); Nordic UART BLE UUIDs adicionados (6e400001/6e400002); USB agora filtra classCode 7 e 0xFF (vendor-specific); BLE usa `writeWithoutResponse` quando disponível; chunk USB usa `ep.packetSize` em vez de 512 fixo. Configuração de agentUrl, cutMode e charset adicionada a `PrinterConfig`. |
+| 2026-05-23 | Docs: ARCHITECTURE.md, FEATURES.md e README.md atualizados — planos (Free/Basic/Pro), RBAC, APIs novas (stripe/subscribe, restaurants/free, adm/settings, adm/theme, etc.), schema completo das 14 migrations, impressora térmica com 4 modos, limites de plano. |
 
 ---
 
