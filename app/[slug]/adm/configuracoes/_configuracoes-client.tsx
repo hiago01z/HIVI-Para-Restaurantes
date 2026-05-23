@@ -178,7 +178,9 @@ export function ConfiguracoesClient({
   // PIX
   const isOwner = currentRole === 'owner'
   const [pixKeyType, setPixKeyType] = useState<PixKeyType>(restaurant.pix_key_type ?? 'evp')
-  const [pixKey, setPixKey]         = useState(restaurant.pix_key ?? '')
+  const [pixKey, setPixKey]         = useState(
+    restaurant.pix_key ?? (restaurant.pix_key_type === 'phone' ? '+55' : '')
+  )
   const [pixSaving, setPixSaving]   = useState(false)
   const [pixSaved, setPixSaved]     = useState(false)
   const [pixError, setPixError]     = useState('')
@@ -687,7 +689,12 @@ export function ConfiguracoesClient({
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de chave</label>
               <select
                 value={pixKeyType}
-                onChange={(e) => { setPixKeyType(e.target.value as PixKeyType); setPixKey(''); setPixError('') }}
+                onChange={(e) => {
+                  const newType = e.target.value as PixKeyType
+                  setPixKeyType(newType)
+                  setPixKey(newType === 'phone' ? '+55' : '')
+                  setPixError('')
+                }}
                 disabled={!isOwner}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
               >
@@ -705,7 +712,14 @@ export function ConfiguracoesClient({
               <input
                 type={pixKeyType === 'email' ? 'email' : 'text'}
                 value={pixKey}
-                onChange={(e) => { setPixKey(e.target.value); setPixError('') }}
+                onChange={(e) => {
+                  let val = e.target.value
+                  if (pixKeyType === 'phone') {
+                    if (!val.startsWith('+55')) val = '+55' + val.replace(/^\+?5?5?/, '')
+                  }
+                  setPixKey(val)
+                  setPixError('')
+                }}
                 placeholder={PIX_KEY_PLACEHOLDERS[pixKeyType]}
                 disabled={!isOwner}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
