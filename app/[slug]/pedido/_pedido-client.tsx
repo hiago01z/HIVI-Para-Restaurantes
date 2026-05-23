@@ -13,6 +13,7 @@ import { type DeliveryHoursConfig, checkDeliveryOpen } from '@/lib/delivery-hour
 type Props = {
   slug: string
   restaurantId: string
+  deliveryEnabled: boolean
   deliveryHours: DeliveryHoursConfig
 }
 
@@ -46,7 +47,7 @@ const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled:        { label: 'Cancelado',              color: '#EF4444' },
 }
 
-export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
+export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
 
@@ -440,7 +441,7 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
               {qrLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
               {qrLoading ? 'Gerando...' : 'Gerar QR Code para a mesa'}
             </button>
-            {deliveryStatus.open ? (
+            {!deliveryEnabled ? null : deliveryStatus.open ? (
               <button
                 onClick={() => setModal('delivery')}
                 className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
@@ -451,7 +452,7 @@ export function PedidoClient({ slug, restaurantId, deliveryHours }: Props) {
               </button>
             ) : (
               <div className="space-y-2">
-                {/* Botão desabilitado */}
+                {/* Botão desabilitado por horário */}
                 <button
                   disabled
                   className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base opacity-40 cursor-not-allowed"

@@ -28,6 +28,7 @@ type Restaurant = {
   whatsapp_number: string | null
   whatsapp_notify_enabled: boolean
   is_active: boolean
+  delivery_enabled: boolean
   delivery_hours: DeliveryHoursConfig
 }
 
@@ -135,6 +136,23 @@ export function ConfiguracoesClient({
     })
     if (res.status === 401) { router.push(`/${restaurant.slug}/adm/login`); return false }
     return res.ok
+  }
+
+  // Ativar/desativar entregas
+  const [deliveryEnabled, setDeliveryEnabled] = useState(restaurant.delivery_enabled)
+  const [deliveryEnabledSaving, setDeliveryEnabledSaving] = useState(false)
+
+  async function toggleDeliveryEnabled() {
+    const newValue = !deliveryEnabled
+    setDeliveryEnabledSaving(true)
+    try {
+      await patchSettings({ delivery_enabled: newValue })
+      setDeliveryEnabled(newValue)
+    } catch {
+      // mantém estado anterior em caso de erro
+    } finally {
+      setDeliveryEnabledSaving(false)
+    }
   }
 
   // Horário de entregas
@@ -640,8 +658,31 @@ export function ConfiguracoesClient({
       </Section>
 
       {/* ── Horário de Entregas ── */}
-      <Section title="Horário de Entregas">
-        {/* Toggle principal */}
+      <Section title="Entregas">
+        {/* Toggle: aceitar entregas */}
+        <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+          <div>
+            <p className="text-sm font-medium text-gray-800">Aceitar pedidos de entrega</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Quando desativado, o botão de entrega some do cardápio.
+            </p>
+          </div>
+          <button
+            onClick={toggleDeliveryEnabled}
+            disabled={deliveryEnabledSaving}
+            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none disabled:opacity-60"
+            style={{ background: deliveryEnabled ? 'var(--adm-primary)' : '#d1d5db' }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              style={{ transform: deliveryEnabled ? 'translateX(24px)' : 'translateX(0)' }}
+            />
+          </button>
+        </div>
+
+        {/* Conteúdo de horário — visível apenas se entregas estiver ativo */}
+        {deliveryEnabled && (<>
+        {/* Toggle: controle de horário */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <p className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
@@ -765,6 +806,7 @@ export function ConfiguracoesClient({
         <div className="mt-4">
           <SaveButton onClick={saveDeliveryHours} loading={hoursSaving} saved={hoursSaved} label="Salvar horários" />
         </div>
+        </>)}
       </Section>
 
       {/* ── Logo ── */}

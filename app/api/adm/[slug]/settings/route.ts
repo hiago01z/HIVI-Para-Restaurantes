@@ -29,6 +29,7 @@ const patchSchema = z.object({
   whatsapp_number:         z.string().nullable().optional(),
   whatsapp_notify_enabled: z.boolean().optional(),
   is_active:               z.boolean().optional(),
+  delivery_enabled:        z.boolean().optional(),
   delivery_hours:          z.any().optional(),
   logo_url:                z.string().nullable().optional(),
 })
