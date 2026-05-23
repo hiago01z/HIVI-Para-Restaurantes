@@ -191,7 +191,7 @@ export async function sendWelcomeEmail(
 ) {
   return resend.emails.send({
     from: `HIVI <${FROM_NOREPLY}>`,
-    reply_to: REPLY_TO,
+    replyTo: REPLY_TO,
     to,
     subject: `${restaurantName} está no ar! 🎉 Veja seus primeiros passos`,
     html: buildWelcomeHtml(restaurantName, slug),
@@ -206,7 +206,7 @@ export async function sendOnboardingD3Email(
 ) {
   return resend.emails.send({
     from: `HIVI <${FROM_NOREPLY}>`,
-    reply_to: REPLY_TO,
+    replyTo: REPLY_TO,
     to,
     subject: `${restaurantName} — seu cardápio está configurado? ✅`,
     html: buildOnboardingD3Html(restaurantName, slug),
@@ -221,7 +221,7 @@ export async function sendTrialEndingEmail(
 ) {
   return resend.emails.send({
     from: `HIVI <${FROM_NOREPLY}>`,
-    reply_to: REPLY_TO,
+    replyTo: REPLY_TO,
     to,
     subject: `Seu trial termina amanhã — o que acontece com ${restaurantName}?`,
     html: buildTrialEndingHtml(restaurantName, slug),
@@ -244,7 +244,7 @@ export async function sendSupportEmail({
 }) {
   return resend.emails.send({
     from: `HIVI Suporte <${FROM_SUPPORT}>`,
-    reply_to: FROM_SUPPORT,
+    replyTo: FROM_SUPPORT,
     to,
     subject,
     html,
@@ -266,7 +266,7 @@ export async function sendFeedbackEmail({
 }) {
   return resend.emails.send({
     from: `HIVI Feedback <${FROM_FEEDBACK}>`,
-    reply_to: FROM_FEEDBACK,
+    replyTo: FROM_FEEDBACK,
     to,
     subject,
     html,
