@@ -25,6 +25,7 @@ type Restaurant = {
   logo_url: string | null
   instagram_url: string | null
   whatsapp_number: string | null
+  whatsapp_notify_enabled: boolean
   is_active: boolean
   delivery_hours: DeliveryHoursConfig
 }
@@ -159,6 +160,7 @@ export function ConfiguracoesClient({
   // Redes sociais
   const [instagram, setInstagram] = useState(restaurant.instagram_url ?? '')
   const [whatsapp, setWhatsapp] = useState(restaurant.whatsapp_number ?? '')
+  const [wppNotify, setWppNotify] = useState(restaurant.whatsapp_notify_enabled)
   const [socialSaving, setSocialSaving] = useState(false)
   const [socialSaved, setSocialSaved] = useState(false)
   const [socialError, setSocialError] = useState('')
@@ -260,6 +262,7 @@ export function ConfiguracoesClient({
         .update({
           instagram_url: instagram.trim() || null,
           whatsapp_number: whatsapp.trim() || null,
+          whatsapp_notify_enabled: wppNotify,
         })
         .eq('id', restaurant.id)
       if (error) {
@@ -577,6 +580,24 @@ export function ConfiguracoesClient({
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
             />
             <p className="text-xs text-gray-400 mt-1">Formato: 55 + DDD + número. Ex: 5511999999999</p>
+            {/* Toggle de notificação de novo pedido */}
+            <div className="flex items-center justify-between mt-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-medium text-gray-800">Notificar novo pedido</p>
+                <p className="text-xs text-gray-400 mt-0.5">Envia mensagem no WhatsApp ao receber pedido de entrega</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWppNotify((v) => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${wppNotify ? 'bg-green-500' : 'bg-gray-200'}`}
+                role="switch"
+                aria-checked={wppNotify}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${wppNotify ? 'translate-x-5' : 'translate-x-0'}`}
+                />
+              </button>
+            </div>
             {/* Botão de teste de notificação */}
             <div className="flex items-center gap-3 mt-3 flex-wrap">
               <button

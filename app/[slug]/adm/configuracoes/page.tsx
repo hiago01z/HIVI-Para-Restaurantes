@@ -15,7 +15,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, is_active, delivery_hours')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_hours')
     .eq('slug', slug)
     .single()
 
@@ -47,6 +47,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         logo_url: restaurant.logo_url,
         instagram_url: restaurant.instagram_url,
         whatsapp_number: restaurant.whatsapp_number,
+        whatsapp_notify_enabled: (restaurant.whatsapp_notify_enabled as boolean | null) ?? true,
         is_active: activeData?.is_active ?? true,
         delivery_hours: (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS,
       }}

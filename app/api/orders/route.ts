@@ -95,11 +95,11 @@ export async function POST(request: Request) {
 
         const { data: restaurant } = await serviceSupabase
           .from('restaurants')
-          .select('name, whatsapp_number, slug')
+          .select('name, whatsapp_number, whatsapp_notify_enabled, slug')
           .eq('id', restaurantId)
           .single()
 
-        if (restaurant?.whatsapp_number && restaurant.slug) {
+        if (restaurant?.whatsapp_number && restaurant.slug && restaurant.whatsapp_notify_enabled !== false) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
           const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
           const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
