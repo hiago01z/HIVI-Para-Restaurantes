@@ -141,10 +141,11 @@ export function PedidosClient({
 
   function openPixModal(order: Order) {
     if (!pixKey) return
+    const grandTotal = order.total + (order.delivery_fee ?? 0)
     const payload = generatePixPayload({
       key: pixKey,
       merchantName: restaurantName,
-      amount: order.total,
+      amount: grandTotal,
       txid: `HIVI${order.order_number}`,
       description: `Pedido #${order.order_number}`,
     })
@@ -675,10 +676,8 @@ export function PedidosClient({
                       <p className="text-sm text-gray-600"><span className="font-medium">Mesa:</span> {order.table_number}</p>
                     )}
 
-                    {/* Botão PIX:
-                        - Mesa: sempre exibe (cliente não escolhe método antes)
-                        - Entrega: só exibe quando payment_method === 'pix' */}
-                    {currency !== 'EUR' && (order.type === 'table' || order.payment_method === 'pix') && (
+                    {/* Botão PIX: exibe para todos os pedidos BRL — o dono pode gerar PIX na hora independente do método escolhido pelo cliente */}
+                    {currency !== 'EUR' && (
                       pixKey ? (
                         <button
                           onClick={() => openPixModal(order)}
@@ -840,7 +839,7 @@ export function PedidosClient({
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm font-bold text-gray-900 mb-0.5">QR Code PIX</p>
             <p className="text-xs text-gray-500 mb-4">
-              Pedido <strong>#{pixModal.order.order_number}</strong> · <strong>{formatPrice(pixModal.order.total)}</strong>
+              Pedido <strong>#{pixModal.order.order_number}</strong> · <strong>{formatPrice(pixModal.order.total + (pixModal.order.delivery_fee ?? 0))}</strong>
             </p>
             <div className="flex justify-center mb-4">
               <QRCodeSVG value={pixModal.payload} size={200} />
