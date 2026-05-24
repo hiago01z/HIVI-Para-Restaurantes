@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ShoppingBag, Bike, LayoutDashboard, UtensilsCrossed, Tag, Settings, Users } from 'lucide-react'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 type Order = {
   id: string
@@ -33,9 +34,7 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled:        'bg-red-100 text-red-600',
 }
 
-function formatPrice(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+// formatPrice é gerado no componente com base na currency do restaurante
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -47,9 +46,11 @@ interface Props {
   todayOrders: Order[]
   totalProducts: number
   totalCategories: number
+  currency?: SupportedCurrency
 }
 
-export function DashboardClient({ slug, restaurantName, todayOrders, totalProducts, totalCategories }: Props) {
+export function DashboardClient({ slug, restaurantName, todayOrders, totalProducts, totalCategories, currency = 'BRL' }: Props) {
+  const formatPrice = (v: number) => formatCurrency(v, currency)
   const pending   = todayOrders.filter(o => o.status === 'pending').length
   const active    = todayOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length
   const revenue   = todayOrders

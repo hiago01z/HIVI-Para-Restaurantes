@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { X, Loader2, Plus, Check, UtensilsCrossed } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useCart, makeCartKey, type SelectedOption } from '@/contexts/cart-context'
+import { useFormatPrice } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 
 type OptionItem = {
@@ -38,12 +39,9 @@ type Props = {
   onClose: () => void
 }
 
-function formatPrice(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
 export function ProductOptionsModal({ product, slug, goToPedido = false, onClose }: Props) {
   const { addItem } = useCart()
+  const formatPrice = useFormatPrice()
   const router = useRouter()
 
   const [groups, setGroups] = useState<OptionGroup[]>([])

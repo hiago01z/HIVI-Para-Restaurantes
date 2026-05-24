@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { DashboardClient } from './_components/dashboard-client'
 import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
+import type { SupportedCurrency } from '@/lib/currency'
 
 function admSupabase() {
   return createClient(
@@ -18,6 +19,7 @@ export default async function AdmDashboardPage({
   const { slug } = await params
   const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
+  const currency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
 
   // Service role — token ADM validado no layout; todos os cargos
   // devem conseguir ver o dashboard sem sessão Supabase Auth.
@@ -53,6 +55,7 @@ export default async function AdmDashboardPage({
       todayOrders={(todayOrders ?? []) as Parameters<typeof DashboardClient>[0]['todayOrders']}
       totalProducts={totalProducts ?? 0}
       totalCategories={totalCategories ?? 0}
+      currency={currency}
     />
   )
 }

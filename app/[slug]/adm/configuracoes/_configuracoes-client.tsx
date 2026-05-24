@@ -19,6 +19,7 @@ import {
   PIX_KEY_LABELS,
   PIX_KEY_PLACEHOLDERS,
 } from '@/lib/pix'
+import { CURRENCY_LABELS, type SupportedCurrency } from '@/lib/currency'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
   type DeliveryHoursConfig,
@@ -40,6 +41,7 @@ type Restaurant = {
   delivery_hours: DeliveryHoursConfig
   pix_key: string | null
   pix_key_type: PixKeyType | null
+  currency: SupportedCurrency
 }
 
 type Theme = {
@@ -175,8 +177,23 @@ export function ConfiguracoesClient({
     }
   }
 
-  // PIX
+  // Moeda
   const isOwner = currentRole === 'owner'
+  const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>(restaurant.currency ?? 'BRL')
+  const [currencySaving, setCurrencySaving]     = useState(false)
+  const [currencySaved, setCurrencySaved]       = useState(false)
+
+  async function saveCurrency(value: SupportedCurrency) {
+    setSelectedCurrency(value)
+    setCurrencySaving(true)
+    try {
+      const ok = await patchSettings({ currency: value })
+      if (ok) { setCurrencySaved(true); setTimeout(() => setCurrencySaved(false), 2000) }
+    } catch { /* silencia — estado visual permanece */ }
+    finally { setCurrencySaving(false) }
+  }
+
+  // PIX
   const [pixKeyType, setPixKeyType] = useState<PixKeyType>(restaurant.pix_key_type ?? 'evp')
   const [pixKey, setPixKey]         = useState(
     restaurant.pix_key ?? (restaurant.pix_key_type === 'phone' ? '+55' : '')
@@ -667,6 +684,39 @@ export function ConfiguracoesClient({
           </button>
         </div>
       </Section>
+
+      {/* ── Moeda ── */}
+      {isOwner && (
+        <Section title={
+          <span className="flex items-center gap-2">
+            Moeda
+            {currencySaved && (
+              <span className="text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ Salvo</span>
+            )}
+          </span>
+        }>
+          <p className="text-sm text-gray-500 mb-4">
+            Define como os preços são exibidos no cardápio e no painel para os clientes e equipe.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {(Object.entries(CURRENCY_LABELS) as [SupportedCurrency, string][]).map(([code, label]) => (
+              <button
+                key={code}
+                onClick={() => saveCurrency(code)}
+                disabled={currencySaving}
+                className={`py-3 px-4 rounded-xl border-2 text-sm font-bold transition-colors text-left disabled:opacity-60 ${
+                  selectedCurrency === code
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
+                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <span className="text-lg block mb-0.5">{code === 'EUR' ? '🇵🇹' : '🇧🇷'}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* ── PIX ── */}
       <Section title={

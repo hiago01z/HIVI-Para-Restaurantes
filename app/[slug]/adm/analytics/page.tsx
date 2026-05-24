@@ -3,6 +3,7 @@ import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 import { createClient } from '@supabase/supabase-js'
 import { AnalyticsClient } from './_analytics-client'
 import { getEffectiveLimits } from '@/lib/plan-limits'
+import type { SupportedCurrency } from '@/lib/currency'
 
 function admSupabase() {
   return createClient(
@@ -73,12 +74,15 @@ export default async function AnalyticsPage({
     .gte('created_at', since.toISOString())
     .order('created_at', { ascending: true })
 
+  const currency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
+
   return (
     <AnalyticsClient
       slug={slug}
       restaurantName={restaurant.name}
       orders={(orders ?? []) as Parameters<typeof AnalyticsClient>[0]['orders']}
       since={since.toISOString()}
+      currency={currency}
     />
   )
 }

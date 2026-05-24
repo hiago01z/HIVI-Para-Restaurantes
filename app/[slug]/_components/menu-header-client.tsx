@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { UtensilsCrossed, Search, X, Menu, Check } from 'lucide-react'
 import { useCart } from '@/contexts/cart-context'
+import { useFormatPrice } from '@/contexts/currency-context'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 
@@ -171,11 +172,8 @@ function SearchResultItem({
   onClose: () => void
 }) {
   const { addItem } = useCart()
+  const formatPrice = useFormatPrice()
   const [added, setAdded] = useState(false)
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
 
   function handleAdd() {
     addItem({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })

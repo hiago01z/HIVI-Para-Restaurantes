@@ -49,3 +49,5 @@ next-env.d.ts
 *.PNG
 *.JPG
 *.JPEG
+
+.vercel

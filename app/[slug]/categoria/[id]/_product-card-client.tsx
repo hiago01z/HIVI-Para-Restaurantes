@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { UtensilsCrossed, Check, Loader2 } from 'lucide-react'
 import { useCart } from '@/contexts/cart-context'
+import { useFormatPrice } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 import { ProductOptionsModal } from '../../_components/product-options-modal'
 import { createClient } from '@/lib/supabase/client'
@@ -18,12 +19,9 @@ type Product = {
   hasOptions?: boolean
 }
 
-function formatPrice(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
 export function CategoryProductCard({ product, slug }: { product: Product; slug: string }) {
   const { addItem } = useCart()
+  const formatPrice = useFormatPrice()
   const router = useRouter()
   const [added, setAdded] = useState(false)
   const [checking, setChecking] = useState(false)

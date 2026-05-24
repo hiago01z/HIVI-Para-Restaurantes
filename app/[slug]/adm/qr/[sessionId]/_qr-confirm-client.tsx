@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Loader2, Clock } from 'lucide-react'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 type OrderItem = {
   product_id: string
@@ -19,19 +20,17 @@ type Props = {
     orderData: { items: OrderItem[]; total: number }
   }
   restaurantName: string
+  currency?: SupportedCurrency
 }
 
-export function QrConfirmClient({ session, restaurantName }: Props) {
+export function QrConfirmClient({ session, restaurantName, currency = 'BRL' }: Props) {
+  const formatPrice = (v: number) => formatCurrency(v, currency)
   const router = useRouter()
   const [customerName, setCustomerName] = useState('')
   const [tableNumber, setTableNumber] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(session.confirmed)
   const [erro, setErro] = useState('')
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
 
   async function handleConfirm() {
     if (!customerName.trim()) { setErro('Informe o nome do cliente.'); return }

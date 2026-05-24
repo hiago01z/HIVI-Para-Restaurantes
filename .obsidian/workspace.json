@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "Contextos/PHASES.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "PHASES"
             }
           }
         ]
@@ -185,19 +185,22 @@
   },
   "active": "b922f02e6e41f3f3",
   "lastOpenFiles": [
-    "Contextos/TASKS.md.tmp.3528.4fc5925b2c4c",
-    "Contextos/TASKS.md.tmp.3528.57a0a7f911c5",
-    "supabase/migrations/009_payment_changed_by.sql",
-    "app/[slug]/adm/pedidos/page.tsx.tmp.3528.e26a95f8573f",
-    "Contextos/TASKS.md.tmp.3528.50a82fc43c8b",
-    "Contextos/TASKS.md.tmp.3528.de64d214fdcf",
-    "RULES.md",
+    "app/[slug]/adm/login/_already-logged-in.tsx",
+    "app/[slug]/adm/error.tsx",
+    "Contextos/ARCHITECTURE.md.tmp.19968.6ebb120fe64e",
+    "Contextos/ARCHITECTURE.md.tmp.19968.9c83da59d614",
+    "app/[slug]/adm/pedidos/_pedidos-client.tsx.tmp.19968.31186e0d23ac",
+    "app/[slug]/adm/pedidos/_pedidos-client.tsx.tmp.19968.fe013e889ba7",
+    "app/[slug]/adm/pedidos/_pedidos-client.tsx.tmp.19968.7a35a4c563e8",
+    "app/[slug]/adm/pedidos/_pedidos-client.tsx.tmp.19968.1f57b00734fa",
+    "app/[slug]/adm/configuracoes/_configuracoes-client.tsx.tmp.19968.b7ecdd4d9c65",
+    "app/[slug]/adm/configuracoes/_configuracoes-client.tsx.tmp.19968.4e56f8be9761",
+    "app/[slug]/adm/configuracoes/_configuracoes-client.tsx.tmp.19968.ea21ff65512a",
+    "Contextos/FEATURES.md",
+    "Contextos/FEATURE_ADICIONAIS.md",
+    "Contextos/ARCHITECTURE.md",
     "README.md",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.edge.production.js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.browser.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.node.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.node.unbundled.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
-    "node_modules/next/dist/compiled/react-server-dom-webpack-experimental/cjs/react-server-dom-webpack-server.edge.production (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).js",
+    "RULES.md",
     "node_modules/next/dist/compiled/react-is/README (Cópia em conflito de DESKTOP-MGKPD8G 2026-05-19).md",
     "docs/rules/no-unknown-property.md"
   ]

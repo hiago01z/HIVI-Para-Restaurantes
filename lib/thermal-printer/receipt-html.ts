@@ -1,4 +1,5 @@
 import type { PrintOrder } from './escpos'
+import type { SupportedCurrency } from '@/lib/currency'
 
 function esc(s: string): string {
   return s
@@ -7,8 +8,10 @@ function esc(s: string): string {
     .replace(/>/g, '&gt;')
 }
 
-function formatPrice(v: number): string {
-  return `R$${v.toFixed(2).replace('.', ',')}`
+function formatPrice(v: number, currency: SupportedCurrency = 'BRL'): string {
+  const symbol = currency === 'EUR' ? '€' : 'R$'
+  const formatted = v.toFixed(2).replace('.', ',')
+  return currency === 'EUR' ? `${formatted}${symbol}` : `${symbol}${formatted}`
 }
 
 function formatDateTime(dateStr: string): string {
@@ -31,6 +34,7 @@ export function buildReceiptHtml(
 ): string {
   const pageMm  = width === 48 ? '80mm' : '58mm'
   const bodyMm  = width === 48 ? '74mm' : '52mm'
+  const curr    = order.currency ?? 'BRL'
 
   const typeLabel = order.type === 'table'
     ? `Mesa ${order.table_number ?? '-'}`
@@ -42,7 +46,7 @@ export function buildReceiptHtml(
     order.payment_method ? (() => {
       const pm = order.payment_method
       const payLabel = pm === 'dinheiro'
-        ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for)})` : ''}`
+        ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for, curr)})` : ''}`
         : pm === 'cartao' ? 'Pgto: Cartao' : 'Pgto: Pix'
       return `<div>${esc(payLabel)}</div>`
     })() : '',
@@ -52,14 +56,14 @@ export function buildReceiptHtml(
     const lineTotal = item.product_price * item.quantity
     const optionsHtml = item.selected_options?.length
       ? item.selected_options.map((o) =>
-          `<div class="option">+ ${esc(o.item_name)}${o.price_addition > 0 ? ` (+${formatPrice(o.price_addition)})` : ''}</div>`
+          `<div class="option">+ ${esc(o.item_name)}${o.price_addition > 0 ? ` (+${formatPrice(o.price_addition, curr)})` : ''}</div>`
         ).join('')
       : ''
 
     return `
       <div class="row bold">
         <span class="l">${item.quantity}x ${esc(item.product_name)}</span>
-        <span class="r">${formatPrice(lineTotal)}</span>
+        <span class="r">${formatPrice(lineTotal, curr)}</span>
       </div>
       ${optionsHtml}`
   }).join('')
@@ -122,7 +126,7 @@ export function buildReceiptHtml(
   <hr>
   <div class="row total bold">
     <span class="l">TOTAL</span>
-    <span class="r">${formatPrice(order.total)}</span>
+    <span class="r">${formatPrice(order.total, curr)}</span>
   </div>
   ${notesHtml}
   <div class="footer">HIVI - Cardapio Digital</div>

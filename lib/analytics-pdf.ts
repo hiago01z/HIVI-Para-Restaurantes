@@ -2,6 +2,7 @@
  * HIVI — Gerador de PDF de Analytics
  * Usa jsPDF + jspdf-autotable (client-side only)
  */
+import { formatCurrency as libFormatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 // ── Tipos (copiados de _analytics-client para evitar import cruzado) ──────────
 
@@ -24,9 +25,7 @@ export type PdfOrder = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function currency(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+// currency() é definido dentro de generateAnalyticsPdf para respeitar a moeda do restaurante
 function pct(v: number, total: number) {
   if (total === 0) return '0%'
   return `${((v / total) * 100).toFixed(1)}%`
@@ -50,8 +49,11 @@ function lastNDays(n: number): string[] {
 export async function generateAnalyticsPdf(
   restaurantName: string,
   orders: PdfOrder[],
-  period: '7d' | '30d'
+  period: '7d' | '30d',
+  restaurantCurrency: SupportedCurrency = 'BRL'
 ) {
+  // Sobrescreve o helper local com a moeda correta do restaurante
+  const currency = (v: number) => libFormatCurrency(v, restaurantCurrency)
   // Dynamic import para evitar SSR
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default

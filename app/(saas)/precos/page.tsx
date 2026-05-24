@@ -1,8 +1,9 @@
+'use client'
+
 import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
-
-export const revalidate = 0 // nunca serve versão cacheada
+import { useState } from 'react'
 
 const FREE_FEATURES = [
   'Cardápio digital público com link e QR code',
@@ -43,7 +44,25 @@ const PRO_EXTRAS = [
   'Exportação de pedidos em CSV',
 ]
 
+const PRICING = {
+  BR: {
+    basic: { label: 'R$ 59', cents: ',99', suffix: '/mês' },
+    pro:   { label: 'R$ 99', cents: ',99', suffix: '/mês' },
+    faq_payment: 'Cartão de crédito e débito pelas principais bandeiras (Visa, Mastercard, Elo, Amex).',
+    faq_cancel:  'Ao cancelar, seu cardápio fica ativo até o fim do período pago — depois continua no plano gratuito.',
+  },
+  PT: {
+    basic: { label: '9', cents: ',99 €', suffix: '/mês' },
+    pro:   { label: '19', cents: ',99 €', suffix: '/mês' },
+    faq_payment: 'Cartão de crédito e débito (Visa, Mastercard). MB Way e Multibanco em breve.',
+    faq_cancel:  'Ao cancelar, o seu menu fica ativo até ao fim do período pago — depois continua no plano gratuito.',
+  },
+}
+
 export default function PrecosPage() {
+  const [locale, setLocale] = useState<'BR' | 'PT'>('BR')
+  const p = PRICING[locale]
+
   return (
     <div className="min-h-screen bg-white">
       <SaasHeader />
@@ -56,9 +75,33 @@ export default function PrecosPage() {
         <h1 className="font-display text-4xl font-bold text-gray-950 text-center mb-3 tracking-tight">
           Preços
         </h1>
-        <p className="text-center text-base text-gray-500 mb-12 leading-relaxed">
+        <p className="text-center text-base text-gray-500 mb-6 leading-relaxed">
           Comece grátis. Sem cartão de crédito. Todo plano inclui 7 dias com tudo do Pro.
         </p>
+
+        {/* Toggle de localização */}
+        <div className="flex items-center justify-center gap-1 mb-12">
+          <button
+            onClick={() => setLocale('BR')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors border-2 ${
+              locale === 'BR'
+                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+          >
+            🇧🇷 Brasil
+          </button>
+          <button
+            onClick={() => setLocale('PT')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors border-2 ${
+              locale === 'PT'
+                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+          >
+            🇵🇹 Portugal
+          </button>
+        </div>
 
         {/* Cards dos planos */}
         <div className="grid sm:grid-cols-3 gap-6 mb-14">
@@ -102,8 +145,8 @@ export default function PrecosPage() {
             </div>
             <div className="text-center mb-7">
               <div>
-                <span className="text-5xl font-black text-gray-900">R$&nbsp;59</span>
-                <span className="text-2xl font-black text-gray-900">,99</span>
+                <span className="text-5xl font-black text-gray-900">{p.basic.label}</span>
+                <span className="text-2xl font-black text-gray-900">{p.basic.cents}</span>
               </div>
               <span className="text-sm text-gray-400 mt-1 block">por mês · cancele quando quiser</span>
             </div>
@@ -137,8 +180,8 @@ export default function PrecosPage() {
             </div>
             <div className="text-center mb-7">
               <div>
-                <span className="text-5xl font-black text-gray-900">R$&nbsp;99</span>
-                <span className="text-2xl font-black text-gray-900">,99</span>
+                <span className="text-5xl font-black text-gray-900">{p.pro.label}</span>
+                <span className="text-2xl font-black text-gray-900">{p.pro.cents}</span>
               </div>
               <span className="text-sm text-gray-400 mt-1 block">por mês · cancele quando quiser</span>
             </div>
@@ -214,7 +257,7 @@ export default function PrecosPage() {
               },
               {
                 q: 'Posso cancelar a qualquer momento?',
-                a: 'Sim. Sem multa e sem período mínimo. Ao cancelar, seu cardápio fica ativo até o fim do período pago — depois continua no plano gratuito.',
+                a: p.faq_cancel,
               },
               {
                 q: 'Posso ter mais de um cardápio?',
@@ -222,7 +265,7 @@ export default function PrecosPage() {
               },
               {
                 q: 'Quais formas de pagamento são aceitas?',
-                a: 'Cartão de crédito e débito pelas principais bandeiras (Visa, Mastercard, Elo, Amex).',
+                a: p.faq_payment,
               },
             ].map((f) => (
               <div key={f.q} className="bg-gray-50 rounded-2xl p-5">

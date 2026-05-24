@@ -21,7 +21,7 @@ function admSupabase() {
 export async function getAdmRestaurant(slug: string) {
   const { data } = await admSupabase()
     .from('restaurants')
-    .select('id, name, plan, trial_ends_at, pix_key, pix_key_type')
+    .select('id, name, plan, trial_ends_at, pix_key, pix_key_type, currency')
     .eq('slug', slug)
     .single()
 

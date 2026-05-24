@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Plus, Pencil, Trash2, X, Loader2, Star, Search, ListPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { ImageCropPicker, type ImageCropPickerHandle } from '../_components/image-crop-picker'
 import { type PlanLimits, isInTrial, trialDaysLeft } from '@/lib/plan-limits'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 type Category = { id: string; name: string }
 type Product = {
@@ -54,10 +55,6 @@ const EMPTY_FORM: Form = {
   name: '', description: '', price: '', category_id: '', is_featured: false, is_available: true,
 }
 
-function formatPrice(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
 export function PratosClient({
   restaurantId,
   initialProducts,
@@ -65,6 +62,7 @@ export function PratosClient({
   limits,
   plan,
   trialEndsAt,
+  currency = 'BRL',
 }: {
   restaurantId: string
   initialProducts: Product[]
@@ -72,7 +70,9 @@ export function PratosClient({
   limits?: PlanLimits
   plan?: string
   trialEndsAt?: string | null
+  currency?: SupportedCurrency
 }) {
+  const formatPrice = (v: number) => formatCurrency(v, currency)
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
   const [products, setProducts] = useState<Product[]>(initialProducts)
@@ -661,10 +661,6 @@ function OptionsManageModal({
     const next = !item.is_available
     const { error } = await supabase.from('product_option_items').update({ is_available: next }).eq('id', item.id)
     if (!error) setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, items: g.items.map((i) => i.id === item.id ? { ...i, is_available: next } : i) } : g))
-  }
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
 
   const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]'

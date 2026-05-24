@@ -35,6 +35,7 @@ const patchSchema = z.object({
   logo_url:                z.string().nullable().optional(),
   pix_key:                 z.string().nullable().optional(),
   pix_key_type:            z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
+  currency:                z.enum(['BRL', 'EUR']).optional(),
 })
 
 export async function PATCH(
@@ -54,11 +55,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
   }
 
-  // PIX restrito ao owner
-  const pixFields = ['pix_key', 'pix_key_type'] as const
-  const touchingPix = pixFields.some((f) => parsed.data[f] !== undefined)
-  if (touchingPix && admPayload.role !== 'owner') {
-    return NextResponse.json({ error: 'Apenas o dono pode configurar o PIX.' }, { status: 403 })
+  // Campos restritos ao owner
+  const ownerOnlyFields = ['pix_key', 'pix_key_type', 'currency'] as const
+  const touchingOwnerField = ownerOnlyFields.some((f) => parsed.data[f] !== undefined)
+  if (touchingOwnerField && admPayload.role !== 'owner') {
+    return NextResponse.json({ error: 'Apenas o dono pode configurar este campo.' }, { status: 403 })
   }
 
   const supabase = adminClient()

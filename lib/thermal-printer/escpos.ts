@@ -32,6 +32,8 @@ export type PrintOrder = {
   notes: string | null
   total: number
   created_at: string
+  /** Moeda do restaurante — determina o símbolo impresso (R$ ou €) */
+  currency?: import('@/lib/currency').SupportedCurrency
   order_items: Array<{
     product_name: string
     product_price: number
@@ -131,8 +133,10 @@ function row(left: string, right: string, width = 32, charset: Charset = 'ascii'
   return line([...lBytes, ...padBytes, ...rBytes])
 }
 
-function formatPrice(v: number): string {
-  return `R$${v.toFixed(2).replace('.', ',')}`
+function formatPrice(v: number, currency: import('@/lib/currency').SupportedCurrency = 'BRL'): string {
+  const symbol = currency === 'EUR' ? '€' : 'R$'
+  const formatted = v.toFixed(2).replace('.', ',')
+  return currency === 'EUR' ? `${formatted}${symbol}` : `${symbol}${formatted}`
 }
 
 function formatDateTime(dateStr: string): string {
@@ -193,7 +197,7 @@ export function encodeOrder(
     if (order.customer_phone) b.push(...CMD_BOLD_ON, ...lineStr(`Tel: ${order.customer_phone}`, charset), ...CMD_BOLD_OFF)
     if (order.payment_method) {
       const payStr = order.payment_method === 'dinheiro'
-        ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for)})` : ''}`
+        ? `Pgto: Dinheiro${order.change_for ? ` (troco p/ ${formatPrice(order.change_for, order.currency)})` : ''}`
         : order.payment_method === 'cartao' ? 'Pgto: Cartao' : 'Pgto: Pix'
       b.push(...CMD_BOLD_ON, ...lineStr(payStr, charset), ...CMD_BOLD_OFF)
     }
@@ -205,11 +209,11 @@ export function encodeOrder(
   for (const item of order.order_items) {
     const lineTotal = item.product_price * item.quantity
     const itemLabel = `${item.quantity}x ${item.product_name}`
-    b.push(...CMD_BOLD_ON, ...row(itemLabel, formatPrice(lineTotal), width, charset), ...CMD_BOLD_OFF)
+    b.push(...CMD_BOLD_ON, ...row(itemLabel, formatPrice(lineTotal, order.currency), width, charset), ...CMD_BOLD_OFF)
 
     if (item.selected_options?.length) {
       for (const opt of item.selected_options) {
-        const optPrice = opt.price_addition > 0 ? `+${formatPrice(opt.price_addition)}` : ''
+        const optPrice = opt.price_addition > 0 ? `+${formatPrice(opt.price_addition, order.currency)}` : ''
         b.push(...row(`  + ${opt.item_name}`, optPrice, width, charset))
       }
     }
@@ -218,7 +222,7 @@ export function encodeOrder(
   b.push(...dashes(width))
 
   // Total
-  b.push(...CMD_BOLD_ON, ...row('TOTAL', formatPrice(order.total), width, charset), ...CMD_BOLD_OFF)
+  b.push(...CMD_BOLD_ON, ...row('TOTAL', formatPrice(order.total, order.currency), width, charset), ...CMD_BOLD_OFF)
 
   // Notes (bold)
   if (order.notes) {

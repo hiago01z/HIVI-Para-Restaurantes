@@ -6,6 +6,7 @@ import { ConfiguracoesClient } from './_configuracoes-client'
 import { DEFAULT_DELIVERY_HOURS, type DeliveryHoursConfig } from '@/lib/delivery-hours'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
 import type { PixKeyType } from '@/lib/pix'
+import type { SupportedCurrency } from '@/lib/currency'
 
 export default async function ConfiguracoesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -24,7 +25,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, pix_key, pix_key_type')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, pix_key, pix_key_type, currency')
     .eq('slug', slug)
     .single()
 
@@ -65,6 +66,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         delivery_hours: (restaurant.delivery_hours as DeliveryHoursConfig | null) ?? DEFAULT_DELIVERY_HOURS,
         pix_key: (restaurant.pix_key as string | null) ?? null,
         pix_key_type: (restaurant.pix_key_type as PixKeyType | null) ?? null,
+        currency: ((restaurant.currency as SupportedCurrency | null) ?? 'BRL'),
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',

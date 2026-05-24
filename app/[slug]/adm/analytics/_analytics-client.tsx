@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { Download, FileText, TrendingUp, ShoppingBag, Clock, Users } from 'lucide-react'
 import type { PdfOrder } from '@/lib/analytics-pdf'
+import { formatCurrency as libFormatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -37,13 +38,12 @@ type Props = {
   restaurantName: string
   orders: Order[]
   since: string
+  currency?: SupportedCurrency
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatCurrency(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+// formatCurrency é gerado no componente com base na currency do restaurante
 
 function formatDate(iso: string) {
   const d = new Date(iso + 'T00:00:00')
@@ -67,7 +67,8 @@ function lastNDays(n: number): string[] {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
-export function AnalyticsClient({ restaurantName, orders }: Props) {
+export function AnalyticsClient({ restaurantName, orders, currency = 'BRL' }: Props) {
+  const formatCurrency = (v: number) => libFormatCurrency(v, currency)
   const [period, setPeriod] = useState<'7d' | '30d'>('30d')
   const [pdfLoading, setPdfLoading] = useState(false)
 
@@ -214,7 +215,7 @@ export function AnalyticsClient({ restaurantName, orders }: Props) {
     setPdfLoading(true)
     try {
       const { generateAnalyticsPdf } = await import('@/lib/analytics-pdf')
-      await generateAnalyticsPdf(restaurantName, orders as unknown as PdfOrder[], period)
+      await generateAnalyticsPdf(restaurantName, orders as unknown as PdfOrder[], period, currency)
     } catch (err) {
       console.error('Erro ao gerar PDF:', err)
     } finally {

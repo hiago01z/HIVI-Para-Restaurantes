@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { PedidosClient } from './_pedidos-client'
 import { getAdmRestaurant } from '@/lib/supabase/adm-restaurant'
 import { getAdmTokenPayload, admCookieName } from '@/lib/adm-auth'
+import type { SupportedCurrency } from '@/lib/currency'
 
 function admSupabase() {
   return createClient(
@@ -53,6 +54,7 @@ export default async function PedidosPage({
   const restaurant = await getAdmRestaurant(slug)
   if (!restaurant) notFound()
   const { id: restaurantId, name: restaurantName, pix_key } = restaurant
+  const currency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
 
   // Extrai cargo do token ADM para filtros de RBAC no cliente
   const cookieStore = await cookies()
@@ -112,6 +114,7 @@ export default async function PedidosPage({
       activePeriodo={periodo}
       memberRole={memberRole}
       memberName={memberName}
+      currency={currency}
     />
   )
 }

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { PratosClient } from './_pratos-client'
 import { getAdmRestaurantId } from '@/lib/supabase/adm-restaurant'
 import { getEffectiveLimits } from '@/lib/plan-limits'
+import type { SupportedCurrency } from '@/lib/currency'
 
 export default async function PratosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -30,7 +31,7 @@ export default async function PratosPage({ params }: { params: Promise<{ slug: s
       .order('display_order'),
     serviceSupabase
       .from('restaurants')
-      .select('id, plan, trial_ends_at')
+      .select('id, plan, trial_ends_at, currency')
       .eq('id', restaurant.id)
       .single(),
   ])
@@ -62,6 +63,7 @@ export default async function PratosPage({ params }: { params: Promise<{ slug: s
       limits={limits}
       plan={restaurantData?.plan ?? 'free'}
       trialEndsAt={restaurantData?.trial_ends_at ?? null}
+      currency={((restaurantData as Record<string, unknown>)?.currency as SupportedCurrency | undefined) ?? 'BRL'}
     />
   )
 }

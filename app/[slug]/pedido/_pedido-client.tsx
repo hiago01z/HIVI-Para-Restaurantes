@@ -1,6 +1,7 @@
 'use client'
 
 import { useCart } from '@/contexts/cart-context'
+import { useFormatPrice } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -50,6 +51,7 @@ const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
 export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
+  const formatPrice = useFormatPrice()
 
   const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
@@ -183,10 +185,6 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
 
     return () => { supabase.removeChannel(channel) }
   }, [qrSessionId, slug, clearCart, router])
-
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
 
   async function handleGerarQR() {
     setQrLoading(true)

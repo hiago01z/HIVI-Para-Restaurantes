@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useFormatPrice } from '@/contexts/currency-context'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Clock, CheckCircle2, ChefHat, Package, Bike, Check, XCircle } from 'lucide-react'
@@ -76,9 +77,7 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
+  const formatPrice = useFormatPrice()
 
   // Realtime: escuta mudanças no pedido
   useEffect(() => {

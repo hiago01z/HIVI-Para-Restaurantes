@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { QrScanner } from '../_components/qr-scanner'
 import { QRCodeSVG } from 'qrcode.react'
 import { generatePixPayload } from '@/lib/pix'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 type SelectedOption = {
   group_id: string
@@ -89,9 +90,7 @@ function getStatusConfig(status: string) {
   return STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0]
 }
 
-function formatPrice(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+// formatPrice injetado como prop via currency
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -109,6 +108,7 @@ type Props = {
   activePeriodo: Periodo
   memberRole: string
   memberName: string
+  currency: SupportedCurrency
 }
 
 const PERIODO_FILTERS: { label: string; value: Periodo; href: (slug: string) => string }[] = [
@@ -124,8 +124,9 @@ const PERIODO_LABEL: Record<Periodo, string> = {
 }
 
 export function PedidosClient({
-  restaurantId, restaurantName, pixKey, initialOrders, isToday, slug, activePeriodo, memberRole, memberName,
+  restaurantId, restaurantName, pixKey, initialOrders, isToday, slug, activePeriodo, memberRole, memberName, currency,
 }: Props) {
+  const formatPrice = (v: number) => formatCurrency(v, currency)
   const router = useRouter()
   const allowedTabs = TAB_ALLOWED[memberRole] ?? ['delivery', 'table', 'qr']
   const allowedStatuses = STATUS_ALLOWED[memberRole] ?? STATUS_OPTIONS.map((s) => s.value)

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { UtensilsCrossed, Check, Loader2 } from 'lucide-react'
 import { useCart } from '@/contexts/cart-context'
+import { useFormatPrice } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ProductOptionsModal } from './product-options-modal'
@@ -51,9 +52,7 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
 
   const product = products[current]
 
-  function formatPrice(v: number) {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
+  const formatPrice = useFormatPrice()
 
   function resetTimer() {
     if (autoTimer.current) clearInterval(autoTimer.current)

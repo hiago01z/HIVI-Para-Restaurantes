@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { CartProvider } from '@/contexts/cart-context'
+import { CurrencyProvider } from '@/contexts/currency-context'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import type { Metadata } from 'next'
+import type { SupportedCurrency } from '@/lib/currency'
 import { PreviewListener } from './_components/preview-listener'
 import { PausedPage } from './_components/paused-page'
 import { ActiveOrderBanner } from './_components/active-order-banner'
@@ -56,7 +58,7 @@ export default async function SlugLayout({
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, logo_url, is_active')
+    .select('id, name, logo_url, is_active, currency')
     .eq('slug', slug)
     .single()
 
@@ -157,10 +159,12 @@ export default async function SlugLayout({
       )}
       <style>{`:root { ${cssVars} }`}</style>
       <PreviewListener />
-      <CartProvider slug={slug}>
-        {children}
-        <ActiveOrderBanner slug={slug} />
-      </CartProvider>
+      <CurrencyProvider currency={(restaurant.currency as SupportedCurrency | null) ?? 'BRL'}>
+        <CartProvider slug={slug}>
+          {children}
+          <ActiveOrderBanner slug={slug} />
+        </CartProvider>
+      </CurrencyProvider>
     </div>
   )
 }

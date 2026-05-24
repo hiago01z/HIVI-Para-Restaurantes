@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { sendWhatsAppMessage } from '@/lib/ultramsg'
 import { getEffectiveLimits } from '@/lib/plan-limits'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency'
 
 const orderSchema = z.object({
   restaurantId: z.string().uuid(),
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
 
         const { data: restaurant } = await serviceSupabase
           .from('restaurants')
-          .select('name, whatsapp_number, whatsapp_notify_enabled, slug, plan, trial_ends_at')
+          .select('name, whatsapp_number, whatsapp_notify_enabled, slug, plan, trial_ends_at, currency')
           .eq('id', restaurantId)
           .single()
 
@@ -108,7 +109,8 @@ export async function POST(request: Request) {
         if (restaurant?.whatsapp_number && restaurant.slug && restaurant.whatsapp_notify_enabled !== false && planLimits.whatsappEnabled) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
           const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
-          const totalFormatted = (order.total as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          const restaurantCurrency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
+          const totalFormatted = formatCurrency(order.total as number, restaurantCurrency)
           const customerName = (order.customer_name as string | null) ?? 'Cliente'
           const customerPhone = parsed.data.customer_phone
           const address = parsed.data.address ?? ''
@@ -117,7 +119,7 @@ export async function POST(request: Request) {
             ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
             : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
           const itemsList = items.map((i) => {
-            const opts = (i.selected_options ?? []).map((o) => `    ↳ ${o.item_name}${o.price_addition > 0 ? ` (+${o.price_addition.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`).join('\n')
+            const opts = (i.selected_options ?? []).map((o) => `    ↳ ${o.item_name}${o.price_addition > 0 ? ` (+${formatCurrency(o.price_addition, restaurantCurrency)})` : ''}`).join('\n')
             return `  • ${i.quantity}x ${i.product_name}${opts ? '\n' + opts : ''}`
           }).join('\n')
 
