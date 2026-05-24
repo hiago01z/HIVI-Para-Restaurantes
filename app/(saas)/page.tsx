@@ -4,8 +4,24 @@ import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import { createClient } from '@/lib/supabase/server'
 import { HiviLogo } from '@/components/saas/hivi-logo'
+import { cookies } from 'next/headers'
 
-export default async function LandingPage() {
+const PRICING_HOME = {
+  BR: { basic: 'R$ 59', basicCents: ',99', pro: 'R$ 99', proCents: ',99' },
+  PT: { basic: '24',         basicCents: ',99 €', pro: '39',   proCents: ',99 €' },
+}
+
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ locale?: string }>
+}) {
+  const sp = await searchParams
+  const cookieStore = await cookies()
+  const geo = cookieStore.get('hivi_locale')?.value
+  const rawLocale = sp.locale ?? geo ?? 'BR'
+  const locale: 'BR' | 'PT' = rawLocale === 'PT' ? 'PT' : 'BR'
+  const pr = PRICING_HOME[locale]
   // Busca o primeiro restaurante ativo para a prévia ao vivo
   const supabase = await createClient()
   const { data: demoRestaurant } = await supabase
@@ -318,8 +334,8 @@ export default async function LandingPage() {
             </p>
             <div className="text-center my-5">
               <div>
-                <span className="font-display text-5xl font-bold text-gray-950">R$&nbsp;59</span>
-                <span className="font-display text-xl font-bold text-gray-950">,99</span>
+                <span className="font-display text-5xl font-bold text-gray-950">{pr.basic}</span>
+                <span className="font-display text-xl font-bold text-gray-950">{pr.basicCents}</span>
               </div>
               <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
@@ -359,8 +375,8 @@ export default async function LandingPage() {
             </p>
             <div className="text-center my-5">
               <div>
-                <span className="font-display text-5xl font-bold text-gray-950">R$&nbsp;99</span>
-                <span className="font-display text-xl font-bold text-gray-950">,99</span>
+                <span className="font-display text-5xl font-bold text-gray-950">{pr.pro}</span>
+                <span className="font-display text-xl font-bold text-gray-950">{pr.proCents}</span>
               </div>
               <span className="text-sm text-gray-400 mt-1 block font-medium">por mês</span>
             </div>
