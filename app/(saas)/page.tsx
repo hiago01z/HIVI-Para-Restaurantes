@@ -149,6 +149,41 @@ export default async function LandingPage({
         <p className="text-sm text-gray-400 mt-3 font-medium">Sem fidelidade · Cancele quando quiser</p>
       </section>
 
+      {/* ── Dores ── */}
+      <section className="px-5 py-16 bg-gray-950">
+        <div className="max-w-sm mx-auto">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-400 text-center mb-3">
+            Isso acontece no seu restaurante?
+          </p>
+          <h2 className="font-display text-[2rem] font-bold text-center text-white mb-10 leading-tight">
+            Problemas que custam<br />dinheiro todo dia
+          </h2>
+          <div className="space-y-4">
+            {[
+              { emoji: '😤', pain: 'Garçom anotou errado e a cozinha refez o prato', cost: 'Prejuízo de tempo e ingrediente em cada erro' },
+              { emoji: '📋', pain: 'Cardápio de papel desatualizado com preço riscado', cost: 'Constrangimento na frente do cliente' },
+              { emoji: '🖨️', pain: 'Gasta com impressão de cardápio toda semana', cost: 'Custo fixo que nunca para' },
+              { emoji: '⏳', pain: 'Cliente esperando o garçom só para fazer o pedido', cost: 'Mesa demorada = menos giro = menos faturamento' },
+              { emoji: '🏃', pain: 'Precisou sair do restaurante para resolver algo', cost: 'Ficou cego. Sem saber o que estava acontecendo lá dentro' },
+            ].map((item) => (
+              <div key={item.pain} className="rounded-2xl p-4 flex items-start gap-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-2xl flex-shrink-0 mt-0.5">{item.emoji}</span>
+                <div>
+                  <p className="text-white font-semibold text-sm leading-snug">{item.pain}</p>
+                  <p className="text-red-400 text-xs mt-1 font-medium">{item.cost}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 rounded-2xl p-6 text-center" style={{ background: 'rgba(249,115,22,0.12)', border: '1.5px solid rgba(249,115,22,0.3)' }}>
+            <p className="text-orange-400 font-bold text-lg leading-snug">
+              Quem usa a HIVI resolve tudo isso.<br />
+              <span className="text-white font-normal text-base">De casa, do celular, em tempo real.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── QR Code nas mesas ── */}
       <section className="px-5 py-16">
         <div className="max-w-sm mx-auto">
@@ -209,10 +244,10 @@ export default async function LandingPage({
         </h2>
         <div className="space-y-3 max-w-sm mx-auto">
           {[
-            { icon: QrCode,     title: 'QR Code nas mesas',  desc: 'Clientes fazem pedidos direto pelo celular, sem esperar o garçom.' },
-            { icon: Smartphone, title: 'Cardápio digital',   desc: 'Atualize preços e itens em tempo real, sem custo de impressão.' },
-            { icon: TrendingUp, title: 'Mais pedidos',       desc: 'Clientes pedem mais quando navegam sozinhos pelo cardápio.' },
-            { icon: Clock,      title: 'Atendimento rápido', desc: 'Pedidos chegam direto para a equipe, sem erros de comunicação.' },
+            { icon: QrCode,     title: 'Sem erro de pedido',      desc: 'O cliente monta o pedido pelo celular — sem garçom no meio, sem ruído, sem retrabalho na cozinha.' },
+            { icon: Smartphone, title: 'Controle de onde estiver', desc: 'Saiu do restaurante? Veja pedidos, edite o cardápio e acompanhe tudo pelo celular em tempo real.' },
+            { icon: TrendingUp, title: 'Cliente pede mais',        desc: 'Navegando sozinho pelo cardápio com fotos e preços, o cliente pede com mais calma — e gasta mais.' },
+            { icon: Clock,      title: 'Zero custo de impressão',  desc: 'Atualize preço, retire prato do dia ou mude descrição em segundos. Sem imprimir nada.' },
           ].map((b) => (
             <div key={b.title} className="bg-white rounded-2xl p-5 flex items-start gap-4 shadow-sm">
               <div className="w-11 h-11 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
