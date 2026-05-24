@@ -406,6 +406,7 @@ export function PratosClient({
           restaurantId={restaurantId}
           onClose={() => setOptsProductId(null)}
           maxOptionGroups={(!inTrial && plan === 'free') ? (limits?.maxOptionGroupsPerProduct ?? null) : null}
+          currency={currency}
         />
       )}
 
@@ -503,13 +504,16 @@ function OptionsManageModal({
   restaurantId,
   onClose,
   maxOptionGroups,
+  currency,
 }: {
   product: Product
   restaurantId: string
   onClose: () => void
   maxOptionGroups?: number | null
+  currency?: SupportedCurrency
 }) {
   const supabase = createClient()
+  const formatPrice = (v: number) => formatCurrency(v, currency)
   const [groups, setGroups] = useState<OptionGroup[]>([])
   const [loadingGroups, setLoadingGroups] = useState(true)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
