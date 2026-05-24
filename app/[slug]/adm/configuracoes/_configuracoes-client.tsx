@@ -20,6 +20,13 @@ import {
   PIX_KEY_PLACEHOLDERS,
 } from '@/lib/pix'
 import { CURRENCY_LABELS, type SupportedCurrency } from '@/lib/currency'
+import {
+  DEFAULT_COUNTRY_CODE,
+  parseStoredPhone,
+  digitsOnly as phoneDigitsOnly,
+  isPhoneValid as isPhoneValidFn,
+  buildFullPhone,
+} from '@/lib/phone'
 import { computeLabelShadow } from '@/lib/color-utils'
 import {
   type DeliveryHoursConfig,
@@ -295,8 +302,12 @@ export function ConfiguracoesClient({
 
   // Redes sociais
   const [instagram, setInstagram] = useState(restaurant.instagram_url ?? '')
-  const [whatsapp, setWhatsapp] = useState(restaurant.whatsapp_number ?? '')
   const [wppNotify, setWppNotify] = useState(restaurant.whatsapp_notify_enabled)
+  // Telefone WhatsApp separado em código de país + número local
+  const _defaultWppCode = DEFAULT_COUNTRY_CODE[restaurant.currency ?? 'BRL'] ?? '55'
+  const _parsedWpp = parseStoredPhone(restaurant.whatsapp_number ?? '', _defaultWppCode)
+  const [wppCode, setWppCode] = useState(_parsedWpp.code)
+  const [wppLocal, setWppLocal] = useState(_parsedWpp.local)
   const [socialSaving, setSocialSaving] = useState(false)
   const [socialSaved, setSocialSaved] = useState(false)
   const [socialError, setSocialError] = useState('')
@@ -390,9 +401,10 @@ export function ConfiguracoesClient({
     setSocialSaving(true)
     setSocialError('')
     try {
+      const fullWpp = wppLocal.trim() ? buildFullPhone(wppCode, wppLocal) : null
       const ok = await patchSettings({
         instagram_url: instagram.trim() || null,
-        whatsapp_number: whatsapp.trim() || null,
+        whatsapp_number: fullWpp,
         whatsapp_notify_enabled: wppNotify,
       })
       if (ok) {
@@ -409,7 +421,7 @@ export function ConfiguracoesClient({
   }
 
   async function handleTestWhatsApp() {
-    if (!whatsapp.trim()) {
+    if (!wppLocal.trim()) {
       setSocialError('Configure e salve o número de WhatsApp antes de testar.')
       return
     }
@@ -900,14 +912,34 @@ export function ConfiguracoesClient({
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
               <Phone className="w-4 h-4 text-green-500" /> WhatsApp
             </label>
-            <input
-              type="tel"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="5511999999999 (com DDI + DDD)"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
-            />
-            <p className="text-xs text-gray-400 mt-1">Formato: 55 + DDD + número. Ex: 5511999999999</p>
+            <div className="flex gap-2">
+              {/* Código de país editável */}
+              <div className="relative flex-shrink-0">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">+</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={wppCode}
+                  onChange={(e) => setWppCode(phoneDigitsOnly(e.target.value).slice(0, 4))}
+                  className="w-16 pl-6 pr-2 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-center focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+                />
+              </div>
+              {/* Número local */}
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={wppLocal}
+                onChange={(e) => setWppLocal(phoneDigitsOnly(e.target.value).slice(0, 13))}
+                placeholder={wppCode === '55' ? '11999999999' : '912345678'}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--adm-primary)_30%,transparent)] focus:border-[color:var(--adm-primary)]"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {wppCode === '55'
+                ? 'DDD + número, sem espaços. Ex: 11999999999'
+                : `Número local sem o +${wppCode}. Ex: 912345678`}
+              {isPhoneValidFn(wppCode, wppLocal) && <span className="ml-2 text-green-500 font-medium">✓ válido</span>}
+            </p>
             {/* Toggle de notificação de novo pedido */}
             <div className="flex items-center justify-between mt-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
               <div>

@@ -28,15 +28,13 @@ type DeliveryForm = {
   notes: string
 }
 
-// ── Utilitários de telefone ────────────────────────────────────────────────
-function phoneDigitsOnly(v: string) { return v.replace(/\D/g, '').slice(0, 11) }
-function formatPhoneDisplay(d: string): string {
-  if (d.length <= 2) return d
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
-}
-function isPhoneValid(digits: string) { return digits.length === 10 || digits.length === 11 }
+import {
+  DEFAULT_COUNTRY_CODE,
+  digitsOnly as phoneDigitsOnly,
+  formatBrLocal,
+  isPhoneValid as isPhoneValidFn,
+  buildFullPhone,
+} from '@/lib/phone'
 
 const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:          { label: 'Aguardando confirmação', color: '#F59E0B' },
@@ -53,6 +51,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
   const router = useRouter()
   const formatPrice = useFormatPrice()
   const currency = useCurrency()
+  const [phoneCode, setPhoneCode] = useState(DEFAULT_COUNTRY_CODE[currency] ?? '55')
 
   const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
@@ -222,8 +221,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
     e.preventDefault()
     if (!form.name.trim()) { setDeliveryError('Informe seu nome.'); return }
     if (!form.address.trim()) { setDeliveryError('Informe seu endereço.'); return }
-    const digits = phoneDigitsOnly(form.phone)
-    if (!isPhoneValid(digits)) { setDeliveryError('Informe um WhatsApp válido com DDD.'); return }
+    if (!isPhoneValidFn(phoneCode, form.phone)) { setDeliveryError('Informe um WhatsApp válido.'); return }
 
     setDeliveryLoading(true)
     setDeliveryError('')
@@ -235,7 +233,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
           restaurantId,
           type: 'delivery',
           customer_name: form.name,
-          customer_phone: `55${phoneDigitsOnly(form.phone)}`,
+          customer_phone: buildFullPhone(phoneCode, form.phone),
           address: `${form.address}${form.reference ? ' — ' + form.reference : ''}`,
           payment_method: form.payment,
           change_for: form.payment === 'dinheiro' && form.change_for ? parseFloat(form.change_for) : null,
@@ -615,44 +613,66 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                 onChange={(v) => setForm({ ...form, reference: v })}
                 placeholder="Ex: Próximo ao mercado"
               />
-              {/* Campo de telefone com máscara e validação */}
+              {/* Campo de telefone com código de país editável */}
               <div>
                 <label className="block text-sm mb-1.5" style={{ color: 'var(--menu-text-muted)' }}>WhatsApp *</label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    value={form.phone}
-                    onChange={(e) => {
-                      const d = phoneDigitsOnly(e.target.value)
-                      setForm({ ...form, phone: formatPhoneDisplay(d) })
-                    }}
-                    placeholder="(11) 99999-9999"
-                    className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
-                    style={{
-                      background: 'var(--menu-card)',
-                      border: `1px solid ${
-                        phoneDigitsOnly(form.phone).length === 0
-                          ? 'rgba(128,128,128,0.20)'
-                          : isPhoneValid(phoneDigitsOnly(form.phone))
-                          ? '#22c55e'
-                          : '#ef4444'
-                      }`,
-                      color: 'var(--menu-text)',
-                      caretColor: 'var(--menu-primary)',
-                    }}
-                  />
-                  {phoneDigitsOnly(form.phone).length > 0 && (
-                    <span
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold"
-                      style={{ color: isPhoneValid(phoneDigitsOnly(form.phone)) ? '#22c55e' : '#ef4444' }}
-                    >
-                      {isPhoneValid(phoneDigitsOnly(form.phone)) ? '✓' : 'DDD + número'}
-                    </span>
-                  )}
+                <div className="flex gap-2">
+                  {/* Código de país */}
+                  <div className="relative flex-shrink-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: 'var(--menu-text-muted)' }}>+</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(phoneDigitsOnly(e.target.value).slice(0, 4))}
+                      className="w-16 pl-6 pr-2 py-3 rounded-xl text-sm text-center focus:outline-none focus:ring-2"
+                      style={{
+                        background: 'var(--menu-card)',
+                        border: '1px solid rgba(128,128,128,0.20)',
+                        color: 'var(--menu-text)',
+                        caretColor: 'var(--menu-primary)',
+                      }}
+                    />
+                  </div>
+                  {/* Número local */}
+                  <div className="relative flex-1">
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={form.phone}
+                      onChange={(e) => {
+                        const local = phoneCode === '55'
+                          ? formatBrLocal(e.target.value)
+                          : phoneDigitsOnly(e.target.value).slice(0, 15)
+                        setForm({ ...form, phone: local })
+                      }}
+                      placeholder={phoneCode === '55' ? '(11) 99999-9999' : '912 345 678'}
+                      className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
+                      style={{
+                        background: 'var(--menu-card)',
+                        border: `1px solid ${
+                          phoneDigitsOnly(form.phone).length === 0
+                            ? 'rgba(128,128,128,0.20)'
+                            : isPhoneValidFn(phoneCode, form.phone)
+                            ? '#22c55e'
+                            : '#ef4444'
+                        }`,
+                        color: 'var(--menu-text)',
+                        caretColor: 'var(--menu-primary)',
+                      }}
+                    />
+                    {phoneDigitsOnly(form.phone).length > 0 && (
+                      <span
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold"
+                        style={{ color: isPhoneValidFn(phoneCode, form.phone) ? '#22c55e' : '#ef4444' }}
+                      >
+                        {isPhoneValidFn(phoneCode, form.phone) ? '✓' : phoneCode === '55' ? 'DDD + nº' : 'nº inválido'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-xs mt-1 px-1" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>
-                  Apenas DDD + número · sem o +55
+                  {phoneCode === '55' ? 'DDD + número · sem o +55' : `Número local · código +${phoneCode} editável`}
                 </p>
               </div>
               <DeliveryTextarea
