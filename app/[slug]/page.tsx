@@ -91,7 +91,7 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, is_active, instagram_url, whatsapp_number')
+    .select('id, name, slug, logo_url, is_active, instagram_url, whatsapp_number, address')
     .eq('slug', slug)
     .single()
 
@@ -248,6 +248,22 @@ export default async function CardapioPage({ params }: { params: Promise<{ slug:
                 WhatsApp
               </a>
             )}
+          </div>
+        )}
+
+        {/* Endereço */}
+        {restaurant.address && (
+          <div className="flex justify-center mb-6">
+            <p
+              className="text-xs font-medium text-center max-w-xs leading-relaxed opacity-70 flex items-start gap-1.5"
+              style={{ color: 'var(--menu-text-muted)' }}
+            >
+              <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              {restaurant.address}
+            </p>
           </div>
         )}
 

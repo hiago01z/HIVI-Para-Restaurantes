@@ -33,6 +33,8 @@ const patchSchema = z.object({
   delivery_enabled:        z.boolean().optional(),
   delivery_hours:          z.any().optional(),
   logo_url:                z.string().nullable().optional(),
+  delivery_fee:            z.number().min(0).nullable().optional(),
+  address:                 z.string().max(300).nullable().optional(),
   pix_key:                 z.string().nullable().optional(),
   pix_key_type:            z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
   currency:                z.enum(['BRL', 'EUR']).optional(),
@@ -60,6 +62,13 @@ export async function PATCH(
   const touchingOwnerField = ownerOnlyFields.some((f) => parsed.data[f] !== undefined)
   if (touchingOwnerField && admPayload.role !== 'owner') {
     return NextResponse.json({ error: 'Apenas o dono pode configurar este campo.' }, { status: 403 })
+  }
+
+  // Campos restritos a owner OU manager (não cook/waiter/delivery)
+  const ownerManagerFields = ['delivery_fee', 'address'] as const
+  const touchingOwnerManagerField = ownerManagerFields.some((f) => parsed.data[f as keyof typeof parsed.data] !== undefined)
+  if (touchingOwnerManagerField && !['owner', 'manager'].includes(admPayload.role)) {
+    return NextResponse.json({ error: 'Apenas o dono ou gerente pode configurar este campo.' }, { status: 403 })
   }
 
   const supabase = adminClient()

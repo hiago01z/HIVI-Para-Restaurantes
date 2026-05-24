@@ -88,6 +88,7 @@ export default async function PedidosPage({
       payment_status,
       payment_changed_by,
       total,
+      delivery_fee,
       created_at,
       order_items (
         id,

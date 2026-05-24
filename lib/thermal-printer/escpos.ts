@@ -34,6 +34,7 @@ export type PrintOrder = {
   created_at: string
   /** Moeda do restaurante — determina o símbolo impresso (R$ ou €) */
   currency?: import('@/lib/currency').SupportedCurrency
+  delivery_fee?: number | null
   order_items: Array<{
     product_name: string
     product_price: number
@@ -221,8 +222,16 @@ export function encodeOrder(
 
   b.push(...dashes(width))
 
-  // Total
-  b.push(...CMD_BOLD_ON, ...row('TOTAL', formatPrice(order.total, order.currency), width, charset), ...CMD_BOLD_OFF)
+  // Subtotal + taxa de entrega (apenas se houver taxa)
+  if (order.delivery_fee && order.delivery_fee > 0) {
+    b.push(...CMD_BOLD_OFF, ...row('Subtotal', formatPrice(order.total, order.currency), width, charset))
+    b.push(...CMD_BOLD_ON, ...row('Taxa de entrega', formatPrice(order.delivery_fee, order.currency), width, charset), ...CMD_BOLD_OFF)
+    b.push(...dashes(width))
+  }
+
+  // Total (grand total = itens + taxa)
+  const grandTotal = order.total + (order.delivery_fee ?? 0)
+  b.push(...CMD_BOLD_ON, ...row('TOTAL', formatPrice(grandTotal, order.currency), width, charset), ...CMD_BOLD_OFF)
 
   // Notes (bold)
   if (order.notes) {

@@ -49,6 +49,8 @@ type Restaurant = {
   pix_key: string | null
   pix_key_type: PixKeyType | null
   currency: SupportedCurrency
+  delivery_fee: number
+  address: string | null
 }
 
 type Theme = {
@@ -282,6 +284,63 @@ export function ConfiguracoesClient({
       setHoursError('Erro de conexão. Tente novamente.')
     } finally {
       setHoursSaving(false)
+    }
+  }
+
+  // Taxa de entrega
+  const canManageDelivery = ['owner', 'manager'].includes(currentRole)
+  const [deliveryFee, setDeliveryFee] = useState(
+    restaurant.delivery_fee > 0 ? restaurant.delivery_fee.toFixed(2).replace('.', ',') : ''
+  )
+  const [deliveryFeeSaving, setDeliveryFeeSaving] = useState(false)
+  const [deliveryFeeSaved, setDeliveryFeeSaved] = useState(false)
+  const [deliveryFeeError, setDeliveryFeeError] = useState('')
+
+  async function saveDeliveryFee() {
+    const raw = deliveryFee.replace(',', '.').trim()
+    const value = raw === '' ? 0 : parseFloat(raw)
+    if (isNaN(value) || value < 0) {
+      setDeliveryFeeError('Valor inválido.')
+      return
+    }
+    setDeliveryFeeSaving(true)
+    setDeliveryFeeError('')
+    try {
+      const ok = await patchSettings({ delivery_fee: value })
+      if (ok) {
+        setDeliveryFeeSaved(true)
+        setTimeout(() => setDeliveryFeeSaved(false), 2000)
+      } else {
+        setDeliveryFeeError('Erro ao salvar. Tente novamente.')
+      }
+    } catch {
+      setDeliveryFeeError('Erro de conexão. Tente novamente.')
+    } finally {
+      setDeliveryFeeSaving(false)
+    }
+  }
+
+  // Endereço do restaurante
+  const [addressValue, setAddressValue] = useState(restaurant.address ?? '')
+  const [addressSaving, setAddressSaving] = useState(false)
+  const [addressSaved, setAddressSaved] = useState(false)
+  const [addressError, setAddressError] = useState('')
+
+  async function saveAddress() {
+    setAddressSaving(true)
+    setAddressError('')
+    try {
+      const ok = await patchSettings({ address: addressValue.trim() || null })
+      if (ok) {
+        setAddressSaved(true)
+        setTimeout(() => setAddressSaved(false), 2000)
+      } else {
+        setAddressError('Erro ao salvar. Tente novamente.')
+      }
+    } catch {
+      setAddressError('Erro de conexão. Tente novamente.')
+    } finally {
+      setAddressSaving(false)
     }
   }
 
@@ -1141,6 +1200,65 @@ export function ConfiguracoesClient({
           <SaveButton onClick={saveDeliveryHours} loading={hoursSaving} saved={hoursSaved} label="Salvar horários" />
         </div>
         </>)}
+
+        {/* Taxa de entrega */}
+        <div className="pt-4 mt-4 border-t border-gray-100">
+          <p className="text-sm font-medium text-gray-800 mb-1">Taxa de entrega</p>
+          <p className="text-xs text-gray-500 mb-3">
+            Cobrada automaticamente em pedidos de entrega. Use 0 para entrega grátis.
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-500">
+              {restaurant.currency === 'EUR' ? '€' : 'R$'}
+            </span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(e.target.value)}
+              disabled={!canManageDelivery}
+              placeholder="0,00"
+              className="w-32 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <SaveButton
+              onClick={saveDeliveryFee}
+              loading={deliveryFeeSaving}
+              saved={deliveryFeeSaved}
+              label="Salvar taxa"
+            />
+          </div>
+          {!canManageDelivery && (
+            <p className="text-xs text-gray-400 mt-1">Apenas o dono ou gerente pode alterar a taxa.</p>
+          )}
+          {deliveryFeeError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{deliveryFeeError}</p>
+          )}
+        </div>
+      </Section>
+
+      {/* ── Endereço do Restaurante ── */}
+      <Section title="Endereço">
+        <p className="text-xs text-gray-500 mb-3">
+          Exibido no rodapé do cardápio público. Deixe em branco para ocultar.
+        </p>
+        <textarea
+          value={addressValue}
+          onChange={(e) => setAddressValue(e.target.value)}
+          disabled={!canManageDelivery}
+          placeholder="Ex: Rua das Flores, 123 — Centro, São Paulo"
+          rows={2}
+          maxLength={300}
+          className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)] disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+        />
+        {!canManageDelivery && (
+          <p className="text-xs text-gray-400 mt-1">Apenas o dono ou gerente pode alterar o endereço.</p>
+        )}
+        {addressError && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{addressError}</p>
+        )}
+        <div className="mt-3">
+          <SaveButton onClick={saveAddress} loading={addressSaving} saved={addressSaved} label="Salvar endereço" />
+        </div>
       </Section>
 
       {/* ── Logo ── */}

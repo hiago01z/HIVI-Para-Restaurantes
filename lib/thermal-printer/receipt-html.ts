@@ -124,9 +124,19 @@ export function buildReceiptHtml(
   <hr>
   ${itemRows}
   <hr>
+  ${order.delivery_fee && order.delivery_fee > 0 ? `
+  <div class="row">
+    <span class="l">Subtotal</span>
+    <span class="r">${formatPrice(order.total, curr)}</span>
+  </div>
+  <div class="row bold">
+    <span class="l">Taxa de entrega</span>
+    <span class="r">${formatPrice(order.delivery_fee, curr)}</span>
+  </div>
+  <hr>` : ''}
   <div class="row total bold">
     <span class="l">TOTAL</span>
-    <span class="r">${formatPrice(order.total, curr)}</span>
+    <span class="r">${formatPrice(order.total + (order.delivery_fee ?? 0), curr)}</span>
   </div>
   ${notesHtml}
   <div class="footer">HIVI - Cardapio Digital</div>

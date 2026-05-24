@@ -52,6 +52,7 @@ type Order = {
   payment_status: 'paid' | 'unpaid'
   payment_changed_by: string | null
   total: number
+  delivery_fee?: number | null
   created_at: string
   order_items: OrderItem[]
 }
@@ -336,7 +337,7 @@ export function PedidosClient({
             .from('orders')
             .select(`
               id, order_number, type, status, status_changed_by, customer_name, customer_phone,
-              address, table_number, payment_method, change_for, notes, payment_status, payment_changed_by, total, created_at,
+              address, table_number, payment_method, change_for, notes, payment_status, payment_changed_by, total, delivery_fee, created_at,
               order_items (id, product_name, product_price, quantity, selected_options)
             `)
             .eq('id', payload.new.id)

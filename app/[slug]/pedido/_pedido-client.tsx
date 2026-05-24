@@ -16,6 +16,7 @@ type Props = {
   restaurantId: string
   deliveryEnabled: boolean
   deliveryHours: DeliveryHoursConfig
+  deliveryFee?: number
 }
 
 type DeliveryForm = {
@@ -46,7 +47,7 @@ const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled:        { label: 'Cancelado',              color: '#EF4444' },
 }
 
-export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours }: Props) {
+export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours, deliveryFee = 0 }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
   const formatPrice = useFormatPrice()
@@ -410,9 +411,28 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
           </div>
 
           {/* Total */}
-          <div className="mx-4 mt-4 rounded-2xl px-4 py-4 flex items-center justify-between" style={{ background: 'var(--menu-card)' }}>
-            <span className="font-medium" style={{ color: 'var(--menu-text-muted)' }}>Total</span>
-            <span className="text-2xl font-black" style={{ color: 'var(--menu-text)' }}>{formatPrice(totalPrice)}</span>
+          <div className="mx-4 mt-4 rounded-2xl px-4 py-4" style={{ background: 'var(--menu-card)' }}>
+            {deliveryFee > 0 ? (
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                  <span>Subtotal</span>
+                  <span>{formatPrice(totalPrice)}</span>
+                </div>
+                <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                  <span>Taxa de entrega</span>
+                  <span>{formatPrice(deliveryFee)}</span>
+                </div>
+                <div className="flex justify-between font-black text-2xl" style={{ color: 'var(--menu-text)' }}>
+                  <span>Total</span>
+                  <span>{formatPrice(totalPrice + deliveryFee)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="font-medium" style={{ color: 'var(--menu-text-muted)' }}>Total</span>
+                <span className="text-2xl font-black" style={{ color: 'var(--menu-text)' }}>{formatPrice(totalPrice)}</span>
+              </div>
+            )}
           </div>
 
           {/* Ações */}
@@ -551,9 +571,28 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                       </div>
                     )
                   })}
-                  <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
-                    <span>Total</span>
-                    <span>{formatPrice(totalPrice)}</span>
+                  <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(128,128,128,0.15)' }}>
+                    {deliveryFee > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                          <span>Subtotal</span>
+                          <span>{formatPrice(totalPrice)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                          <span>Taxa de entrega</span>
+                          <span>{formatPrice(deliveryFee)}</span>
+                        </div>
+                        <div className="flex justify-between font-black text-2xl" style={{ color: 'var(--menu-text)' }}>
+                          <span>Total</span>
+                          <span>{formatPrice(totalPrice + deliveryFee)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between font-black" style={{ color: 'var(--menu-text)' }}>
+                        <span>Total</span>
+                        <span>{formatPrice(totalPrice)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-center mt-4" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Válido por 15 minutos</p>
@@ -726,10 +765,27 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
 
               {/* Resumo */}
               <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
-                <div className="flex justify-between font-black text-lg" style={{ color: 'var(--menu-text)' }}>
-                  <span>Total</span>
-                  <span>{formatPrice(totalPrice)}</span>
-                </div>
+                {deliveryFee > 0 ? (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                      <span>Taxa de entrega</span>
+                      <span>{formatPrice(deliveryFee)}</span>
+                    </div>
+                    <div className="flex justify-between font-black text-2xl" style={{ color: 'var(--menu-text)' }}>
+                      <span>Total</span>
+                      <span>{formatPrice(totalPrice + deliveryFee)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-between font-black text-lg" style={{ color: 'var(--menu-text)' }}>
+                    <span>Total</span>
+                    <span>{formatPrice(totalPrice)}</span>
+                  </div>
+                )}
               </div>
 
               <button

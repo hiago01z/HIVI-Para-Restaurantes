@@ -95,9 +95,24 @@ export async function POST(request: Request) {
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
+        // Buscar delivery_fee do restaurante e salvar no pedido (snapshot)
+        try {
+          const { data: restFee } = await serviceSupabase
+            .from('restaurants')
+            .select('delivery_fee')
+            .eq('id', restaurantId)
+            .single()
+          const fee = (restFee?.delivery_fee as number | null) ?? 0
+          if (fee > 0) {
+            await serviceSupabase.from('orders').update({ delivery_fee: fee }).eq('id', order.id)
+          }
+        } catch {
+          // não falha o pedido se a taxa não puder ser salva
+        }
+
         const { data: restaurant } = await serviceSupabase
           .from('restaurants')
-          .select('name, whatsapp_number, whatsapp_notify_enabled, slug, plan, trial_ends_at, currency')
+          .select('name, whatsapp_number, whatsapp_notify_enabled, slug, plan, trial_ends_at, currency, delivery_fee')
           .eq('id', restaurantId)
           .single()
 
@@ -111,6 +126,8 @@ export async function POST(request: Request) {
           const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
           const restaurantCurrency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
           const totalFormatted = formatCurrency(order.total as number, restaurantCurrency)
+          const feeAmount = ((restaurant as Record<string, unknown>).delivery_fee as number | null) ?? 0
+          const feeFormatted = feeAmount > 0 ? formatCurrency(feeAmount, restaurantCurrency) : ''
           const customerName = (order.customer_name as string | null) ?? 'Cliente'
           const customerPhone = parsed.data.customer_phone
           const address = parsed.data.address ?? ''
@@ -138,7 +155,7 @@ export async function POST(request: Request) {
             `👤 Cliente: ${customerName}\n` +
             `📍 Endereço: ${address}${notesLine}\n` +
             `💳 Pagamento: ${paymentLabel}\n` +
-            `💰 Total: ${totalFormatted}\n\n` +
+            `💰 Total: ${totalFormatted}${feeFormatted ? ` + ${feeFormatted} (taxa)` : ''}\n\n` +
             `📦 Itens:\n${itemsList}` +
             waLine
 
