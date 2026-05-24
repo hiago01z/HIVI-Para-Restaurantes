@@ -171,6 +171,7 @@
 | 2026-05-24 | Fix: build error _pratos-client.tsx — formatPrice undefined em OptionsManageModal (função separada, escopo diferente); adicionada prop currency? + formatCurrency interno no modal. |
 | 2026-05-24 | Fix: build error precos/page.tsx — arrays FREE_FEATURES, BASIC_FEATURES, PRO_EXTRAS declarados mas nunca usados; removidos. |
 | 2026-05-24 | Docs: README.md, TASKS.md, PHASES.md e ARCHITECTURE.md atualizados — internacionalização EUR/PT, migrations 015/016/017, lib/phone.ts, lib/currency.ts, preços dinâmicos BRL/EUR, Fase 14 adicionada. |
+| 2026-05-24 | Fix: banner "Trial Pro ativo" exibido incorretamente para plano Pro — corrigido em _conta-actions.tsx, _pratos-client.tsx e _categorias-client.tsx. Regra: banner visível apenas para planos free e basic (durante os 7 dias de trial); plano pro já inclui todos os recursos e não exibe o banner, mas o trial continua contando para eventual downgrade. |
 
 ---
 

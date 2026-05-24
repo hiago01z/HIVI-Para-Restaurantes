@@ -251,8 +251,8 @@ export function PratosClient({
         </button>
       </div>
 
-      {/* Banner trial */}
-      {inTrial && (
+      {/* Banner trial — exibe apenas para free e basic (pro já é o plano completo) */}
+      {inTrial && plan !== 'pro' && (
         <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium">
           Periodo experimental: {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'} com tudo do Pro
         </div>

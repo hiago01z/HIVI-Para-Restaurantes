@@ -210,8 +210,9 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
 
         return (
           <div key={loja.id} className="bg-white rounded-2xl p-5 shadow-sm">
-            {/* Banner de trial */}
+            {/* Banner de trial — exibe apenas para free e basic (pro já é o plano completo) */}
             {(() => {
+              if (loja.plan === 'pro') return null
               const days = trialDaysLeft(loja.trial_ends_at)
               if (days <= 0) return null
               const urgent = days <= 2

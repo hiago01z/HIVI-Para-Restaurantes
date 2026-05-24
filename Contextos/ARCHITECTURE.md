@@ -435,6 +435,14 @@ created_at      timestamptz DEFAULT now()
 
 **Soft-lock (plano free)**: pratos em excesso são auto-pausados (`is_available=false`) no carregamento da página ADM — nunca deletados. Implementado em `lib/plan-limits.ts → getEffectiveLimits()`.
 
+**Regras do Trial de 7 dias:**
+- O trial começa no momento da criação do restaurante (qualquer plano) e dura 7 dias (`trial_ends_at = now() + 7d`)
+- Durante o trial, `getEffectiveLimits()` retorna `PRO_LIMITS` independente do plano atual
+- Banner "Trial Pro ativo" exibido **apenas para planos `free` e `basic`** — plano `pro` já tem todos os recursos e não precisa do aviso
+- Planos `basic` e `pro` são cobrados imediatamente pelo Stripe no momento da assinatura — o trial não é um período gratuito de planos pagos; é um período do **plano free com recursos Pro**
+- Se o cliente estiver em trial free e fizer upgrade para `basic`, o banner continua visível e os recursos Pro continuam ativos até o trial expirar
+- Se o cliente fizer upgrade para `pro` durante o trial, o banner desaparece mas o `trial_ends_at` continua contando — se fizer downgrade antes de expirar, ainda terá os dias restantes
+
 ---
 
 ## Impressão Térmica
