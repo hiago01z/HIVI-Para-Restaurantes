@@ -125,15 +125,18 @@ export async function POST(request: Request) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
           const trackingUrl = `${appUrl}/${restaurant.slug}/meu-pedido/${order.id}`
           const restaurantCurrency = ((restaurant as Record<string, unknown>).currency as SupportedCurrency | undefined) ?? 'BRL'
-          const totalFormatted = formatCurrency(order.total as number, restaurantCurrency)
+          const itemsTotal = order.total as number
           const feeAmount = ((restaurant as Record<string, unknown>).delivery_fee as number | null) ?? 0
+          const grandTotal = itemsTotal + feeAmount
+          const grandTotalFormatted = formatCurrency(grandTotal, restaurantCurrency)
+          const itemsTotalFormatted = formatCurrency(itemsTotal, restaurantCurrency)
           const feeFormatted = feeAmount > 0 ? formatCurrency(feeAmount, restaurantCurrency) : ''
           const customerName = (order.customer_name as string | null) ?? 'Cliente'
           const customerPhone = parsed.data.customer_phone
           const address = parsed.data.address ?? ''
           const notesLine = parsed.data.notes ? `\n📝 Obs: ${parsed.data.notes}` : ''
           const paymentLabel = parsed.data.payment_method === 'dinheiro'
-            ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${parsed.data.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : ''}`
+            ? `Dinheiro${parsed.data.change_for ? ` (troco p/ ${formatCurrency(parsed.data.change_for, restaurantCurrency)})` : ''}`
             : parsed.data.payment_method === 'cartao' ? 'Cartão' : 'Pix'
           const itemsList = items.map((i) => {
             const opts = (i.selected_options ?? []).map((o) => `    ↳ ${o.item_name}${o.price_addition > 0 ? ` (+${formatCurrency(o.price_addition, restaurantCurrency)})` : ''}`).join('\n')
@@ -155,7 +158,7 @@ export async function POST(request: Request) {
             `👤 Cliente: ${customerName}\n` +
             `📍 Endereço: ${address}${notesLine}\n` +
             `💳 Pagamento: ${paymentLabel}\n` +
-            `💰 Total: ${totalFormatted}${feeFormatted ? ` + ${feeFormatted} (taxa)` : ''}\n\n` +
+            `💰 Total: ${grandTotalFormatted}${feeAmount > 0 ? ` (itens: ${itemsTotalFormatted} + taxa: ${feeFormatted})` : ''}\n\n` +
             `📦 Itens:\n${itemsList}` +
             waLine
 
