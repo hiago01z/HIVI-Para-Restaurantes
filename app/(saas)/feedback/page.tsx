@@ -137,7 +137,7 @@ export default function FeedbackPage() {
             Prefere falar diretamente? Entre em contato pelo WhatsApp.
           </p>
           <a
-            href="https://wa.me/5500000000000"
+            href="https://wa.me/5595974004814"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block mt-4 px-6 py-3 bg-green-500 text-white font-bold rounded-xl text-base hover:bg-green-600 transition-colors"
