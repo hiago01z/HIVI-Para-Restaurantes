@@ -92,7 +92,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | **Categorias** | CRUD + reordenação, crop de imagem |
 | **Funcionários** | Convidar por e-mail (Supabase invite), cargo, nome de exibição, senha ADM individual, remover |
 | **Analytics** ⭐ Pro | Receita/pedidos por dia, top produtos, pedidos por tipo, horário de pico, KPIs, comparativo semanal, exportação CSV e PDF |
-| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste (com telefone internacional), logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, chave PIX + QR code (apenas BRL), impressora térmica (USB/BT/Sistema), QR code download |
+| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste (com telefone internacional), logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, **taxa de entrega** (owner/manager), chave PIX + QR code (apenas BRL), impressora térmica (USB/BT/Sistema), QR code download, **endereço do restaurante** (exibido no rodapé do cardápio) |
 | **Notificação sonora** | Beep duplo (Web Audio API), toggle ativo/pausado no header |
 | **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Rede TCP (agente local), Via Sistema (window.print); cut mode; charset Latin-1 para acentos; auto-impressão; reimpressão manual por pedido |
 
@@ -247,14 +247,14 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), currency (`BRL`/`EUR`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, pix_key, pix_key_type, trial_ends_at, stripe_*, adm_password_hash |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), currency (`BRL`/`EUR`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, delivery_fee, address, pix_key, pix_key_type, trial_ends_at, stripe_*, adm_password_hash |
 | `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash, session_id (login único por dispositivo no plano free) |
 | `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
 | `categories` | Categorias do cardápio: nome, imagem, display_order |
 | `products` | Pratos/bebidas: nome, preço, imagem, is_featured, is_available, category_id |
 | `product_option_groups` | Grupos de adicionais por produto: nome, min/max seleções, sort_order |
 | `product_option_items` | Itens de cada grupo: nome, price_addition, is_available, sort_order |
-| `orders` | Pedidos: type (table/delivery), status (7 estados), payment_status, payment_changed_by, status_changed_by, customer_*, notes, total |
+| `orders` | Pedidos: type (table/delivery), status (7 estados), payment_status, payment_changed_by, status_changed_by, customer_*, notes, total (itens-only, analytics usa este), delivery_fee (snapshot da taxa no momento do pedido — não soma em analytics) |
 | `order_items` | Itens de cada pedido com snapshot de nome/preço + selected_options JSONB |
 | `qr_sessions` | Sessões QR de mesa: TTL 15 min, order_data JSON, confirmed, order_id |
 
@@ -324,7 +324,7 @@ Todas as tabelas têm RLS ativo. Políticas principais:
 | `POST` | `/api/adm/[slug]/funcionarios` | Convida membro (Supabase invite) ou atualiza cargo. |
 | `DELETE` | `/api/adm/[slug]/funcionarios` | Remove membro da equipe. |
 | `POST` | `/api/adm/[slug]/member-password` | Define/reseta senha ADM de um membro específico. |
-| `PATCH` | `/api/adm/[slug]/settings` | Atualiza configurações do restaurante (whatsapp, instagram, status, delivery_enabled, horários, logo). Requer token ADM + service role. |
+| `PATCH` | `/api/adm/[slug]/settings` | Atualiza configurações do restaurante (whatsapp, instagram, status, delivery_enabled, horários, logo, delivery_fee, address). Requer token ADM + service role. delivery_fee e address requerem role owner ou manager. |
 | `PATCH` | `/api/adm/[slug]/theme` | Upsert completo do tema visual. Requer token ADM + service role. |
 
 ### WhatsApp
@@ -463,8 +463,9 @@ Execute as migrations em ordem no **SQL Editor do Supabase** (Dashboard → SQL 
 | `015_email_queue.sql` | Tabela `email_queue` para fila de e-mails de onboarding (welcome, dia 3, dia 6) |
 | `016_pix_key.sql` | Colunas `pix_key TEXT` e `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
 | `017_currency.sql` | Coluna `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
+| `018_delivery_fee_and_address.sql` | Coluna `delivery_fee NUMERIC(10,2) DEFAULT 0` em `restaurants` (taxa configurável) + `address TEXT` em `restaurants` (endereço público); coluna `delivery_fee NUMERIC(10,2) DEFAULT 0` em `orders` (snapshot da taxa no momento do pedido) |
 
-**Status em produção: todas as 17 migrations executadas.**
+**Status em produção: todas as 18 migrations executadas.**
 
 ---
 
@@ -513,11 +514,15 @@ Todos os fluxos testados e validados em produção:
 - ✅ Telefone internacional com código de país editável (+55 BR / +351 PT padrão)
 - ✅ PIX: chave configurável no ADM, QR code por pedido (apenas restaurantes BRL)
 - ✅ Painel ADM completo: pedidos, pratos, categorias, funcionários (RBAC 5 cargos)
-- ✅ Analytics com gráficos, KPIs, CSV e PDF (Plano Pro)
+- ✅ Analytics com gráficos, KPIs, CSV e PDF (Plano Pro) — usa orders.total (itens-only, exclui taxa)
 - ✅ Impressão térmica: USB, Bluetooth, Rede TCP (agente local), Via sistema; charset Latin-1; cut mode configurável
+- ✅ Impressão com breakdown Subtotal + Taxa de entrega + TOTAL quando taxa > 0
 - ✅ WhatsApp automático com toggle de notificação (Planos Básico e Pro)
+- ✅ Taxa de entrega configurável no ADM (owner/manager); snapshot em orders.delivery_fee; exibida no recibo mas excluída dos analytics
+- ✅ Endereço do restaurante configurável no ADM; exibido com ícone de pin no rodapé do cardápio público
 - ✅ Exclusão de cardápio cancela assinatura Stripe automaticamente
-- ✅ Todas as 17 migrations aplicadas em produção
+- ✅ Banner Trial Pro corrigido: exibido apenas para planos free e basic (não exibe para pro)
+- ✅ Todas as 18 migrations aplicadas em produção
 
 ### Próximas funcionalidades planejadas
 - 🔲 PIX dinâmico (gateway — MercadoPago/Asaas)

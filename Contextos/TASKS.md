@@ -172,6 +172,10 @@
 | 2026-05-24 | Fix: build error precos/page.tsx — arrays FREE_FEATURES, BASIC_FEATURES, PRO_EXTRAS declarados mas nunca usados; removidos. |
 | 2026-05-24 | Docs: README.md, TASKS.md, PHASES.md e ARCHITECTURE.md atualizados — internacionalização EUR/PT, migrations 015/016/017, lib/phone.ts, lib/currency.ts, preços dinâmicos BRL/EUR, Fase 14 adicionada. |
 | 2026-05-24 | Fix: banner "Trial Pro ativo" exibido incorretamente para plano Pro — corrigido em _conta-actions.tsx, _pratos-client.tsx e _categorias-client.tsx. Regra: banner visível apenas para planos free e basic (durante os 7 dias de trial); plano pro já inclui todos os recursos e não exibe o banner, mas o trial continua contando para eventual downgrade. |
+| 2026-05-24 | Feature: Taxa de entrega por restaurante — migration 018 (delivery_fee NUMERIC(10,2) DEFAULT 0 em restaurants; delivery_fee NUMERIC(10,2) DEFAULT 0 em orders como snapshot); campo no ADM Configurações → seção Entregas (owner/manager); snapshot salvo em orders.delivery_fee ao criar pedido de entrega; receipt HTML e ESC/POS exibem Subtotal + Taxa de entrega + TOTAL quando fee > 0; analytics, CSV e PDF usam apenas orders.total (itens); `orders.total` nunca inclui a taxa. |
+| 2026-05-24 | Feature: Endereço do restaurante — migration 018 adiciona coluna address TEXT em restaurants; campo textarea no ADM Configurações (owner/manager); exibido no rodapé do cardápio público com ícone de pin, alinhado ao tema via CSS vars (--menu-text-muted). |
+| 2026-05-24 | Feature: Subtotal + Taxa + TOTAL no cardápio — _pedido-client.tsx exibe breakdown Subtotal/Taxa/Total quando deliveryFee > 0 nos 3 locais de exibição do total; submit ainda envia total: totalPrice (itens-only). |
+| 2026-05-24 | Fix: símbolo da moeda na taxa de entrega não atualizava ao mudar currency no ADM — _configuracoes-client.tsx: `restaurant.currency === 'EUR'` → `selectedCurrency === 'EUR'` (usa estado reativo já existente). |
 
 ---
 

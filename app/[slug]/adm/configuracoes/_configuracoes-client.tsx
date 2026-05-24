@@ -1209,7 +1209,7 @@ export function ConfiguracoesClient({
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-gray-500">
-              {restaurant.currency === 'EUR' ? '€' : 'R$'}
+              {selectedCurrency === 'EUR' ? '€' : 'R$'}
             </span>
             <input
               type="text"

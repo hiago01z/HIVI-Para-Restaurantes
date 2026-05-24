@@ -111,7 +111,7 @@ hivi/
 │   └── hivi-print-agent.js            # Agente TCP local (Node.js): browser → porta 9100
 │
 ├── middleware.ts                       # Proteção /conta e /criar-loja; header x-pathname; detecção locale por IP → cookie hivi_locale
-└── supabase/migrations/               # 17 migrations SQL em ordem
+└── supabase/migrations/               # 18 migrations SQL em ordem
 ```
 
 ---
@@ -139,6 +139,8 @@ delivery_hours           jsonb                                    -- migration 0
 pix_key                  text                                     -- migration 016
 pix_key_type             text CHECK (pix_key_type IN ('cpf','cnpj','email','phone','evp'))  -- migration 016
 currency                 text NOT NULL DEFAULT 'BRL'              -- migration 017: 'BRL' | 'EUR'
+delivery_fee             numeric(10,2) DEFAULT 0                  -- migration 018: taxa de entrega configurável
+address                  text                                     -- migration 018: endereço público (rodapé cardápio)
 created_at               timestamptz DEFAULT now()
 ```
 
@@ -242,7 +244,8 @@ table_number         text
 address              text
 payment_method       text
 change_for           numeric(10,2)
-total                numeric(10,2)
+total                numeric(10,2)                               -- APENAS itens (analytics usa só este campo)
+delivery_fee         numeric(10,2) DEFAULT 0                     -- migration 018: snapshot da taxa no momento do pedido
 notes                text
 created_at           timestamptz DEFAULT now()
 updated_at           timestamptz DEFAULT now()
@@ -308,8 +311,9 @@ created_at      timestamptz DEFAULT now()
 | `015_email_queue.sql` | Tabela `email_queue` para fila de e-mails de onboarding (welcome / dia 3 / dia 6) |
 | `016_pix_key.sql` | `pix_key TEXT`, `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
 | `017_currency.sql` | `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
+| `018_delivery_fee_and_address.sql` | `delivery_fee NUMERIC(10,2) DEFAULT 0` e `address TEXT` em `restaurants`; `delivery_fee NUMERIC(10,2) DEFAULT 0` em `orders` (snapshot da taxa — analytics usa apenas `orders.total`) |
 
-**Status em produção: todas as 17 migrations aplicadas.**
+**Status em produção: todas as 18 migrations aplicadas.**
 
 ---
 
