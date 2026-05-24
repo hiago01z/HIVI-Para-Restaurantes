@@ -18,10 +18,12 @@
 | 11 | Impressão Térmica | ✅ Concluído |
 | 12 | Plano Pro + Billing Multi-plano | ✅ Concluído |
 | 13 | Plano Gratuito + Trial | ✅ Concluído |
-| 14 | PIX e Pagamentos Online | 🔲 Pendente |
-| 15 | Cupons e Descontos | 🔲 Pendente |
-| 16 | Fidelidade e Clientes | 🔲 Pendente |
-| 17 | Multi-unidade | 🔲 Pendente |
+| 14 | Internacionalização EUR/PT | ✅ Concluído |
+| 15 | PIX Estático (BRL) | ✅ Concluído |
+| 16 | Cupons e Descontos | 🔲 Pendente |
+| 17 | Fidelidade e Clientes | 🔲 Pendente |
+| 18 | PIX Dinâmico / Pagamentos Online | 🔲 Pendente |
+| 19 | Multi-unidade | 🔲 Pendente |
 
 ---
 
@@ -267,17 +269,37 @@
 
 ---
 
-## Fase 14 — PIX e Pagamentos Online 🔲
+## Fase 14 — Internacionalização EUR/PT ✅
 
-- [ ] Geração de QR Code PIX estático por restaurante (chave PIX configurada no ADM)
-- [ ] Geração de QR Code PIX dinâmico por pedido (valor exato)
-- [ ] Integração com gateway (MercadoPago / PagSeguro / Asaas)
-- [ ] Confirmação automática de pagamento via webhook
-- [ ] Status "Pago via PIX" no ADM
+> Concluído em 2026-05-24.
+
+- [x] Middleware detecta locale por IP via `request.geo?.country` (Vercel Edge) — seta cookie `hivi_locale` ('BR' ou 'PT')
+- [x] `EU_COUNTRIES` set no middleware para mapeamento ISO → locale
+- [x] Override `?locale=PT` via URL param para testes
+- [x] Preços dinâmicos BRL/EUR na landing page (`/`), `/precos`, `/criar-loja` e `/conta`
+- [x] `lib/currency.ts` — `formatCurrency(value, currency)` com `Intl.NumberFormat`
+- [x] Migration `017_currency.sql` — coluna `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL|EUR)` em `restaurants`
+- [x] Stripe multi-moeda: 4 price IDs (`STRIPE_PRICE_BASIC`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BASIC_EUR`, `STRIPE_PRICE_PRO_EUR`); checkout/subscribe/upgrade/downgrade selecionam price pelo `currency` do restaurante
+- [x] Webhook Stripe salva `currency` ao criar restaurante; `subscription.updated` detecta troca por price_id (BRL e EUR)
+- [x] `/api/restaurants/free` aceita `locale` e salva `currency` correto
+- [x] PIX ocultado para restaurantes `currency=EUR` (cardápio público + ADM pedidos)
+- [x] Telefone internacional: `lib/phone.ts` com `DEFAULT_COUNTRY_CODE`, `parseStoredPhone`, `buildFullPhone`, `isPhoneValid`; campo `[+código] [número]` editável no formulário de entrega e ADM Configurações WhatsApp
 
 ---
 
-## Fase 15 — Cupons e Descontos 🔲 (era Fase 13)
+## Fase 15 — PIX Estático (BRL) ✅
+
+> Concluído em 2026-05-23.
+
+- [x] Migration `016_pix_key.sql` — `pix_key TEXT`, `pix_key_type TEXT CHECK (cpf|cnpj|email|phone|evp)` em `restaurants`
+- [x] `lib/pix.ts` — gerador BR Code EMV (Banco Central) sem dependências: CRC16-CCITT, campos EMV em ordem crescente, sanitização de acentos, `validatePixKey()`, `normalizePixKey()`
+- [x] ADM Configurações: seção PIX (apenas owner, apenas currency=BRL) — seletor de tipo, campo de chave, validação inline
+- [x] ADM Pedidos: botão PIX por pedido → modal com `QRCodeSVG` do payload gerado por `generatePixPayload()`
+- [x] PIX completamente oculto para restaurantes `currency=EUR`
+
+---
+
+## Fase 16 — Cupons e Descontos 🔲
 
 - [ ] ADM: criação de cupons (código, valor fixo ou percentual, validade, limite de usos)
 - [ ] Cardápio público: campo de cupom na tela de pedido
@@ -286,7 +308,7 @@
 
 ---
 
-## Fase 16 — Fidelidade e Clientes 🔲
+## Fase 17 — Fidelidade e Clientes 🔲
 
 - [ ] Cadastro opcional do cliente (nome, WhatsApp, histórico)
 - [ ] Programa de pontos: X pedidos = desconto
@@ -295,7 +317,16 @@
 
 ---
 
-## Fase 17 — Multi-unidade 🔲
+## Fase 18 — PIX Dinâmico / Pagamentos Online 🔲
+
+- [ ] Geração de QR Code PIX dinâmico por pedido (valor exato via API do banco)
+- [ ] Integração com gateway (MercadoPago / PagSeguro / Asaas)
+- [ ] Confirmação automática de pagamento via webhook
+- [ ] Status "Pago via PIX" automático no ADM
+
+---
+
+## Fase 19 — Multi-unidade 🔲
 
 - [ ] Restaurante com múltiplas filiais sob o mesmo dono
 - [ ] Cardápio base compartilhado + customizações por unidade

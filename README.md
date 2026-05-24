@@ -55,9 +55,10 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | Landing page | Hero, como funciona, depoimentos, preços, FAQ, rodapé |
 | Autenticação | Login/cadastro via Google OAuth (Supabase Auth) |
 | Área de conta (`/conta`) | Listar cardápios, acessar painel ADM, pausar, excluir |
-| Criar cardápio (`/criar-loja`) | Checkout Stripe → webhook cria restaurante + copia template |
+| Criar cardápio (`/criar-loja`) | Checkout Stripe ou criação gratuita; seletor de plano; copia template |
 | Billing portal | Gerenciar assinatura via Stripe Customer Portal |
 | Banners de feedback | Sucesso em `/conta?success=1`, cancelamento em `/criar-loja?cancelled=1` |
+| Internacionalização EUR/PT | Detecção de locale por IP (Vercel Edge `request.geo?.country`) → cookie `hivi_locale`; preços exibidos em BRL ou EUR em toda a plataforma automaticamente; override via `?locale=PT` |
 
 ### Cardápio Público (`/[slug]`)
 
@@ -67,6 +68,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | Categorias | Listagem de pratos com ordenação (preço, nome) |
 | Carrinho | Persistido em `localStorage`, acessível em qualquer página |
 | Pré-preenchimento de entrega | Nome, endereço e telefone salvos do último pedido (sem login) |
+| Telefone internacional | Campo de código de país editável (+55 BR / +351 PT padrão); aceita qualquer código |
 | Pedido de mesa via QR | Gera QR code → garçom escaneia e confirma |
 | Pedido de entrega | Formulário completo → WhatsApp automático para o restaurante |
 | Observações | Campo de obs em ambos os fluxos (mesa e entrega) |
@@ -90,7 +92,7 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 | **Categorias** | CRUD + reordenação, crop de imagem |
 | **Funcionários** | Convidar por e-mail (Supabase invite), cargo, nome de exibição, senha ADM individual, remover |
 | **Analytics** ⭐ Pro | Receita/pedidos por dia, top produtos, pedidos por tipo, horário de pico, KPIs, comparativo semanal, exportação CSV e PDF |
-| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste, logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, impressora térmica (USB/BT/Sistema), QR code download |
+| **Configurações** | Status, redes sociais, WhatsApp + toggle de notificação + teste (com telefone internacional), logo, banner, tema completo com prévia ao vivo, **toggle de entregas** (restaurantes só mesa), horário de entregas, chave PIX + QR code (apenas BRL), impressora térmica (USB/BT/Sistema), QR code download |
 | **Notificação sonora** | Beep duplo (Web Audio API), toggle ativo/pausado no header |
 | **Impressão térmica** | USB (WebUSB), Bluetooth (Web BT), Rede TCP (agente local), Via Sistema (window.print); cut mode; charset Latin-1 para acentos; auto-impressão; reimpressão manual por pedido |
 
@@ -106,13 +108,13 @@ hivi-web.com/[slug]/adm     → Painel administrativo do restaurante
 
 ### Planos
 
-| Plano | Preço | Inclui |
-|---|---|---|
-| **Gratuito** | R$ 0 — para sempre | Até 16 pratos, 4 categorias, 1 adicional/prato, equipe de 4, sem WhatsApp automático, sem Analytics. 7 dias de trial com tudo do Pro ao criar. Login único por dispositivo (session_id). |
-| **Básico** | R$ 59,99/mês | Tudo do Free ilimitado + WhatsApp automático + equipe ilimitada |
-| **Pro** | R$ 99,99/mês | Tudo do Básico + Analytics completo (gráficos, KPIs, CSV, PDF) |
+| Plano | Preço BR | Preço PT | Inclui |
+|---|---|---|---|
+| **Gratuito** | R$ 0 | € 0 | Até 16 pratos, 4 categorias, 1 adicional/prato, equipe de 4, sem WhatsApp automático, sem Analytics. 7 dias de trial com tudo do Pro ao criar. Login único por dispositivo (session_id). |
+| **Básico** | R$ 59,99/mês | € 24,99/mês | Tudo do Free ilimitado + WhatsApp automático + equipe ilimitada |
+| **Pro** | R$ 99,99/mês | € 39,99/mês | Tudo do Básico + Analytics completo (gráficos, KPIs, CSV, PDF) |
 
-Upgrade e downgrade via `/conta` sem cancelar a assinatura — troca o price na subscription do Stripe (`proration_behavior: 'none'`), próxima fatura já reflete o novo valor.
+A moeda é determinada pelo locale detectado no momento da criação (`currency: 'BRL' | 'EUR'` salvo no restaurante). Upgrade e downgrade via `/conta` sem cancelar a assinatura — troca o price na subscription do Stripe (`proration_behavior: 'none'`), próxima fatura já reflete o novo valor.
 
 Restaurantes criados no plano Gratuito usam `POST /api/restaurants/free` (sem Stripe) e têm `trial_ends_at = now() + 7 days`. Durante o trial, `getEffectiveLimits()` retorna `PRO_LIMITS`. Após o trial, pratos em excesso são auto-pausados (`is_available=false`) no carregamento da página ADM — nunca deletados (soft-lock).
 
@@ -203,23 +205,20 @@ lib/
 │   ├── server.ts               # Server client (cookies)
 │   └── adm-restaurant.ts       # Helpers de lookup de restaurante
 ├── adm-auth.ts                 # HMAC tokens + PBKDF2 para senhas ADM
+├── analytics-pdf.ts            # Geração de PDF de analytics (jsPDF + autotable)
 ├── color-utils.ts              # getContrastColor, computeLabelShadow
+├── currency.ts                 # formatCurrency(value, currency) — Intl.NumberFormat BRL/EUR
 ├── delivery-hours.ts           # Tipos e lógica de horário de entregas
+├── phone.ts                    # Utilitários de telefone internacional (parse, validate, build)
+├── pix.ts                      # Gerador BR Code EMV (PIX Banco Central) sem dependências
+├── plan-limits.ts              # getEffectiveLimits(plan, trial_ends_at) — limites por plano + trial
 ├── rate-limit.ts               # Rate limiting in-memory
-└── ultramsg.ts                 # Cliente WhatsApp UltraMSG
-
-lib/
-├── adm-auth.ts             # HMAC tokens + PBKDF2 para senhas ADM
-├── color-utils.ts          # getContrastColor, computeLabelShadow
-├── delivery-hours.ts       # Tipos e lógica de horário de entregas
-├── plan-limits.ts          # getEffectiveLimits(plan, trial_ends_at) — limites por plano + trial
-├── rate-limit.ts           # Rate limiting in-memory
-├── ultramsg.ts             # Cliente UltraMSG
-├── analytics-pdf.ts        # Geração de PDF de analytics (jsPDF + autotable)
+├── resend.ts                   # SDK Resend: 3 identidades, List-Unsubscribe, onboarding queue
+├── ultramsg.ts                 # Cliente UltraMSG (WhatsApp)
 └── thermal-printer/
-    ├── escpos.ts           # Encoder ESC/POS puro (CutMode, Charset Latin-1/ASCII, entrega)
-    ├── printer.ts          # Conexão USB/BT/Rede/Browser + checkNetworkAgent
-    └── receipt-html.ts     # HTML de cupom para modo "Via sistema"
+    ├── escpos.ts               # Encoder ESC/POS puro (CutMode, Charset Latin-1/ASCII, entrega)
+    ├── printer.ts              # Conexão USB/BT/Rede/Browser + checkNetworkAgent
+    └── receipt-html.ts         # HTML de cupom para modo "Via sistema"
 
 supabase/
 └── migrations/
@@ -248,7 +247,7 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, trial_ends_at, stripe_*, adm_password_hash |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), currency (`BRL`/`EUR`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, pix_key, pix_key_type, trial_ends_at, stripe_*, adm_password_hash |
 | `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash, session_id (login único por dispositivo no plano free) |
 | `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
 | `categories` | Categorias do cardápio: nome, imagem, display_order |
@@ -380,9 +379,10 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_PRICE_BASIC=price_...
-STRIPE_PRICE_PRO=price_...
-STRIPE_PRICE_FREE=  # vazio — plano gratuito não usa Stripe
+STRIPE_PRICE_BASIC=price_...       # R$ 59,99/mês (BRL)
+STRIPE_PRICE_PRO=price_...         # R$ 99,99/mês (BRL)
+STRIPE_PRICE_BASIC_EUR=price_...   # € 24,99/mês (EUR — Portugal)
+STRIPE_PRICE_PRO_EUR=price_...     # € 39,99/mês (EUR — Portugal)
 
 # Resend (e-mails)
 RESEND_API_KEY=re_...
@@ -407,7 +407,7 @@ INTERNAL_API_SECRET=segredo_aleatorio
 | Variável | Status |
 |---|---|
 | Supabase (URL, Anon Key, Service Role) | ✅ Configurado |
-| Stripe (Secret, Webhook, Price Basic, Price Pro) | ✅ Configurado |
+| Stripe (Secret, Webhook, Price Basic BRL/EUR, Price Pro BRL/EUR) | ✅ Configurado |
 | UltraMSG (Instance ID, Token) | ✅ Configurado |
 | Google OAuth | ✅ Configurado no painel Supabase |
 | Resend (API Key, From Email) | ✅ Configurado |
@@ -460,8 +460,11 @@ Execute as migrations em ordem no **SQL Editor do Supabase** (Dashboard → SQL 
 | `012_whatsapp_notify_enabled.sql` | Coluna `whatsapp_notify_enabled BOOLEAN DEFAULT true` em `restaurants` |
 | `013_delivery_enabled.sql` | Coluna `delivery_enabled BOOLEAN DEFAULT true` em `restaurants` |
 | `014_free_plan.sql` | `trial_ends_at TIMESTAMPTZ` em `restaurants`, `session_id TEXT` em `restaurant_users`, `plan` default alterado para `'free'` |
+| `015_email_queue.sql` | Tabela `email_queue` para fila de e-mails de onboarding (welcome, dia 3, dia 6) |
+| `016_pix_key.sql` | Colunas `pix_key TEXT` e `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
+| `017_currency.sql` | Coluna `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
 
-**Status em produção: todas as 14 migrations executadas.**
+**Status em produção: todas as 17 migrations executadas.**
 
 ---
 
@@ -496,24 +499,28 @@ Todos os fluxos testados e validados em produção:
 
 ---
 
-## Estado Atual — 2026-05-23
+## Estado Atual — 2026-05-24
 
-**Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–12 concluídas.
+**Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–14 concluídas.
 
 ### Implementado e funcionando
-- ✅ Três planos: Gratuito (com trial de 7 dias), Básico (R$59,99) e Pro (R$99,99)
+- ✅ Três planos: Gratuito (com trial de 7 dias), Básico e Pro
+- ✅ Preços em BRL (R$59,99 / R$99,99) e EUR (€24,99 / €39,99) — detectados por locale automático
 - ✅ Plano Gratuito: criação sem Stripe, soft-lock, login único por dispositivo (session_id)
 - ✅ Upgrade free→pago e upgrade/downgrade Basic↔Pro via Stripe (sem cancelar assinatura)
+- ✅ Internacionalização EUR/PT: locale por IP (Vercel Edge), cookie `hivi_locale`, todos os preços dinâmicos
 - ✅ Cardápio digital público com temas, adicionais, horário de entregas
+- ✅ Telefone internacional com código de país editável (+55 BR / +351 PT padrão)
+- ✅ PIX: chave configurável no ADM, QR code por pedido (apenas restaurantes BRL)
 - ✅ Painel ADM completo: pedidos, pratos, categorias, funcionários (RBAC 5 cargos)
 - ✅ Analytics com gráficos, KPIs, CSV e PDF (Plano Pro)
 - ✅ Impressão térmica: USB, Bluetooth, Rede TCP (agente local), Via sistema; charset Latin-1; cut mode configurável
 - ✅ WhatsApp automático com toggle de notificação (Planos Básico e Pro)
 - ✅ Exclusão de cardápio cancela assinatura Stripe automaticamente
-- ✅ Todas as 14 migrations aplicadas em produção
+- ✅ Todas as 17 migrations aplicadas em produção
 
 ### Próximas funcionalidades planejadas
-- 🔲 PIX e pagamentos online integrados
+- 🔲 PIX dinâmico (gateway — MercadoPago/Asaas)
 - 🔲 Cupons e descontos
 - 🔲 Fidelidade e histórico de clientes
 - 🔲 Multi-unidade (filiais)

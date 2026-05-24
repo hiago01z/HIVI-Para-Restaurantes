@@ -94,11 +94,13 @@ hivi/
 │   ├── adm-auth.ts                    # HMAC tokens + PBKDF2 (senhas ADM)
 │   ├── analytics-pdf.ts               # Geração PDF de analytics (jsPDF + autotable)
 │   ├── color-utils.ts                 # getContrastColor, computeLabelShadow
+│   ├── currency.ts                    # formatCurrency(value, currency) — Intl.NumberFormat BRL/EUR
 │   ├── delivery-hours.ts              # Tipos DeliveryHoursConfig + checkDeliveryOpen()
+│   ├── phone.ts                       # Utilitários tel. internacional: parseStoredPhone, buildFullPhone, isPhoneValid
 │   ├── pix.ts                         # Gerador BR Code EMV (PIX Banco Central) sem dependências externas
 │   ├── plan-limits.ts                 # getEffectiveLimits(plan, trial_ends_at)
 │   ├── rate-limit.ts                  # Rate limiting in-memory (sem Redis)
-│   ├── resend.ts                      # Resend SDK: 3 identidades (noreply/support/feedback), List-Unsubscribe
+│   ├── resend.ts                      # Resend SDK: 3 identidades (noreply/support/feedback), List-Unsubscribe, onboarding queue
 │   ├── ultramsg.ts                    # Cliente UltraMSG (WhatsApp)
 │   └── thermal-printer/
 │       ├── escpos.ts                  # Encoder ESC/POS: CutMode, Charset, entrega
@@ -108,8 +110,8 @@ hivi/
 ├── public/
 │   └── hivi-print-agent.js            # Agente TCP local (Node.js): browser → porta 9100
 │
-├── middleware.ts                       # Proteção /conta e /criar-loja; header x-pathname
-└── supabase/migrations/               # 14 migrations SQL em ordem
+├── middleware.ts                       # Proteção /conta e /criar-loja; header x-pathname; detecção locale por IP → cookie hivi_locale
+└── supabase/migrations/               # 17 migrations SQL em ordem
 ```
 
 ---
@@ -136,6 +138,7 @@ delivery_enabled         boolean NOT NULL DEFAULT true           -- migration 01
 delivery_hours           jsonb                                    -- migration 008
 pix_key                  text                                     -- migration 016
 pix_key_type             text CHECK (pix_key_type IN ('cpf','cnpj','email','phone','evp'))  -- migration 016
+currency                 text NOT NULL DEFAULT 'BRL'              -- migration 017: 'BRL' | 'EUR'
 created_at               timestamptz DEFAULT now()
 ```
 
@@ -257,6 +260,18 @@ notes            text
 selected_options jsonb                                           -- migration 010: adicionais
 ```
 
+### `email_queue` — Fila de e-mails de onboarding (migration 015)
+```sql
+id             uuid PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id  uuid REFERENCES restaurants(id) ON DELETE CASCADE
+to_email       text NOT NULL
+type           text NOT NULL CHECK (type IN ('welcome','onboarding_d3','trial_ending'))
+send_at        timestamptz NOT NULL
+sent_at        timestamptz                -- null = pendente
+error          text                       -- mensagem de erro se falhou
+created_at     timestamptz NOT NULL DEFAULT now()
+```
+
 ### `qr_sessions` — Sessões QR (cliente → garçom)
 ```sql
 id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
@@ -290,9 +305,11 @@ created_at      timestamptz DEFAULT now()
 | `012_whatsapp_notify_enabled.sql` | `whatsapp_notify_enabled BOOLEAN DEFAULT true` |
 | `013_delivery_enabled.sql` | `delivery_enabled BOOLEAN DEFAULT true` |
 | `014_free_plan.sql` | `plan` default → `'free'`, `trial_ends_at TIMESTAMPTZ`, `session_id TEXT` em `restaurant_users` |
+| `015_email_queue.sql` | Tabela `email_queue` para fila de e-mails de onboarding (welcome / dia 3 / dia 6) |
 | `016_pix_key.sql` | `pix_key TEXT`, `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
+| `017_currency.sql` | `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
 
-**Status em produção: todas as 15 migrations aplicadas.**
+**Status em produção: todas as 17 migrations aplicadas.**
 
 ---
 
@@ -397,6 +414,7 @@ created_at      timestamptz DEFAULT now()
 - Protege `/conta` e `/criar-loja` via Supabase session
 - Injeta header `x-pathname` para layouts server detectarem rota ADM
 - Proteção ADM feita no `adm/layout.tsx` (não no middleware Edge) — HMAC requer Node.js runtime
+- **Detecção de locale por IP**: `request.geo?.country` (Vercel Edge nativo) → seta cookie `hivi_locale` ('BR' ou 'PT') em toda requisição; ignora se `hivi_locale_manual` presente; override via `?locale=PT`
 
 ---
 
@@ -404,7 +422,8 @@ created_at      timestamptz DEFAULT now()
 
 | | **Gratuito** | **Básico** | **Pro** |
 |---|---|---|---|
-| Preço | R$ 0 | R$ 59,99/mês | R$ 99,99/mês |
+| Preço (BRL) | R$ 0 | R$ 59,99/mês | R$ 99,99/mês |
+| Preço (EUR) | € 0 | € 24,99/mês | € 39,99/mês |
 | Pratos | 16 | Ilimitado | Ilimitado |
 | Categorias | 4 | Ilimitado | Ilimitado |
 | Adicionais/prato | 1 grupo | Ilimitado | Ilimitado |
@@ -572,8 +591,10 @@ Funções: `sendWelcomeEmail()`, `sendMemberInviteEmail()`, `sendSupportEmail()`
 | `STRIPE_SECRET_KEY` | Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Stripe |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe |
-| `STRIPE_PRICE_BASIC` | Price ID R$59,99/mês |
-| `STRIPE_PRICE_PRO` | Price ID R$99,99/mês |
+| `STRIPE_PRICE_BASIC` | Price ID R$59,99/mês (BRL) |
+| `STRIPE_PRICE_PRO` | Price ID R$99,99/mês (BRL) |
+| `STRIPE_PRICE_BASIC_EUR` | Price ID €24,99/mês (EUR — Portugal) |
+| `STRIPE_PRICE_PRO_EUR` | Price ID €39,99/mês (EUR — Portugal) |
 | `ULTRAMSG_INSTANCE_ID` | UltraMSG |
 | `ULTRAMSG_TOKEN` | UltraMSG |
 | `RESEND_API_KEY` | Resend |
