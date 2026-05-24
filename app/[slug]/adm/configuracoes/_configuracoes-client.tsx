@@ -51,6 +51,7 @@ type Restaurant = {
   currency: SupportedCurrency
   delivery_fee: number
   address: string | null
+  address_url: string | null
 }
 
 type Theme = {
@@ -322,15 +323,25 @@ export function ConfiguracoesClient({
 
   // Endereço do restaurante
   const [addressValue, setAddressValue] = useState(restaurant.address ?? '')
+  const [addressUrl, setAddressUrl] = useState(restaurant.address_url ?? '')
   const [addressSaving, setAddressSaving] = useState(false)
   const [addressSaved, setAddressSaved] = useState(false)
   const [addressError, setAddressError] = useState('')
 
   async function saveAddress() {
+    // Valida URL se preenchida
+    const urlTrimmed = addressUrl.trim()
+    if (urlTrimmed && !urlTrimmed.startsWith('http')) {
+      setAddressError('O link deve começar com https://')
+      return
+    }
     setAddressSaving(true)
     setAddressError('')
     try {
-      const ok = await patchSettings({ address: addressValue.trim() || null })
+      const ok = await patchSettings({
+        address: addressValue.trim() || null,
+        address_url: urlTrimmed || null,
+      })
       if (ok) {
         setAddressSaved(true)
         setTimeout(() => setAddressSaved(false), 2000)
@@ -1241,6 +1252,9 @@ export function ConfiguracoesClient({
         <p className="text-xs text-gray-500 mb-3">
           Exibido no rodapé do cardápio público. Deixe em branco para ocultar.
         </p>
+
+        {/* Texto do endereço */}
+        <label className="block text-xs font-medium text-gray-600 mb-1">Endereço</label>
         <textarea
           value={addressValue}
           onChange={(e) => setAddressValue(e.target.value)}
@@ -1250,8 +1264,46 @@ export function ConfiguracoesClient({
           maxLength={300}
           className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)] disabled:opacity-50 disabled:cursor-not-allowed resize-none"
         />
+
+        {/* Link do Google Maps */}
+        <label className="block text-xs font-medium text-gray-600 mt-3 mb-1">
+          Link do Google Maps{' '}
+          <span className="font-normal text-gray-400">(opcional — torna o endereço clicável)</span>
+        </label>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </span>
+            <input
+              type="url"
+              value={addressUrl}
+              onChange={(e) => setAddressUrl(e.target.value)}
+              disabled={!canManageDelivery}
+              placeholder="https://maps.google.com/..."
+              className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-[color:var(--adm-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+          {addressUrl && (
+            <a
+              href={addressUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 text-xs font-medium px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              Testar
+            </a>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          Copie o link de compartilhamento do Google Maps e cole aqui.
+        </p>
+
         {!canManageDelivery && (
-          <p className="text-xs text-gray-400 mt-1">Apenas o dono ou gerente pode alterar o endereço.</p>
+          <p className="text-xs text-gray-400 mt-2">Apenas o dono ou gerente pode alterar o endereço.</p>
         )}
         {addressError && (
           <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{addressError}</p>

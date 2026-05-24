@@ -35,6 +35,7 @@ const patchSchema = z.object({
   logo_url:                z.string().nullable().optional(),
   delivery_fee:            z.number().min(0).nullable().optional(),
   address:                 z.string().max(300).nullable().optional(),
+  address_url:             z.string().url().max(500).nullable().optional(),
   pix_key:                 z.string().nullable().optional(),
   pix_key_type:            z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
   currency:                z.enum(['BRL', 'EUR']).optional(),
@@ -65,7 +66,7 @@ export async function PATCH(
   }
 
   // Campos restritos a owner OU manager (não cook/waiter/delivery)
-  const ownerManagerFields = ['delivery_fee', 'address'] as const
+  const ownerManagerFields = ['delivery_fee', 'address', 'address_url'] as const
   const touchingOwnerManagerField = ownerManagerFields.some((f) => parsed.data[f as keyof typeof parsed.data] !== undefined)
   if (touchingOwnerManagerField && !['owner', 'manager'].includes(admPayload.role)) {
     return NextResponse.json({ error: 'Apenas o dono ou gerente pode configurar este campo.' }, { status: 403 })
