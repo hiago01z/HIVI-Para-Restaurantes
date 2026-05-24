@@ -7,6 +7,7 @@ const checkoutSchema = z.object({
   restaurantName: z.string().min(1, 'Nome obrigatório'),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug inválido'),
   plan: z.enum(['basic', 'pro']).default('basic'),
+  locale: z.enum(['BR', 'PT']).optional().default('BR'),
 })
 
 export async function POST(request: Request) {
@@ -19,12 +20,14 @@ export async function POST(request: Request) {
     }
 
     const selectedPlan = parsed.data.plan ?? 'basic'
+    const isEur = parsed.data.locale === 'PT'
     const priceId = selectedPlan === 'pro'
-      ? process.env.STRIPE_PRICE_PRO
-      : process.env.STRIPE_PRICE_BASIC
+      ? (isEur ? process.env.STRIPE_PRICE_PRO_EUR : process.env.STRIPE_PRICE_PRO)
+      : (isEur ? process.env.STRIPE_PRICE_BASIC_EUR : process.env.STRIPE_PRICE_BASIC)
     if (!priceId) {
       return NextResponse.json({ error: `Plano ${selectedPlan} não configurado` }, { status: 500 })
     }
+    const currency = isEur ? 'EUR' : 'BRL'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -76,6 +79,7 @@ export async function POST(request: Request) {
           restaurant_name: parsed.data.restaurantName,
           slug:            parsed.data.slug,
           plan:            selectedPlan,
+          currency,
         },
       })
     } catch (stripeErr) {

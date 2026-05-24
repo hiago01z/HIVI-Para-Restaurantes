@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      const { user_id, restaurant_name, slug, plan, restaurant_id } = session.metadata!
+      const { user_id, restaurant_name, slug, plan, restaurant_id, currency } = session.metadata!
 
       // ── Upgrade de restaurante existente (free → basic/pro) ──
       if (restaurant_id) {
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
         is_active: true,
         plan: plan === 'pro' ? 'pro' : 'basic',
         trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        currency: currency === 'EUR' ? 'EUR' : 'BRL',
       })
 
       if (error) {
@@ -172,11 +173,13 @@ export async function POST(request: Request) {
         updatePayload.plan = planFromMeta
       }
 
-      // Também detecta upgrade via price_id: se o price muda para STRIPE_PRICE_PRO
+      // Detecta upgrade via price_id (BRL e EUR)
       const priceId = subscription.items.data[0]?.price?.id
-      if (priceId && priceId === process.env.STRIPE_PRICE_PRO) {
+      const proPrices = [process.env.STRIPE_PRICE_PRO, process.env.STRIPE_PRICE_PRO_EUR].filter(Boolean)
+      const basicPrices = [process.env.STRIPE_PRICE_BASIC, process.env.STRIPE_PRICE_BASIC_EUR].filter(Boolean)
+      if (priceId && proPrices.includes(priceId)) {
         updatePayload.plan = 'pro'
-      } else if (priceId && priceId === process.env.STRIPE_PRICE_BASIC) {
+      } else if (priceId && basicPrices.includes(priceId)) {
         updatePayload.plan = 'basic'
       }
 

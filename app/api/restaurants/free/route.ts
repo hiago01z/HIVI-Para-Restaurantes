@@ -8,6 +8,7 @@ import { z } from 'zod'
 const schema = z.object({
   restaurantName: z.string().min(1).max(100),
   slug: z.string().min(3).max(60).regex(/^[a-z0-9-]+$/, 'Slug inválido'),
+  locale: z.enum(['BR', 'PT']).optional().default('BR'),
 })
 
 export async function POST(request: Request) {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { restaurantName, slug } = parsed.data
+  const { restaurantName, slug, locale } = parsed.data
   const supabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     is_active: true,
     plan: 'free',
     trial_ends_at: trialEndsAt,
+    currency: locale === 'PT' ? 'EUR' : 'BRL',
   })
 
   if (insertError) {

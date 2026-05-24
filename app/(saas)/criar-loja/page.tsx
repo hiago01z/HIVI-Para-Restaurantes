@@ -19,6 +19,18 @@ function CriarLojaInner() {
   const searchParams = useSearchParams()
   const cancelled = searchParams.get('cancelled') === '1'
 
+  // Lê locale do cookie definido pelo middleware (detectado por IP)
+  const [locale] = useState<'BR' | 'PT'>(() => {
+    if (typeof document === 'undefined') return 'BR'
+    const m = document.cookie.match(/(?:^|;\s*)hivi_locale=([^;]+)/)
+    return m?.[1] === 'PT' ? 'PT' : 'BR'
+  })
+
+  const prices = {
+    BR: { basic: 'R$ 59,99', pro: 'R$ 99,99' },
+    PT: { basic: '24,99 €', pro: '39,99 €' },
+  }[locale]
+
   const [nome, setNome] = useState('')
   const [slug, setSlug] = useState('')
   const [slugEditado, setSlugEditado] = useState(false)
@@ -59,7 +71,7 @@ function CriarLojaInner() {
         const res = await fetch('/api/restaurants/free', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ restaurantName: nome, slug }),
+          body: JSON.stringify({ restaurantName: nome, slug, locale }),
         })
         const data = await res.json()
         if (!res.ok) {
@@ -76,7 +88,7 @@ function CriarLojaInner() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantName: nome, slug, plan: plano }),
+        body: JSON.stringify({ restaurantName: nome, slug, plan: plano, locale }),
       })
 
       const data = await res.json()
@@ -224,7 +236,7 @@ function CriarLojaInner() {
                   </div>
                   <span className="font-bold text-gray-900">Plano Básico</span>
                 </div>
-                <span className="font-black text-orange-500">R$ 59,99<span className="text-xs font-medium text-gray-400">/mês</span></span>
+                <span className="font-black text-orange-500">{prices.basic}<span className="text-xs font-medium text-gray-400">/mês</span></span>
               </div>
               <p className="text-xs text-gray-500 ml-6">
                 Cardápio digital, QR code de mesa, pedidos, equipe, temas e configurações.
@@ -251,7 +263,7 @@ function CriarLojaInner() {
                   <span className="font-bold text-gray-900">Plano Pro</span>
                   <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">Recomendado</span>
                 </div>
-                <span className="font-black text-orange-500">R$ 99,99<span className="text-xs font-medium text-gray-400">/mês</span></span>
+                <span className="font-black text-orange-500">{prices.pro}<span className="text-xs font-medium text-gray-400">/mês</span></span>
               </div>
               <p className="text-xs text-gray-500 ml-6">
                 Tudo do Básico + <strong className="text-gray-700">Analytics completo</strong>: gráficos de receita, top produtos, horário de pico e exportação CSV.
