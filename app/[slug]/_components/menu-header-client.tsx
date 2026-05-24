@@ -33,20 +33,25 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   }
 
-  const q = normalize(query.trim())
-  const results = q.length >= 1
+  const qRaw = query.trim()
+  // Divide em palavras individuais — cada uma deve aparecer em algum lugar
+  const words = normalize(qRaw).split(/\s+/).filter(Boolean)
+
+  const results = words.length >= 1
     ? allProducts
-        .filter((p) =>
-          normalize(p.name).includes(q) ||
-          normalize(p.description ?? '').includes(q)
-        )
+        .filter((p) => {
+          const haystack = normalize(p.name) + ' ' + normalize(p.description ?? '')
+          // Todas as palavras devem estar presentes (AND)
+          return words.every((w) => haystack.includes(w))
+        })
         .sort((a, b) => {
-          // Prioriza: nome começa com o termo > nome contém > descrição contém
+          // Prioriza: nome começa com a primeira palavra > contém no nome > só na descrição
           const aName = normalize(a.name)
           const bName = normalize(b.name)
-          const aStarts = aName.startsWith(q) ? 0 : aName.includes(q) ? 1 : 2
-          const bStarts = bName.startsWith(q) ? 0 : bName.includes(q) ? 1 : 2
-          return aStarts - bStarts
+          const first = words[0]
+          const aScore = aName.startsWith(first) ? 0 : aName.includes(first) ? 1 : 2
+          const bScore = bName.startsWith(first) ? 0 : bName.includes(first) ? 1 : 2
+          return aScore - bScore
         })
     : []
 
@@ -131,7 +136,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            {q.length >= 1 && results.length === 0 && (
+            {words.length >= 1 && results.length === 0 && (
               <p className="text-center mt-10 text-sm" style={{ color: 'var(--menu-text-muted)' }}>
                 Nenhum item encontrado
               </p>
