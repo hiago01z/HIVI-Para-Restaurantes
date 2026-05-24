@@ -14,6 +14,13 @@ type Loja = {
   has_adm_password?: boolean
   plan?: 'free' | 'basic' | 'pro'
   trial_ends_at?: string | null
+  currency?: 'BRL' | 'EUR'
+}
+
+function planPrices(currency: 'BRL' | 'EUR' = 'BRL') {
+  return currency === 'EUR'
+    ? { basic: '24,99 €/mês', pro: '39,99 €/mês' }
+    : { basic: 'R$ 59,99/mês', pro: 'R$ 99,99/mês' }
 }
 
 function trialDaysLeft(trialEndsAt: string | null | undefined): number {
@@ -112,7 +119,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
   }
 
   async function handleDowngrade(loja: Loja) {
-    if (!confirm(`Fazer downgrade de "${loja.name}" para o Plano Básico?\n\nO plano muda imediatamente e a próxima fatura será R$ 59,99. Você perderá acesso ao Analytics.`)) return
+    if (!confirm(`Fazer downgrade de "${loja.name}" para o Plano Básico?\n\nO plano muda imediatamente e a próxima fatura será ${planPrices(loja.currency).basic}. Você perderá acesso ao Analytics.`)) return
     setDowngradingId(loja.id)
     try {
       const res = await fetch('/api/stripe/downgrade', {
@@ -199,6 +206,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
       {localLojas.map((loja) => {
         const isToggling = loadingId === loja.id
         const isDeleting = loadingId === loja.id + '-del'
+        const pp = planPrices(loja.currency)
 
         return (
           <div key={loja.id} className="bg-white rounded-2xl p-5 shadow-sm">
@@ -294,7 +302,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                   {subscribingId === loja.id + '-basic'
                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     : <TrendingUp className="w-3.5 h-3.5" />}
-                  {subscribingId === loja.id + '-basic' ? 'Abrindo...' : 'Básico — R$ 59,99/mês'}
+                  {subscribingId === loja.id + '-basic' ? 'Abrindo...' : `Básico — ${pp.basic}`}
                 </button>
                 <button
                   onClick={() => handleSubscribe(loja, 'pro')}
@@ -304,7 +312,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                   {subscribingId === loja.id + '-pro'
                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     : <TrendingUp className="w-3.5 h-3.5" />}
-                  {subscribingId === loja.id + '-pro' ? 'Abrindo...' : 'Pro ★ — R$ 99,99/mês'}
+                  {subscribingId === loja.id + '-pro' ? 'Abrindo...' : `Pro ★ — ${pp.pro}`}
                 </button>
               </div>
             )}
@@ -319,7 +327,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 {upgradingId === loja.id
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <TrendingUp className="w-4 h-4" />}
-                {upgradingId === loja.id ? 'Processando...' : 'Fazer upgrade para Pro — R$ 99,99/mês'}
+                {upgradingId === loja.id ? 'Processando...' : `Fazer upgrade para Pro — ${pp.pro}`}
               </button>
             )}
 
@@ -333,7 +341,7 @@ export function ContaActions({ lojas = [], showPortalOnly = false, AdmPasswordFo
                 {downgradingId === loja.id
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <TrendingDown className="w-4 h-4" />}
-                {downgradingId === loja.id ? 'Processando...' : 'Voltar para o Básico — R$ 59,99/mês'}
+                {downgradingId === loja.id ? 'Processando...' : `Voltar para o Básico — ${pp.basic}`}
               </button>
             )}
 

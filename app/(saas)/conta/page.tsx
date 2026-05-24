@@ -7,6 +7,7 @@ import { ContaActions } from './_conta-actions'
 import { AdmPasswordForm } from './_adm-password-form'
 import { MemberPasswordForm } from './_member-password-form'
 import { SuccessBanner } from './_success-banner'
+import { cookies } from 'next/headers'
 
 export default async function ContaPage({
   searchParams,
@@ -20,10 +21,17 @@ export default async function ContaPage({
 
   const { success } = await searchParams
 
+  // Locale para preços (usado no texto "Adicionar cardápio")
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('hivi_locale')?.value === 'PT' ? 'PT' : 'BR'
+  const addCardapioPrice = locale === 'PT'
+    ? 'Básico 24,99 €/mês · Pro 39,99 €/mês'
+    : 'Básico R$ 59,99/mês · Pro R$ 99,99/mês'
+
   // ── Restaurantes onde o usuário é DONO ───────────────────────
   const { data: restaurantes } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash, plan, trial_ends_at')
+    .select('id, name, slug, is_active, stripe_customer_id, adm_password_hash, plan, trial_ends_at, currency')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -33,6 +41,7 @@ export default async function ContaPage({
     plan: (l.plan ?? 'free') as 'free' | 'basic' | 'pro',
     trial_ends_at: l.trial_ends_at ?? null,
     has_adm_password: !!adm_password_hash,
+    currency: (l.currency as 'BRL' | 'EUR' | null) ?? 'BRL',
     role: 'owner' as string,
   }))
   const temStripe = lojas.some((l) => l.stripe_customer_id)
@@ -197,7 +206,7 @@ export default async function ContaPage({
                   <Plus className="w-4 h-4" />
                   Adicionar cardápio
                 </Link>
-                <p className="text-xs text-gray-400 mt-2">Básico R$ 59,99/mês · Pro R$ 99,99/mês</p>
+                <p className="text-xs text-gray-400 mt-2">{addCardapioPrice}</p>
               </div>
             )}
           </div>
