@@ -160,19 +160,6 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
               </button>
             </div>
             <div className="flex-1 overflow-y-auto py-2">
-              {/* Tudo */}
-              <Link
-                href={`/${slug}/tudo`}
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center gap-2 px-5 py-3.5 font-black text-[0.9375rem] tracking-wide transition-opacity hover:opacity-80"
-                style={{ color: 'var(--menu-primary)' }}
-              >
-                Tudo
-              </Link>
-              {/* Separador */}
-              {categories.length > 0 && (
-                <div className="mx-5 mb-1" style={{ borderTop: '1px solid rgba(128,128,128,0.15)' }} />
-              )}
               {/* Categorias */}
               {categories.map((cat) => (
                 <Link
@@ -185,6 +172,18 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
                   {cat.name}
                 </Link>
               ))}
+              {/* Separador + Tudo (último item) */}
+              {categories.length > 0 && (
+                <div className="mx-5 mt-1" style={{ borderTop: '1px solid rgba(128,128,128,0.15)' }} />
+              )}
+              <Link
+                href={`/${slug}/tudo`}
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center px-5 py-3.5 font-medium text-[0.9375rem] tracking-wide transition-opacity hover:opacity-80"
+                style={{ color: 'var(--menu-text)' }}
+              >
+                Tudo
+              </Link>
             </div>
           </div>
         </>
