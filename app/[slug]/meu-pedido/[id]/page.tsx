@@ -16,6 +16,7 @@ export default async function MeuPedidoPage({ params }: { params: Promise<{ slug
       customer_name,
       notes,
       total,
+      delivery_fee,
       created_at,
       restaurant_id,
       order_items (

@@ -31,6 +31,7 @@ type Order = {
   customer_name: string | null
   notes: string | null
   total: number
+  delivery_fee?: number | null
   created_at: string
   order_items: OrderItem[]
 }
@@ -213,9 +214,28 @@ export function MeuPedidoClient({ order: initialOrder, restaurant, slug }: Props
               )
             })}
           </div>
-          <div className="mt-3 pt-3 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
-            <span>Total</span>
-            <span>{formatPrice(initialOrder.total)}</span>
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(128,128,128,0.15)' }}>
+            {initialOrder.delivery_fee && initialOrder.delivery_fee > 0 ? (
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                  <span>Subtotal</span>
+                  <span>{formatPrice(initialOrder.total)}</span>
+                </div>
+                <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                  <span>Taxa de entrega</span>
+                  <span>{formatPrice(initialOrder.delivery_fee)}</span>
+                </div>
+                <div className="flex justify-between font-black" style={{ color: 'var(--menu-text)' }}>
+                  <span>Total</span>
+                  <span>{formatPrice(initialOrder.total + initialOrder.delivery_fee)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between font-black" style={{ color: 'var(--menu-text)' }}>
+                <span>Total</span>
+                <span>{formatPrice(initialOrder.total)}</span>
+              </div>
+            )}
           </div>
         </div>
 

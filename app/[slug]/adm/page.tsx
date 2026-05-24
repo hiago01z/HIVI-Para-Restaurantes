@@ -31,7 +31,7 @@ export default async function AdmDashboardPage({
 
   const { data: todayOrders } = await supabase
     .from('orders')
-    .select('id, order_number, type, status, customer_name, total, created_at')
+    .select('id, order_number, type, status, customer_name, total, delivery_fee, created_at')
     .eq('restaurant_id', restaurant.id)
     .gte('created_at', todayStart.toISOString())
     .order('created_at', { ascending: false })

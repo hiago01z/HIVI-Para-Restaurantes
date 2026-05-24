@@ -11,6 +11,7 @@ type Order = {
   status: string
   customer_name: string | null
   total: number
+  delivery_fee?: number | null
   created_at: string
 }
 
@@ -162,7 +163,7 @@ export function DashboardClient({ slug, restaurantName, todayOrders, totalProduc
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLOR[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {STATUS_LABEL[order.status] ?? order.status}
                   </span>
-                  <span className="text-xs font-medium text-gray-700">{formatPrice(order.total)}</span>
+                  <span className="text-xs font-medium text-gray-700">{formatPrice(order.total + (order.delivery_fee ?? 0))}</span>
                 </div>
               </li>
             ))}
