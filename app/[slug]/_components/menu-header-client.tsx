@@ -28,11 +28,26 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
     if (searchOpen) searchRef.current?.focus()
   }, [searchOpen])
 
-  const results = query.trim().length >= 2
-    ? allProducts.filter((p) =>
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        (p.description ?? '').toLowerCase().includes(query.toLowerCase())
-      )
+  // Normaliza string: minúsculas + remove acentos
+  function normalize(s: string) {
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  }
+
+  const q = normalize(query.trim())
+  const results = q.length >= 1
+    ? allProducts
+        .filter((p) =>
+          normalize(p.name).includes(q) ||
+          normalize(p.description ?? '').includes(q)
+        )
+        .sort((a, b) => {
+          // Prioriza: nome começa com o termo > nome contém > descrição contém
+          const aName = normalize(a.name)
+          const bName = normalize(b.name)
+          const aStarts = aName.startsWith(q) ? 0 : aName.includes(q) ? 1 : 2
+          const bStarts = bName.startsWith(q) ? 0 : bName.includes(q) ? 1 : 2
+          return aStarts - bStarts
+        })
     : []
 
   return (
@@ -116,7 +131,7 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            {query.trim().length >= 2 && results.length === 0 && (
+            {q.length >= 1 && results.length === 0 && (
               <p className="text-center mt-10 text-sm" style={{ color: 'var(--menu-text-muted)' }}>
                 Nenhum item encontrado
               </p>
