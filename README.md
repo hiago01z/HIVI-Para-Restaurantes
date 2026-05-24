@@ -247,7 +247,7 @@ supabase/
 
 | Tabela | Descrição |
 |---|---|
-| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), currency (`BRL`/`EUR`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, delivery_fee, address, pix_key, pix_key_type, trial_ends_at, stripe_*, adm_password_hash |
+| `restaurants` | Dados do restaurante: slug, nome, logo, status, plano (`free`/`basic`/`pro`), currency (`BRL`/`EUR`), whatsapp_number, whatsapp_notify_enabled, delivery_enabled, delivery_hours, delivery_fee, address, address_url, pix_key, pix_key_type, trial_ends_at, stripe_*, adm_password_hash |
 | `restaurant_users` | Membros da equipe: role (owner/manager/cook/waiter/delivery), name, adm_password_hash, session_id (login único por dispositivo no plano free) |
 | `restaurant_themes` | Tema visual completo: cores, fonte, tamanho, banner, label (fonte/cor/efeito/stroke/offset) |
 | `categories` | Categorias do cardápio: nome, imagem, display_order |
@@ -464,8 +464,9 @@ Execute as migrations em ordem no **SQL Editor do Supabase** (Dashboard → SQL 
 | `016_pix_key.sql` | Colunas `pix_key TEXT` e `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
 | `017_currency.sql` | Coluna `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
 | `018_delivery_fee_and_address.sql` | Coluna `delivery_fee NUMERIC(10,2) DEFAULT 0` em `restaurants` (taxa configurável) + `address TEXT` em `restaurants` (endereço público); coluna `delivery_fee NUMERIC(10,2) DEFAULT 0` em `orders` (snapshot da taxa no momento do pedido) |
+| `019_address_url.sql` | Coluna `address_url TEXT` em `restaurants` — link do Google Maps; endereço no rodapé do cardápio vira `<a>` clicável quando preenchido |
 
-**Status em produção: todas as 18 migrations executadas.**
+**Status em produção: todas as 19 migrations executadas.**
 
 ---
 
@@ -500,9 +501,9 @@ Todos os fluxos testados e validados em produção:
 
 ---
 
-## Estado Atual — 2026-05-24
+## Estado Atual — 2026-05-24 (pronto para lançamento)
 
-**Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–14 concluídas.
+**Plataforma em produção em [hivi-web.com](https://hivi-web.com)**. Fases 0–14 concluídas. 19 migrations aplicadas.
 
 ### Implementado e funcionando
 - ✅ Três planos: Gratuito (com trial de 7 dias), Básico e Pro
@@ -519,10 +520,10 @@ Todos os fluxos testados e validados em produção:
 - ✅ Impressão com breakdown Subtotal + Taxa de entrega + TOTAL quando taxa > 0
 - ✅ WhatsApp automático com toggle de notificação (Planos Básico e Pro)
 - ✅ Taxa de entrega configurável no ADM (owner/manager); snapshot em orders.delivery_fee; exibida no recibo mas excluída dos analytics
-- ✅ Endereço do restaurante configurável no ADM; exibido com ícone de pin no rodapé do cardápio público
+- ✅ Endereço do restaurante com link do Google Maps — configurável no ADM; exibido com ícone de pin no rodapé; clicável quando link definido
 - ✅ Exclusão de cardápio cancela assinatura Stripe automaticamente
 - ✅ Banner Trial Pro corrigido: exibido apenas para planos free e basic (não exibe para pro)
-- ✅ Todas as 18 migrations aplicadas em produção
+- ✅ Todas as 19 migrations aplicadas em produção
 
 ### Próximas funcionalidades planejadas
 - 🔲 PIX dinâmico (gateway — MercadoPago/Asaas)

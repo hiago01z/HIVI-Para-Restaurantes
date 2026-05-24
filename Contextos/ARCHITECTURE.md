@@ -111,7 +111,7 @@ hivi/
 │   └── hivi-print-agent.js            # Agente TCP local (Node.js): browser → porta 9100
 │
 ├── middleware.ts                       # Proteção /conta e /criar-loja; header x-pathname; detecção locale por IP → cookie hivi_locale
-└── supabase/migrations/               # 18 migrations SQL em ordem
+└── supabase/migrations/               # 19 migrations SQL em ordem
 ```
 
 ---
@@ -141,6 +141,7 @@ pix_key_type             text CHECK (pix_key_type IN ('cpf','cnpj','email','phon
 currency                 text NOT NULL DEFAULT 'BRL'              -- migration 017: 'BRL' | 'EUR'
 delivery_fee             numeric(10,2) DEFAULT 0                  -- migration 018: taxa de entrega configurável
 address                  text                                     -- migration 018: endereço público (rodapé cardápio)
+address_url              text                                     -- migration 019: link Google Maps (torna endereço clicável)
 created_at               timestamptz DEFAULT now()
 ```
 
@@ -312,8 +313,9 @@ created_at      timestamptz DEFAULT now()
 | `016_pix_key.sql` | `pix_key TEXT`, `pix_key_type TEXT CHECK (cpf\|cnpj\|email\|phone\|evp)` em `restaurants` |
 | `017_currency.sql` | `currency TEXT NOT NULL DEFAULT 'BRL' CHECK (BRL\|EUR)` em `restaurants` |
 | `018_delivery_fee_and_address.sql` | `delivery_fee NUMERIC(10,2) DEFAULT 0` e `address TEXT` em `restaurants`; `delivery_fee NUMERIC(10,2) DEFAULT 0` em `orders` (snapshot da taxa — analytics usa apenas `orders.total`) |
+| `019_address_url.sql` | `address_url TEXT` em `restaurants` — link do Google Maps; torna o endereço no rodapé do cardápio clicável |
 
-**Status em produção: todas as 18 migrations aplicadas.**
+**Status em produção: todas as 19 migrations aplicadas.**
 
 ---
 

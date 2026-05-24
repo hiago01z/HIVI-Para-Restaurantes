@@ -176,6 +176,8 @@
 | 2026-05-24 | Feature: Endereço do restaurante — migration 018 adiciona coluna address TEXT em restaurants; campo textarea no ADM Configurações (owner/manager); exibido no rodapé do cardápio público com ícone de pin, alinhado ao tema via CSS vars (--menu-text-muted). |
 | 2026-05-24 | Feature: Subtotal + Taxa + TOTAL no cardápio — _pedido-client.tsx exibe breakdown Subtotal/Taxa/Total quando deliveryFee > 0 nos 3 locais de exibição do total; submit ainda envia total: totalPrice (itens-only). |
 | 2026-05-24 | Fix: símbolo da moeda na taxa de entrega não atualizava ao mudar currency no ADM — _configuracoes-client.tsx: `restaurant.currency === 'EUR'` → `selectedCurrency === 'EUR'` (usa estado reativo já existente). |
+| 2026-05-24 | Feature: Link do Google Maps no endereço — migration 019 (address_url TEXT em restaurants); campo de URL no ADM Configurações com ícone de pin, botão "Testar" ao vivo e validação de prefixo https://; no cardápio público o endereço vira `<a>` clicável (target="_blank") quando address_url definido, mantendo estética do tema. |
+| 2026-05-24 | Docs: TASKS.md, ARCHITECTURE.md e README.md atualizados — migrations 018/019, taxa de entrega, endereço, link Google Maps, fix símbolo moeda, contagem 19 migrations. |
 
 ---
 
