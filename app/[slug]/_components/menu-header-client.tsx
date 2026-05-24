@@ -145,6 +145,20 @@ export function MenuHeaderClient({ slug, restaurantName, logoUrl, categories, al
               </button>
             </div>
             <div className="flex-1 overflow-y-auto py-2">
+              {/* Tudo */}
+              <Link
+                href={`/${slug}/tudo`}
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center gap-2 px-5 py-3.5 font-black text-[0.9375rem] tracking-wide transition-opacity hover:opacity-80"
+                style={{ color: 'var(--menu-primary)' }}
+              >
+                Tudo
+              </Link>
+              {/* Separador */}
+              {categories.length > 0 && (
+                <div className="mx-5 mb-1" style={{ borderTop: '1px solid rgba(128,128,128,0.15)' }} />
+              )}
+              {/* Categorias */}
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
