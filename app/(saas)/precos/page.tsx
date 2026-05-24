@@ -9,22 +9,24 @@ const EU_COUNTRIES = new Set([
   'GB','CH','NO','IS','LI','AL','BA','ME','MK','RS','UA','AM','AZ','GE',
 ])
 
-export default async function PrecosPage() {
+export default async function PrecosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ locale?: string }>
+}) {
+  // 1. Override por URL: /precos?locale=PT  (útil para testes)
+  const sp = await searchParams
+  if (sp.locale === 'PT') return <PrecosClient initialLocale="PT" />
+  if (sp.locale === 'BR') return <PrecosClient initialLocale="BR" />
+
+  // 2. Cookie definido pelo middleware via request.geo (IP real)
   const cookieStore = await cookies()
-
-  // 1. Preferência manual do usuário (toggle clicado)
-  const manual = cookieStore.get('hivi_locale_manual')?.value
-  if (manual === 'PT' || manual === 'BR') {
-    return <PrecosClient initialLocale={manual} />
-  }
-
-  // 2. Cookie definido pelo middleware via request.geo
   const geo = cookieStore.get('hivi_locale')?.value
   if (geo === 'PT' || geo === 'BR') {
     return <PrecosClient initialLocale={geo} />
   }
 
-  // 3. Fallback: ler header diretamente
+  // 3. Fallback: header direto
   const headersList = await headers()
   const country = headersList.get('x-vercel-ip-country') ?? ''
   const initialLocale = EU_COUNTRIES.has(country) ? 'PT' : 'BR'
