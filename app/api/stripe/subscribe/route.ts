@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     // Verifica que o restaurante pertence ao usuário e está no plano free
     const { data: restaurant } = await serviceClient
       .from('restaurants')
-      .select('id, name, slug, plan, stripe_customer_id')
+      .select('id, name, slug, plan, stripe_customer_id, currency')
       .eq('id', restaurantId)
       .eq('owner_id', user.id)
       .single()
@@ -44,9 +44,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Este restaurante já possui uma assinatura.' }, { status: 400 })
     }
 
+    const isEur = (restaurant as Record<string, unknown>).currency === 'EUR'
     const priceId = plan === 'pro'
-      ? process.env.STRIPE_PRICE_PRO
-      : process.env.STRIPE_PRICE_BASIC
+      ? (isEur ? process.env.STRIPE_PRICE_PRO_EUR : process.env.STRIPE_PRICE_PRO)
+      : (isEur ? process.env.STRIPE_PRICE_BASIC_EUR : process.env.STRIPE_PRICE_BASIC)
     if (!priceId) {
       return NextResponse.json({ error: `Plano ${plan} não configurado` }, { status: 500 })
     }

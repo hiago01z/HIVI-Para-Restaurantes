@@ -27,11 +27,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    const priceId = process.env.STRIPE_PRICE_BASIC
-    if (!priceId) {
-      return NextResponse.json({ error: 'Plano Básico não configurado' }, { status: 500 })
-    }
-
     const service = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -40,10 +35,16 @@ export async function POST(request: Request) {
     // Verifica que o usuário é dono e que o restaurante está no plano Pro
     const { data: restaurant } = await service
       .from('restaurants')
-      .select('id, name, plan, stripe_subscription_id')
+      .select('id, name, plan, stripe_subscription_id, currency')
       .eq('id', parsed.data.restaurantId)
       .eq('owner_id', user.id)
       .single()
+
+    const isEur = (restaurant as Record<string, unknown> | null)?.currency === 'EUR'
+    const priceId = isEur ? process.env.STRIPE_PRICE_BASIC_EUR : process.env.STRIPE_PRICE_BASIC
+    if (!priceId) {
+      return NextResponse.json({ error: 'Plano Básico não configurado' }, { status: 500 })
+    }
 
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })

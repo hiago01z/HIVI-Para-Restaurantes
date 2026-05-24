@@ -27,11 +27,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    const priceId = process.env.STRIPE_PRICE_PRO
-    if (!priceId) {
-      return NextResponse.json({ error: 'Plano Pro não configurado' }, { status: 500 })
-    }
-
     // Verifica que o usuário é dono do restaurante
     const service = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,10 +34,16 @@ export async function POST(request: Request) {
     )
     const { data: restaurant } = await service
       .from('restaurants')
-      .select('id, name, slug, plan, stripe_customer_id, stripe_subscription_id')
+      .select('id, name, slug, plan, stripe_customer_id, stripe_subscription_id, currency')
       .eq('id', parsed.data.restaurantId)
       .eq('owner_id', user.id)
       .single()
+
+    const isEur = (restaurant as Record<string, unknown> | null)?.currency === 'EUR'
+    const priceId = isEur ? process.env.STRIPE_PRICE_PRO_EUR : process.env.STRIPE_PRICE_PRO
+    if (!priceId) {
+      return NextResponse.json({ error: 'Plano Pro não configurado' }, { status: 500 })
+    }
 
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
