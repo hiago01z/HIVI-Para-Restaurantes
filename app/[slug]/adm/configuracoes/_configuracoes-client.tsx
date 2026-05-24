@@ -718,8 +718,8 @@ export function ConfiguracoesClient({
         </Section>
       )}
 
-      {/* ── PIX ── */}
-      <Section title={
+      {/* ── PIX (apenas para BRL) ── */}
+      {selectedCurrency !== 'EUR' && <Section title={
         <span className="flex items-center gap-2">
           PIX
           {!isOwner && (
@@ -847,7 +847,7 @@ export function ConfiguracoesClient({
             </div>
           </div>
         )}
-      </Section>
+      </Section>}
 
       {/* ── Status do restaurante ── */}
       <Section title="Status do Cardápio">

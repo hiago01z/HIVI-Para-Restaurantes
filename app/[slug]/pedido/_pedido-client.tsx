@@ -1,7 +1,7 @@
 'use client'
 
 import { useCart } from '@/contexts/cart-context'
-import { useFormatPrice } from '@/contexts/currency-context'
+import { useFormatPrice, useCurrency } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -52,6 +52,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
   const formatPrice = useFormatPrice()
+  const currency = useCurrency()
 
   const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
@@ -668,7 +669,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                   {[
                     { value: 'dinheiro', label: 'Dinheiro' },
                     { value: 'cartao', label: 'Cartão' },
-                    { value: 'pix', label: 'Pix' },
+                    ...(currency !== 'EUR' ? [{ value: 'pix', label: 'Pix' }] : []),
                   ].map((opt) => (
                     <button
                       key={opt.value}

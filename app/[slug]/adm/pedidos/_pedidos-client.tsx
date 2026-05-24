@@ -677,7 +677,7 @@ export function PedidosClient({
                     {/* Botão PIX:
                         - Mesa: sempre exibe (cliente não escolhe método antes)
                         - Entrega: só exibe quando payment_method === 'pix' */}
-                    {(order.type === 'table' || order.payment_method === 'pix') && (
+                    {currency !== 'EUR' && (order.type === 'table' || order.payment_method === 'pix') && (
                       pixKey ? (
                         <button
                           onClick={() => openPixModal(order)}
@@ -815,7 +815,7 @@ export function PedidosClient({
       )}
 
       {/* ── Modal QR Code PIX ── */}
-      {pixModal && (
+      {currency !== 'EUR' && pixModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPixModal(null)}>
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm font-bold text-gray-900 mb-0.5">QR Code PIX</p>
