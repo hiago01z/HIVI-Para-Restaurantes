@@ -47,12 +47,12 @@ export function FeaturedCarousel({ products, slug }: { products: Product[]; slug
     return () => { if (autoTimer.current) clearInterval(autoTimer.current) }
   }, [goNext, products.length, modalOpen])
 
+  const formatPrice = useFormatPrice()
+
   // ── Early return APÓS todos os hooks ──────────────────────────────────────
   if (products.length === 0) return null
 
   const product = products[current]
-
-  const formatPrice = useFormatPrice()
 
   function resetTimer() {
     if (autoTimer.current) clearInterval(autoTimer.current)
