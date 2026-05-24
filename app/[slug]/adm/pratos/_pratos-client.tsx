@@ -439,7 +439,7 @@ export function PratosClient({
 
               <Field label="Nome *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Ex: X-Burguer" />
               <Field label="Descrição" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Ex: Pão, carne, queijo, alface..." textarea />
-              <Field label="Preço (R$) *" value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="Ex: 29.90" type="number" />
+              <Field label={`Preço (${currency === 'EUR' ? '€' : 'R$'}) *`} value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="Ex: 29.90" type="number" />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoria</label>
@@ -791,7 +791,7 @@ function OptionsManageModal({
                                 />
                                 <div className="flex gap-2">
                                   <div className="relative flex-1">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+R$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+{currency === 'EUR' ? '€' : 'R$'}</span>
                                     <input type="number" min="0" step="0.01"
                                       value={editItemForm.price_addition}
                                       onChange={(e) => setEditItemForm({ ...editItemForm, price_addition: e.target.value })}
@@ -845,7 +845,7 @@ function OptionsManageModal({
                             />
                             <div className="flex gap-2">
                               <div className="relative flex-1">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+R$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">+{currency === 'EUR' ? '€' : 'R$'}</span>
                                 <input type="number" min="0" step="0.01"
                                   value={itemForms[group.id]?.price_addition ?? '0'}
                                   onChange={(e) => setItemForms((prev) => ({ ...prev, [group.id]: { ...(prev[group.id] ?? EMPTY_ITEM_FORM), price_addition: e.target.value } }))}
