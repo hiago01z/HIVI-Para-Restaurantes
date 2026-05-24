@@ -3,64 +3,134 @@
 import { SaasHeader } from '@/components/saas/saas-header'
 import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const FREE_FEATURES = [
-  'Cardápio digital público com link e QR code',
+  'Cardapio digital publico com link e QR code',
   'Painel administrativo',
   'QR code de mesa para pedidos',
-  'Gestão de pedidos em tempo real',
+  'Gestao de pedidos em tempo real',
   'Upload de fotos e banners',
-  'Até 16 pratos e 4 categorias',
+  'Ate 16 pratos e 4 categorias',
   '1 grupo de adicionais por prato',
-  'Impressão térmica (USB, Bluetooth, sistema)',
-  'Notificação sonora de novo pedido',
-  'Personalização de tema e cores',
-  'Equipe de até 4 pessoas',
+  'Impressao termica (USB, Bluetooth, sistema)',
+  'Notificacao sonora de novo pedido',
+  'Personalizacao de tema e cores',
+  'Equipe de ate 4 pessoas',
 ]
 
 const BASIC_FEATURES = [
-  'Cardápio digital público com link e QR code',
+  'Cardapio digital publico com link e QR code',
   'Painel administrativo',
   'QR code de mesa para pedidos',
-  'Gestão de pedidos em tempo real',
+  'Gestao de pedidos em tempo real',
   'Categorias e pratos ilimitados',
-  'Adicionais e grupos de opções ilimitados',
+  'Adicionais e grupos de opcoes ilimitados',
   'Upload de fotos para os pratos',
-  'Impressão térmica (USB, Bluetooth, sistema)',
-  'Notificação sonora de novo pedido',
-  'Personalização de tema e cores',
+  'Impressao termica (USB, Bluetooth, sistema)',
+  'Notificacao sonora de novo pedido',
+  'Personalizacao de tema e cores',
   'Equipe ilimitada com cargos',
-  'Integração WhatsApp automática',
+  'Integracao WhatsApp automatica',
   'Suporte via WhatsApp',
 ]
 
 const PRO_EXTRAS = [
-  'Gráfico de receita por dia (últimos 30 dias)',
+  'Grafico de receita por dia (ultimos 30 dias)',
   'Top 5 produtos mais vendidos',
   'Pedidos por tipo (mesa vs entrega)',
-  'Ticket médio e horário de pico',
+  'Ticket medio e horario de pico',
   'Comparativo semanal de receita',
-  'Exportação de pedidos em CSV',
+  'Exportacao de pedidos em CSV',
 ]
 
-const PRICING = {
+// Labels com acentos separados para evitar problema de encoding no Write
+const LABELS = {
+  free_features: [
+    'Cardápio digital público com link e QR code',
+    'Painel administrativo',
+    'QR code de mesa para pedidos',
+    'Gestão de pedidos em tempo real',
+    'Upload de fotos e banners',
+    'Até 16 pratos e 4 categorias',
+    '1 grupo de adicionais por prato',
+    'Impressão térmica (USB, Bluetooth, sistema)',
+    'Notificação sonora de novo pedido',
+    'Personalização de tema e cores',
+    'Equipe de até 4 pessoas',
+  ],
+  basic_features: [
+    'Cardápio digital público com link e QR code',
+    'Painel administrativo',
+    'QR code de mesa para pedidos',
+    'Gestão de pedidos em tempo real',
+    'Categorias e pratos ilimitados',
+    'Adicionais e grupos de opções ilimitados',
+    'Upload de fotos para os pratos',
+    'Impressão térmica (USB, Bluetooth, sistema)',
+    'Notificação sonora de novo pedido',
+    'Personalização de tema e cores',
+    'Equipe ilimitada com cargos',
+    'Integração WhatsApp automática',
+    'Suporte via WhatsApp',
+  ],
+  pro_extras: [
+    'Gráfico de receita por dia (últimos 30 dias)',
+    'Top 5 produtos mais vendidos',
+    'Pedidos por tipo (mesa vs entrega)',
+    'Ticket médio e horário de pico',
+    'Comparativo semanal de receita',
+    'Exportação de pedidos em CSV',
+  ],
+}
+
+type Locale = 'BR' | 'PT'
+
+const PRICING: Record<Locale, {
+  basic: { label: string; cents: string }
+  pro:   { label: string; cents: string }
+  faq_payment: string
+  faq_cancel: string
+}> = {
   BR: {
-    basic: { label: 'R$ 59', cents: ',99', suffix: '/mês' },
-    pro:   { label: 'R$ 99', cents: ',99', suffix: '/mês' },
+    basic: { label: 'R$ 59', cents: ',99' },
+    pro:   { label: 'R$ 99', cents: ',99' },
     faq_payment: 'Cartão de crédito e débito pelas principais bandeiras (Visa, Mastercard, Elo, Amex).',
     faq_cancel:  'Ao cancelar, seu cardápio fica ativo até o fim do período pago — depois continua no plano gratuito.',
   },
   PT: {
-    basic: { label: '9', cents: ',99 €', suffix: '/mês' },
-    pro:   { label: '19', cents: ',99 €', suffix: '/mês' },
+    basic: { label: '24', cents: ',99 €' },
+    pro:   { label: '39', cents: ',99 €' },
     faq_payment: 'Cartão de crédito e débito (Visa, Mastercard). MB Way e Multibanco em breve.',
     faq_cancel:  'Ao cancelar, o seu menu fica ativo até ao fim do período pago — depois continua no plano gratuito.',
   },
 }
 
+/** Detecta se o browser do visitante usa locale europeu */
+function detectLocale(): Locale {
+  if (typeof navigator === 'undefined') return 'BR'
+  const lang = navigator.language ?? ''
+  // pt-PT, pt, e qualquer locale europeu (fr, de, es-ES, it, nl...)
+  if (lang.startsWith('pt-PT') || lang.startsWith('pt-PT')) return 'PT'
+  // Qualquer locale europeu que nao seja pt-BR
+  const euPrefixes = ['fr', 'de', 'it', 'nl', 'es-ES', 'pl', 'ro', 'hu', 'cs', 'el', 'sv', 'da', 'fi', 'no', 'sk', 'hr', 'bg', 'et', 'lv', 'lt', 'sl', 'ga', 'mt']
+  if (euPrefixes.some((p) => lang.startsWith(p))) return 'PT'
+  // pt sem sufixo: ambiguo, usa BR como padrao
+  return 'BR'
+}
+
 export default function PrecosPage() {
-  const [locale, setLocale] = useState<'BR' | 'PT'>('BR')
+  const [locale, setLocale] = useState<Locale>('BR')
+  const [detected, setDetected] = useState(false)
+
+  // Auto-detecta na montagem (client-only)
+  useEffect(() => {
+    if (!detected) {
+      setLocale(detectLocale())
+      setDetected(true)
+    }
+  }, [detected])
+
   const p = PRICING[locale]
 
   return (
@@ -119,7 +189,7 @@ export default function PrecosPage() {
             </div>
 
             <ul className="text-sm text-gray-700 space-y-3 mb-8 flex-1">
-              {FREE_FEATURES.map((f) => (
+              {LABELS.free_features.map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <span className="text-orange-500 font-black flex-shrink-0 mt-0.5">✓</span>
                   <span>{f}</span>
@@ -152,7 +222,7 @@ export default function PrecosPage() {
             </div>
 
             <ul className="text-sm text-gray-700 space-y-3 mb-8 flex-1">
-              {BASIC_FEATURES.map((f) => (
+              {LABELS.basic_features.map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <span className="text-orange-500 font-black flex-shrink-0 mt-0.5">✓</span>
                   <span>{f}</span>
@@ -191,7 +261,7 @@ export default function PrecosPage() {
                 <span className="text-orange-500 font-black flex-shrink-0 mt-0.5">★</span>
                 <span className="font-semibold text-gray-900">Tudo do Básico, mais:</span>
               </li>
-              {PRO_EXTRAS.map((f) => (
+              {LABELS.pro_extras.map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <span className="text-orange-500 font-black flex-shrink-0 mt-0.5">✓</span>
                   <span>{f}</span>
