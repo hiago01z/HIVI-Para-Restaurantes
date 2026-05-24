@@ -705,7 +705,7 @@ export function PedidosClient({
                     className="w-full flex items-center justify-between px-4 py-2.5 border-t border-gray-50 bg-gray-50/50 hover:bg-gray-50 transition-colors"
                   >
                     <span className="text-xs font-bold text-gray-500">
-                      {order.order_items.length} {order.order_items.length === 1 ? 'item' : 'itens'} — {formatPrice(order.total)}
+                      {order.order_items.length} {order.order_items.length === 1 ? 'item' : 'itens'} — {formatPrice(order.total + (order.delivery_fee ?? 0))}
                     </span>
                     {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </button>
@@ -735,9 +735,28 @@ export function PedidosClient({
                         </div>
                         )
                       })}
-                      <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-black text-gray-900 text-sm">
-                        <span>Total</span>
-                        <span>{formatPrice(order.total)}</span>
+                      <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
+                        {order.delivery_fee && order.delivery_fee > 0 ? (
+                          <>
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Subtotal</span>
+                              <span>{formatPrice(order.total)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Taxa de entrega</span>
+                              <span>{formatPrice(order.delivery_fee)}</span>
+                            </div>
+                            <div className="flex justify-between font-black text-gray-900 text-sm pt-1 border-t border-gray-200">
+                              <span>Total</span>
+                              <span>{formatPrice(order.total + order.delivery_fee)}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex justify-between font-black text-gray-900 text-sm">
+                            <span>Total</span>
+                            <span>{formatPrice(order.total)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

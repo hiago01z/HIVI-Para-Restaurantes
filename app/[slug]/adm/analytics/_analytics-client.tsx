@@ -197,7 +197,7 @@ export function AnalyticsClient({ restaurantName, orders, currency = 'BRL' }: Pr
         o.type === 'delivery' ? 'Entrega' : 'Mesa',
         o.status,
         '',
-        formatCurrency(o.total).replace('R$ ', 'R$ '),
+        formatCurrency(o.total),
         itens,
       ])
     })
@@ -347,7 +347,7 @@ export function AnalyticsClient({ restaurantName, orders, currency = 'BRL' }: Pr
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${v}`} width={55} />
+              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} tickFormatter={(v) => formatCurrency(Number(v))} width={65} />
               <Tooltip
                 formatter={(v) => [formatCurrency(Number(v)), 'Receita']}
                 contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13 }}
