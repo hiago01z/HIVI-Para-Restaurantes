@@ -5,45 +5,6 @@ import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-const FREE_FEATURES = [
-  'Cardapio digital publico com link e QR code',
-  'Painel administrativo',
-  'QR code de mesa para pedidos',
-  'Gestao de pedidos em tempo real',
-  'Upload de fotos e banners',
-  'Ate 16 pratos e 4 categorias',
-  '1 grupo de adicionais por prato',
-  'Impressao termica (USB, Bluetooth, sistema)',
-  'Notificacao sonora de novo pedido',
-  'Personalizacao de tema e cores',
-  'Equipe de ate 4 pessoas',
-]
-
-const BASIC_FEATURES = [
-  'Cardapio digital publico com link e QR code',
-  'Painel administrativo',
-  'QR code de mesa para pedidos',
-  'Gestao de pedidos em tempo real',
-  'Categorias e pratos ilimitados',
-  'Adicionais e grupos de opcoes ilimitados',
-  'Upload de fotos para os pratos',
-  'Impressao termica (USB, Bluetooth, sistema)',
-  'Notificacao sonora de novo pedido',
-  'Personalizacao de tema e cores',
-  'Equipe ilimitada com cargos',
-  'Integracao WhatsApp automatica',
-  'Suporte via WhatsApp',
-]
-
-const PRO_EXTRAS = [
-  'Grafico de receita por dia (ultimos 30 dias)',
-  'Top 5 produtos mais vendidos',
-  'Pedidos por tipo (mesa vs entrega)',
-  'Ticket medio e horario de pico',
-  'Comparativo semanal de receita',
-  'Exportacao de pedidos em CSV',
-]
-
 // Labels com acentos separados para evitar problema de encoding no Write
 const LABELS = {
   free_features: [
