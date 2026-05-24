@@ -66,8 +66,19 @@ const PRICING: Record<Locale, {
   },
 }
 
+function setLocaleCookie(locale: Locale) {
+  document.cookie = `hivi_locale_manual=${locale};path=/;max-age=${60 * 60 * 24 * 30};samesite=lax`
+  document.cookie = `hivi_locale=${locale};path=/;max-age=${60 * 60 * 24 * 30};samesite=lax`
+}
+
 export function PrecosClient({ initialLocale }: { initialLocale: Locale }) {
   const [locale, setLocale] = useState<Locale>(initialLocale)
+
+  function handleSetLocale(l: Locale) {
+    setLocale(l)
+    setLocaleCookie(l)
+  }
+
   const p = PRICING[locale]
 
   return (
@@ -89,7 +100,7 @@ export function PrecosClient({ initialLocale }: { initialLocale: Locale }) {
         {/* Toggle de localização */}
         <div className="flex items-center justify-center gap-1 mb-12">
           <button
-            onClick={() => setLocale('BR')}
+            onClick={() => handleSetLocale('BR')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors border-2 ${
               locale === 'BR'
                 ? 'border-orange-500 bg-orange-50 text-orange-700'
@@ -99,7 +110,7 @@ export function PrecosClient({ initialLocale }: { initialLocale: Locale }) {
             🇧🇷 Brasil
           </button>
           <button
-            onClick={() => setLocale('PT')}
+            onClick={() => handleSetLocale('PT')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors border-2 ${
               locale === 'PT'
                 ? 'border-orange-500 bg-orange-50 text-orange-700'
