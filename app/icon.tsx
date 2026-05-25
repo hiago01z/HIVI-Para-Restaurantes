@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-export const dynamic = 'force-dynamic'
-export const size = { width: 32, height: 32 }
+export const size = { width: 96, height: 96 }
 export const contentType = 'image/png'
 
 /**
@@ -13,10 +12,10 @@ export default function Icon() {
     (
       <div
         style={{
-          width: 32,
-          height: 32,
+          width: 96,
+          height: 96,
           background: 'linear-gradient(145deg, #FB923C 0%, #EA580C 100%)',
-          borderRadius: 8,
+          borderRadius: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -25,15 +24,15 @@ export default function Icon() {
         {/* Garfo simulado com divs — satori não suporta SVG inline */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
           {/* 3 dentes do garfo */}
-          <div style={{ display: 'flex', gap: 3, marginBottom: 1 }}>
-            <div style={{ width: 2.5, height: 8, background: 'white', borderRadius: 2 }} />
-            <div style={{ width: 2.5, height: 8, background: 'white', borderRadius: 2 }} />
-            <div style={{ width: 2.5, height: 8, background: 'white', borderRadius: 2 }} />
+          <div style={{ display: 'flex', gap: 7, marginBottom: 3 }}>
+            <div style={{ width: 7, height: 24, background: 'white', borderRadius: 4 }} />
+            <div style={{ width: 7, height: 24, background: 'white', borderRadius: 4 }} />
+            <div style={{ width: 7, height: 24, background: 'white', borderRadius: 4 }} />
           </div>
           {/* Separador */}
-          <div style={{ width: 10, height: 2, background: 'white', borderRadius: 1, marginBottom: 1 }} />
+          <div style={{ width: 30, height: 5, background: 'white', borderRadius: 3, marginBottom: 3 }} />
           {/* Cabo */}
-          <div style={{ width: 2.5, height: 9, background: 'white', borderRadius: 2 }} />
+          <div style={{ width: 7, height: 28, background: 'white', borderRadius: 4 }} />
         </div>
       </div>
     ),
