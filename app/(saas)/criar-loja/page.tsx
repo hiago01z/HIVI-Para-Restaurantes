@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { trackLead, trackCompleteRegistration, trackInitiateCheckout } from '@/lib/fbq'
 
 function slugify(text: string) {
   return text
@@ -43,6 +44,11 @@ function CriarLojaInner() {
     if (cancelled) setShowCancelledInfo(true)
   }, [cancelled])
 
+  // Lead: usuário chegou na página de criação = intenção clara
+  useEffect(() => {
+    trackLead()
+  }, [])
+
   function handleNome(valor: string) {
     setNome(valor)
     if (!slugEditado) {
@@ -79,6 +85,8 @@ function CriarLojaInner() {
           setLoading(false)
           return
         }
+        // Evento: cadastro gratuito concluído
+        trackCompleteRegistration({ content_name: nome })
         // Vai para /conta para configurar senha ADM antes de entrar no painel
         window.location.href = '/conta'
         return
@@ -98,6 +106,18 @@ function CriarLojaInner() {
         setLoading(false)
         return
       }
+
+      // Evento: checkout iniciado (plano pago)
+      const planValues = {
+        BR: { basic: 59.99, pro: 99.99 },
+        PT: { basic: 24.99, pro: 39.99 },
+      }[locale]
+      trackInitiateCheckout({
+        value: plano === 'pro' ? planValues.pro : planValues.basic,
+        currency: locale === 'PT' ? 'EUR' : 'BRL',
+        content_name: plano === 'pro' ? 'Plano Pro' : 'Plano Básico',
+        num_items: 1,
+      })
 
       // Redireciona para o checkout do Stripe
       window.location.href = data.url

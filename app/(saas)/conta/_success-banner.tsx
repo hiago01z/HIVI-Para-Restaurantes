@@ -1,10 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { CheckCircle2, X } from 'lucide-react'
+import { trackPurchase } from '@/lib/fbq'
+
+const PLAN_VALUES: Record<string, Record<string, number>> = {
+  BRL: { basic: 59.99, pro: 99.99 },
+  EUR: { basic: 24.99, pro: 39.99 },
+}
 
 export function SuccessBanner() {
   const [visible, setVisible] = useState(true)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const plan     = searchParams.get('plan')     // 'basic' | 'pro'
+    const currency = searchParams.get('currency') // 'BRL' | 'EUR'
+
+    if (!plan || !currency) return
+
+    const value = PLAN_VALUES[currency]?.[plan]
+    if (!value) return
+
+    trackPurchase({
+      value,
+      currency: currency as 'BRL' | 'EUR',
+      content_name: plan === 'pro' ? 'Plano Pro' : 'Plano Básico',
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!visible) return null
 

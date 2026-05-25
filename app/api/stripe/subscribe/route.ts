@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       payment_method_types: ['card'],
       allow_promotion_codes: true,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/conta?success=1`,
+      success_url: `${appUrl}/conta?success=1&plan=${plan}&currency=${isEur ? 'EUR' : 'BRL'}`,
       cancel_url: `${appUrl}/conta?cancelled=1`,
       // Se já tem customer Stripe, reutiliza; caso contrário usa e-mail
       ...(restaurant.stripe_customer_id

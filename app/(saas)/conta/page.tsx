@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { Suspense } from 'react'
 import { ContaActions } from './_conta-actions'
 import { AdmPasswordForm } from './_adm-password-form'
 import { MemberPasswordForm } from './_member-password-form'
@@ -107,7 +108,11 @@ export default async function ContaPage({
       <main className="px-5 py-8 max-w-lg mx-auto">
 
         {/* Banner de sucesso após pagamento */}
-        {success === '1' && <SuccessBanner />}
+        {success === '1' && (
+          <Suspense fallback={null}>
+            <SuccessBanner />
+          </Suspense>
+        )}
 
         {/* ── Meus cardápios (proprietário) ── */}
         <div className="flex items-center justify-between mb-5">

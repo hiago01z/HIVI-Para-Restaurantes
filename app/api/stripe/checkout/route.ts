@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         payment_method_types: ['card'],
         allow_promotion_codes: true,
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${appUrl}/conta?success=1`,
+        success_url: `${appUrl}/conta?success=1&plan=${selectedPlan}&currency=${currency}`,
         cancel_url:  `${appUrl}/criar-loja?cancelled=1`,
         customer_email: user.email ?? undefined,
         metadata: {
