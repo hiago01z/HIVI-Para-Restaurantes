@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
+import { MetaPixel } from '@/components/meta-pixel'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
+        <MetaPixel />
         {children}
       </body>
     </html>
