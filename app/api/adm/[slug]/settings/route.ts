@@ -33,12 +33,13 @@ const patchSchema = z.object({
   delivery_enabled:        z.boolean().optional(),
   delivery_hours:          z.any().optional(),
   logo_url:                z.string().nullable().optional(),
-  delivery_fee:            z.number().min(0).nullable().optional(),
-  address:                 z.string().max(300).nullable().optional(),
-  address_url:             z.string().url().max(500).nullable().optional(),
-  pix_key:                 z.string().nullable().optional(),
-  pix_key_type:            z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
-  currency:                z.enum(['BRL', 'EUR']).optional(),
+  delivery_fee:               z.number().min(0).nullable().optional(),
+  address:                    z.string().max(300).nullable().optional(),
+  address_url:                z.string().url().max(500).nullable().optional(),
+  pix_key:                    z.string().nullable().optional(),
+  pix_key_type:               z.enum(['cpf','cnpj','email','phone','evp']).nullable().optional(),
+  currency:                   z.enum(['BRL', 'EUR']).optional(),
+  table_order_auto_approve:   z.boolean().optional(),
 })
 
 export async function PATCH(

@@ -52,6 +52,7 @@ type Restaurant = {
   delivery_fee: number
   address: string | null
   address_url: string | null
+  table_order_auto_approve: boolean
 }
 
 type Theme = {
@@ -259,6 +260,23 @@ export function ConfiguracoesClient({
       // mantém estado anterior em caso de erro
     } finally {
       setDeliveryEnabledSaving(false)
+    }
+  }
+
+  // Auto-aprovação de pedidos na mesa
+  const [tableAutoApprove, setTableAutoApprove] = useState(restaurant.table_order_auto_approve)
+  const [tableAutoApproveSaving, setTableAutoApproveSaving] = useState(false)
+
+  async function toggleTableAutoApprove() {
+    const newValue = !tableAutoApprove
+    setTableAutoApproveSaving(true)
+    try {
+      await patchSettings({ table_order_auto_approve: newValue })
+      setTableAutoApprove(newValue)
+    } catch {
+      // mantém estado anterior em caso de erro
+    } finally {
+      setTableAutoApproveSaving(false)
     }
   }
 
@@ -1244,6 +1262,35 @@ export function ConfiguracoesClient({
           {deliveryFeeError && (
             <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{deliveryFeeError}</p>
           )}
+        </div>
+      </Section>
+
+      {/* ── Pedidos na Mesa ── */}
+      <Section title="Pedidos na Mesa">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-gray-800">Auto-aprovação de pedidos</p>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              Quando ativado, o cliente informa o <strong>nome</strong> e o <strong>número da mesa</strong> e faz o pedido diretamente — sem precisar mostrar o QR code ao garçom.<br />
+              O pedido aparece no painel em tempo real.
+            </p>
+            {tableAutoApprove && (
+              <p className="text-xs mt-2 font-medium" style={{ color: 'var(--adm-primary)' }}>
+                ✓ Clientes podem pedir diretamente pela mesa
+              </p>
+            )}
+          </div>
+          <button
+            onClick={toggleTableAutoApprove}
+            disabled={tableAutoApproveSaving}
+            className="relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none disabled:opacity-60"
+            style={{ background: tableAutoApprove ? 'var(--adm-primary)' : '#d1d5db' }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+              style={{ transform: tableAutoApprove ? 'translateX(24px)' : 'translateX(0)' }}
+            />
+          </button>
         </div>
       </Section>
 

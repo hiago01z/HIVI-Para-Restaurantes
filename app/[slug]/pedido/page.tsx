@@ -9,7 +9,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ slug: s
 
   const { data: restaurant } = await supabase
     .from('restaurants')
-    .select('id, name, slug, is_active, delivery_enabled, delivery_hours, delivery_fee')
+    .select('id, name, slug, is_active, delivery_enabled, delivery_hours, delivery_fee, table_order_auto_approve')
     .eq('slug', slug)
     .single()
 
@@ -25,6 +25,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ slug: s
       deliveryEnabled={(restaurant.delivery_enabled as boolean | null) ?? true}
       deliveryHours={deliveryHours}
       deliveryFee={(restaurant.delivery_fee as number | null) ?? 0}
+      tableAutoApprove={(restaurant.table_order_auto_approve as boolean | null) ?? false}
     />
   )
 }

@@ -5,7 +5,7 @@ import { useFormatPrice, useCurrency } from '@/contexts/currency-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2, CheckCircle2, Clock } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Trash2, QrCode, Truck, X, Loader2, CheckCircle2, Clock, UtensilsCrossed } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { createClient } from '@/lib/supabase/client'
@@ -17,6 +17,7 @@ type Props = {
   deliveryEnabled: boolean
   deliveryHours: DeliveryHoursConfig
   deliveryFee?: number
+  tableAutoApprove?: boolean
 }
 
 type DeliveryForm = {
@@ -47,14 +48,19 @@ const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled:        { label: 'Cancelado',              color: '#EF4444' },
 }
 
-export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours, deliveryFee = 0 }: Props) {
+export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHours, deliveryFee = 0, tableAutoApprove = false }: Props) {
   const { items, totalPrice, totalItems, increment, decrement, removeItem, clearCart } = useCart()
   const router = useRouter()
   const formatPrice = useFormatPrice()
   const currency = useCurrency()
   const [phoneCode, setPhoneCode] = useState(DEFAULT_COUNTRY_CODE[currency] ?? '55')
 
-  const [modal, setModal] = useState<null | 'qr' | 'delivery'>(null)
+  const [modal, setModal] = useState<null | 'qr' | 'delivery' | 'table'>(null)
+  // ── Auto-aprovação de mesa ────────────────────────────────────────────────────
+  const [tableForm, setTableForm] = useState({ name: '', tableNumber: '', notes: '' })
+  const [tableLoading, setTableLoading] = useState(false)
+  const [tableError, setTableError] = useState('')
+
   const [qrSessionId, setQrSessionId] = useState<string | null>(null)
   const [qrConfirmed, setQrConfirmed] = useState(false)
   const [qrLoading, setQrLoading] = useState(false)
@@ -186,6 +192,44 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
 
     return () => { supabase.removeChannel(channel) }
   }, [qrSessionId, slug, clearCart, router])
+
+  async function handleTableOrder(e: React.FormEvent) {
+    e.preventDefault()
+    if (!tableForm.name.trim()) { setTableError('Informe seu nome.'); return }
+    if (!tableForm.tableNumber.trim()) { setTableError('Informe o número da mesa.'); return }
+
+    setTableLoading(true)
+    setTableError('')
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId,
+          type: 'table',
+          customer_name: tableForm.name.trim(),
+          table_number: tableForm.tableNumber.trim(),
+          notes: tableForm.notes.trim() || null,
+          total: totalPrice,
+          items: items.map((i) => ({
+            product_id: i.id,
+            product_name: i.name,
+            product_price: i.price,
+            quantity: i.quantity,
+            selected_options: i.selectedOptions ?? null,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao criar pedido.')
+      try { localStorage.setItem(`hivi-active-order-${slug}`, data.orderId) } catch {}
+      clearCart()
+      router.push(`/${slug}/meu-pedido/${data.orderId}`)
+    } catch (err: unknown) {
+      setTableError(err instanceof Error ? err.message : 'Erro ao criar pedido.')
+      setTableLoading(false)
+    }
+  }
 
   async function handleGerarQR() {
     setQrLoading(true)
@@ -437,27 +481,42 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
 
           {/* Ações */}
           <div className="px-4 mt-6 space-y-3">
-            {/* Observações do pedido (para mesa via QR) */}
-            <DeliveryTextarea
-              label="Observações (opcional)"
-              value={qrNotes}
-              onChange={setQrNotes}
-              placeholder="Ex: sem cebola, bem passado, sem glúten..."
-            />
-            {qrError && (
-              <div className="rounded-2xl px-4 py-3 text-sm text-center" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
-                {qrError}
-              </div>
+
+            {tableAutoApprove ? (
+              /* ── Modo auto-aprovação: cliente pede diretamente ── */
+              <button
+                onClick={() => setModal('table')}
+                className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+                style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
+              >
+                <UtensilsCrossed className="w-5 h-5" />
+                Fazer pedido na mesa
+              </button>
+            ) : (
+              /* ── Modo QR: garçom confirma ── */
+              <>
+                <DeliveryTextarea
+                  label="Observações (opcional)"
+                  value={qrNotes}
+                  onChange={setQrNotes}
+                  placeholder="Ex: sem cebola, bem passado, sem glúten..."
+                />
+                {qrError && (
+                  <div className="rounded-2xl px-4 py-3 text-sm text-center" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
+                    {qrError}
+                  </div>
+                )}
+                <button
+                  onClick={handleGerarQR}
+                  disabled={qrLoading}
+                  className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+                  style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
+                >
+                  {qrLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
+                  {qrLoading ? 'Gerando...' : 'Gerar QR Code para a mesa'}
+                </button>
+              </>
             )}
-            <button
-              onClick={handleGerarQR}
-              disabled={qrLoading}
-              className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
-              style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
-            >
-              {qrLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
-              {qrLoading ? 'Gerando...' : 'Gerar QR Code para a mesa'}
-            </button>
             {!deliveryEnabled ? null : deliveryStatus.open ? (
               <button
                 onClick={() => setModal('delivery')}
@@ -598,6 +657,91 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                 <p className="text-xs text-center mt-4" style={{ color: 'var(--menu-text-muted)', opacity: 0.6 }}>Válido por 15 minutos</p>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Mesa (auto-aprovação) */}
+      {modal === 'table' && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <div
+            className="w-full max-w-md rounded-t-3xl overflow-y-auto overscroll-contain"
+            style={{
+              background: 'var(--menu-bg)',
+              borderTop: '1px solid rgba(128,128,128,0.15)',
+              maxHeight: '92dvh',
+            }}
+          >
+            <div className="p-6 pb-10">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-black" style={{ color: 'var(--menu-text)' }}>Pedido na Mesa</h2>
+                <button onClick={() => setModal(null)} style={{ color: 'var(--menu-text-muted)' }}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleTableOrder} className="space-y-4">
+                <DeliveryField
+                  label="Seu nome *"
+                  value={tableForm.name}
+                  onChange={(v) => setTableForm({ ...tableForm, name: v })}
+                  placeholder="Ex: João Silva"
+                />
+                <DeliveryField
+                  label="Número da mesa *"
+                  value={tableForm.tableNumber}
+                  onChange={(v) => setTableForm({ ...tableForm, tableNumber: v })}
+                  placeholder="Ex: 5"
+                />
+                <DeliveryTextarea
+                  label="Observações (opcional)"
+                  value={tableForm.notes}
+                  onChange={(v) => setTableForm({ ...tableForm, notes: v })}
+                  placeholder="Ex: sem cebola, bem passado..."
+                />
+
+                {/* Resumo dos itens */}
+                <div className="rounded-2xl p-4" style={{ background: 'var(--menu-card)' }}>
+                  <p className="text-xs mb-2" style={{ color: 'var(--menu-text-muted)' }}>Resumo do pedido</p>
+                  {items.map((item) => {
+                    const unitPrice = item.price + (item.selectedOptions ?? []).reduce((s, o) => s + o.price_addition, 0)
+                    return (
+                      <div key={item.cartKey ?? item.id} className="py-1">
+                        <div className="flex justify-between text-sm" style={{ color: 'var(--menu-text-muted)' }}>
+                          <span>{item.quantity}x {item.name}</span>
+                          <span>{formatPrice(unitPrice * item.quantity)}</span>
+                        </div>
+                        {item.selectedOptions && item.selectedOptions.length > 0 && (
+                          <p className="text-xs pl-4 mt-0.5" style={{ color: 'var(--menu-text-muted)', opacity: 0.7 }}>
+                            {item.selectedOptions.map((o) => o.item_name).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div className="mt-2 pt-2 flex justify-between font-black" style={{ borderTop: '1px solid rgba(128,128,128,0.15)', color: 'var(--menu-text)' }}>
+                    <span>Total</span>
+                    <span>{formatPrice(totalPrice)}</span>
+                  </div>
+                </div>
+
+                {tableError && (
+                  <div className="rounded-xl px-4 py-3 bg-red-900/30 border border-red-500/30">
+                    <p className="text-red-400 text-sm">{tableError}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={tableLoading}
+                  className="w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-base"
+                  style={{ background: 'var(--menu-primary)', color: 'var(--menu-text-on-primary)' }}
+                >
+                  {tableLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UtensilsCrossed className="w-5 h-5" />}
+                  {tableLoading ? 'Enviando pedido...' : 'Confirmar pedido'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

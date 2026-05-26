@@ -25,7 +25,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
 
   const { data: restaurant } = await serviceSupabase
     .from('restaurants')
-    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, pix_key, pix_key_type, currency, delivery_fee, address, address_url')
+    .select('id, name, slug, logo_url, instagram_url, whatsapp_number, whatsapp_notify_enabled, is_active, delivery_enabled, delivery_hours, pix_key, pix_key_type, currency, delivery_fee, address, address_url, table_order_auto_approve')
     .eq('slug', slug)
     .single()
 
@@ -70,6 +70,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
         delivery_fee: (restaurant.delivery_fee as number | null) ?? 0,
         address: (restaurant.address as string | null) ?? null,
         address_url: (restaurant.address_url as string | null) ?? null,
+        table_order_auto_approve: (restaurant.table_order_auto_approve as boolean | null) ?? false,
       }}
       theme={{
         primary_color:        theme?.primary_color        ?? '#FF6B00',
