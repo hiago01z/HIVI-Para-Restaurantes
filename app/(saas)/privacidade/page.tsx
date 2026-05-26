@@ -19,7 +19,7 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="text-xl font-black text-gray-900 mb-3">1. Quem somos</h2>
             <p>
-              A HIVI Tecnologia ("HIVI", "nós") é responsável pelo tratamento dos dados pessoais dos
+              A HIVI Tecnologia (&quot;HIVI&quot;, &quot;nós&quot;) é responsável pelo tratamento dos dados pessoais dos
               restaurantes e seus usuários que utilizam a plataforma hivi-web.com. Esta política
               está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).
             </p>
@@ -209,7 +209,7 @@ export default function PrivacidadePage() {
             <p>
               Podemos atualizar esta política periodicamente. Alterações relevantes serão comunicadas
               por e-mail ou por aviso na plataforma com antecedência mínima de 10 dias.
-              A data de "última atualização" no topo desta página sempre refletirá a versão vigente.
+              A data de &quot;última atualização&quot; no topo desta página sempre refletirá a versão vigente.
             </p>
           </section>
 
