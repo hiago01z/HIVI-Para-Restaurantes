@@ -93,7 +93,19 @@ export default function TermosPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-black text-gray-900 mb-3">9. Contato</h2>
+            <h2 className="text-xl font-black text-gray-900 mb-3">9. Proteção de dados (LGPD)</h2>
+            <p>
+              O tratamento dos seus dados pessoais está descrito em nossa{' '}
+              <a href="/privacidade" className="text-orange-500 hover:underline font-medium">Política de Privacidade</a>,
+              em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
+              Para exercer seus direitos como titular de dados ou contatar nosso encarregado (DPO),
+              envie um e-mail para{' '}
+              <a href="mailto:privacidade@hivi-web.com" className="text-orange-500 hover:underline font-medium">privacidade@hivi-web.com</a>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-black text-gray-900 mb-3">10. Contato</h2>
             <p>
               Dúvidas sobre os termos? Entre em contato: <a href="mailto:support@hivi-web.com" className="text-orange-500 hover:underline font-medium">support@hivi-web.com</a>
             </p>

@@ -83,19 +83,25 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
     return () => clearInterval(timer)
   }, [deliveryHours])
 
-  // ── Dados de entrega salvos (localStorage) ───────────────────────────────────
+  // ── Dados de entrega salvos (localStorage) — expira após 30 dias (LGPD) ──────
   useEffect(() => {
     try {
       const saved = localStorage.getItem('hivi-delivery-info')
       if (saved) {
-        const parsed = JSON.parse(saved) as Partial<DeliveryForm>
-        setForm((prev) => ({
-          ...prev,
-          name:      parsed.name      ?? '',
-          address:   parsed.address   ?? '',
-          reference: parsed.reference ?? '',
-          phone:     parsed.phone     ?? '',
-        }))
+        const parsed = JSON.parse(saved) as Partial<DeliveryForm> & { _savedAt?: number }
+        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+        const expired = parsed._savedAt && Date.now() - parsed._savedAt > THIRTY_DAYS_MS
+        if (expired) {
+          localStorage.removeItem('hivi-delivery-info')
+        } else {
+          setForm((prev) => ({
+            ...prev,
+            name:      parsed.name      ?? '',
+            address:   parsed.address   ?? '',
+            reference: parsed.reference ?? '',
+            phone:     parsed.phone     ?? '',
+          }))
+        }
       }
     } catch { /* ignore */ }
   }, [])
@@ -302,6 +308,7 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
           address:   form.address,
           reference: form.reference,
           phone:     form.phone,
+          _savedAt:  Date.now(),
         }))
       } catch { /* ignore */ }
       // Persiste o pedido no localStorage para acesso após fechar o navegador
@@ -731,6 +738,20 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                   </div>
                 )}
 
+                {/* Aviso LGPD */}
+                <p className="text-xs text-center px-2" style={{ color: 'var(--menu-text-muted)', opacity: 0.55 }}>
+                  Seus dados são usados apenas para processar este pedido.{' '}
+                  <a
+                    href="/privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                    style={{ color: 'var(--menu-primary)', opacity: 1 }}
+                  >
+                    Política de Privacidade
+                  </a>
+                </p>
+
                 <button
                   type="submit"
                   disabled={tableLoading}
@@ -931,6 +952,20 @@ export function PedidoClient({ slug, restaurantId, deliveryEnabled, deliveryHour
                   </div>
                 )}
               </div>
+
+              {/* Aviso LGPD */}
+              <p className="text-xs text-center px-2" style={{ color: 'var(--menu-text-muted)', opacity: 0.55 }}>
+                Seus dados são usados apenas para processar este pedido.{' '}
+                <a
+                  href="/privacidade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2"
+                  style={{ color: 'var(--menu-primary)', opacity: 1 }}
+                >
+                  Política de Privacidade
+                </a>
+              </p>
 
               <button
                 type="submit"
