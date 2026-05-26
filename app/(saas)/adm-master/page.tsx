@@ -47,9 +47,23 @@ export default async function AdmMasterPage() {
       .order('created_at', { ascending: false }),
     service
       .from('restaurant_users')
-      .select('restaurant_id')
+      .select('restaurant_id, user_id, role')
       .in('restaurant_id', ids),
   ])
+
+  // ── Busca nome dos donos via auth.admin ────────────────────────────────────
+  const ownerUserIds: Record<string, string> = {}
+  for (const ru of (staffCounts ?? []) as { restaurant_id: string; user_id: string; role: string }[]) {
+    if (!ownerUserIds[ru.restaurant_id]) ownerUserIds[ru.restaurant_id] = ru.user_id
+  }
+
+  const ownerNames: Record<string, string> = {}
+  await Promise.all(
+    Object.entries(ownerUserIds).map(async ([restaurantId, userId]) => {
+      const { data } = await service.auth.admin.getUserById(userId)
+      ownerNames[restaurantId] = data?.user?.user_metadata?.full_name ?? data?.user?.email ?? ''
+    })
+  )
 
   type RestaurantRow = {
     id: string
@@ -89,6 +103,7 @@ export default async function AdmMasterPage() {
     pedidos:    orderMap[r.id] ?? 0,
     staff:      staffMap[r.id] ?? 0,
     last_order: lastOrderMap[r.id] ?? null,
+    owner_name: ownerNames[r.id] ?? '',
   }))
 
   // ── Totais globais ─────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import {
   Store, ShoppingBag, UtensilsCrossed, Users,
   TrendingUp, CheckCircle2, XCircle, Clock,
   ExternalLink, Search, ChevronUp, ChevronDown,
+  Mail, Loader2,
 } from 'lucide-react'
 
 type Restaurant = {
@@ -22,6 +23,7 @@ type Restaurant = {
   pedidos: number
   staff: number
   last_order: string | null
+  owner_name: string
 }
 
 type Totals = {
@@ -66,10 +68,38 @@ function trialStatus(trial_ends_at: string | null, plan: string | null) {
 }
 
 export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaurant[]; totals: Totals }) {
-  const [search, setSearch]     = useState('')
-  const [planFilter, setPlan]   = useState<string>('all')
-  const [sortKey, setSortKey]   = useState<SortKey>('created_at')
-  const [sortDir, setSortDir]   = useState<SortDir>('desc')
+  const [search, setSearch]       = useState('')
+  const [planFilter, setPlan]     = useState<string>('all')
+  const [sortKey, setSortKey]     = useState<SortKey>('created_at')
+  const [sortDir, setSortDir]     = useState<SortDir>('desc')
+  const [sending, setSending]     = useState<string | null>(null)   // restaurantId em envio
+  const [sentIds, setSentIds]     = useState<Set<string>>(new Set()) // já enviados nesta sessão
+  const [sendError, setSendError] = useState<string | null>(null)
+
+  async function sendWelcome(r: Restaurant) {
+    if (sending || sentIds.has(r.id)) return
+    setSending(r.id)
+    setSendError(null)
+    try {
+      const res = await fetch('/api/adm-master/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId:   r.id,
+          slug:           r.slug,
+          restaurantName: r.name,
+          ownerName:      r.owner_name,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao enviar')
+      setSentIds((prev) => new Set(prev).add(r.id))
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'Erro ao enviar e-mail')
+    } finally {
+      setSending(null)
+    }
+  }
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
@@ -121,6 +151,14 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
       </div>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Erro de envio */}
+        {sendError && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 flex items-center justify-between">
+            {sendError}
+            <button onClick={() => setSendError(null)} className="ml-4 text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
@@ -278,7 +316,7 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
                           <span className="text-gray-200">—</span>
                         )}
                       </td>
-                      {/* Links */}
+                      {/* Links + ações */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Link
@@ -297,6 +335,23 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
                           >
                             <Store className="w-3.5 h-3.5" />
                           </Link>
+                          <button
+                            onClick={() => sendWelcome(r)}
+                            disabled={!!sending || sentIds.has(r.id)}
+                            className="p-1.5 rounded-lg transition-colors"
+                            style={{
+                              background: sentIds.has(r.id) ? '#f0fdf4' : undefined,
+                              color: sentIds.has(r.id) ? '#16a34a' : '#9ca3af',
+                            }}
+                            title={sentIds.has(r.id) ? 'E-mail enviado' : 'Enviar boas-vindas'}
+                          >
+                            {sending === r.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : sentIds.has(r.id)
+                              ? <CheckCircle2 className="w-3.5 h-3.5" />
+                              : <Mail className="w-3.5 h-3.5" />
+                            }
+                          </button>
                         </div>
                       </td>
                     </tr>
