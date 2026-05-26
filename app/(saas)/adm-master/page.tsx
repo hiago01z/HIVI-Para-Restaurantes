@@ -97,13 +97,29 @@ export default async function AdmMasterPage() {
     if (!lastOrderMap[o.restaurant_id]) lastOrderMap[o.restaurant_id] = o.created_at
   }
 
+  // ── Resumo de contatos por restaurante ────────────────────────────────────
+  const { data: contactRows } = await service
+    .from('adm_contacts')
+    .select('restaurant_id, type, created_at')
+    .in('restaurant_id', ids)
+    .order('created_at', { ascending: false })
+
+  const lastContactMap: Record<string, string> = {}
+  const contactCountMap: Record<string, number> = {}
+  for (const c of (contactRows ?? []) as { restaurant_id: string; created_at: string }[]) {
+    if (!lastContactMap[c.restaurant_id]) lastContactMap[c.restaurant_id] = c.created_at
+    contactCountMap[c.restaurant_id] = (contactCountMap[c.restaurant_id] ?? 0) + 1
+  }
+
   const enriched = (restaurants as RestaurantRow[]).map((r) => ({
     ...r,
-    pratos:     prodMap[r.id]  ?? 0,
-    pedidos:    orderMap[r.id] ?? 0,
-    staff:      staffMap[r.id] ?? 0,
-    last_order: lastOrderMap[r.id] ?? null,
-    owner_name: ownerNames[r.id] ?? '',
+    pratos:        prodMap[r.id]       ?? 0,
+    pedidos:       orderMap[r.id]      ?? 0,
+    staff:         staffMap[r.id]      ?? 0,
+    last_order:    lastOrderMap[r.id]  ?? null,
+    owner_name:    ownerNames[r.id]    ?? '',
+    last_contact:  lastContactMap[r.id] ?? null,
+    contact_count: contactCountMap[r.id] ?? 0,
   }))
 
   // ── Totais globais ─────────────────────────────────────────────────────────

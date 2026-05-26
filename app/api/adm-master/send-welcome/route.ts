@@ -108,5 +108,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro ao enviar e-mail' }, { status: 500 })
   }
 
+  // ── Loga o envio no histórico de contatos ─────────────────────────────────
+  await service.from('adm_contacts').insert({
+    restaurant_id: restaurantId,
+    type:          'welcome_email',
+    content:       `E-mail de boas-vindas enviado para ${toEmail}`,
+  })
+
   return NextResponse.json({ ok: true, to: toEmail })
 }
