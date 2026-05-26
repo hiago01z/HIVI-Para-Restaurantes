@@ -10,7 +10,7 @@ export default async function AdmMasterPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || user.email !== OWNER_EMAIL) redirect('/')
+  if (!user || user.email !== OWNER_EMAIL) redirect('/adm-master/login')
 
   // ── Dados via service role (lê tudo sem RLS) ───────────────────────────────
   const service = createServiceClient(
