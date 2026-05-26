@@ -99,6 +99,7 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
   const [selected,    setSelected]  = useState<Restaurant | null>(null)
   const [sending,     setSending]   = useState<string | null>(null)
   const [sentIds,     setSentIds]   = useState<Set<string>>(new Set())
+  const [confirmId,   setConfirmId] = useState<string | null>(null)  // aguardando confirmação
   const [localRestaurants, setLocalRestaurants] = useState(restaurants)
 
   function toggleSort(key: SortKey) {
@@ -128,6 +129,17 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
 
   async function sendWelcome(r: Restaurant) {
     if (sending || sentIds.has(r.id)) return
+
+    // Primeiro clique: pede confirmação
+    if (confirmId !== r.id) {
+      setConfirmId(r.id)
+      // Cancela automaticamente após 4s sem segundo clique
+      setTimeout(() => setConfirmId(id => id === r.id ? null : id), 4000)
+      return
+    }
+
+    // Segundo clique: confirma e envia
+    setConfirmId(null)
     setSending(r.id)
     try {
       const res  = await fetch('/api/adm-master/send-welcome', {
@@ -304,16 +316,27 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
                             className="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors" title="Abrir ADM">
                             <Store className="w-3.5 h-3.5" />
                           </Link>
-                          <button onClick={() => sendWelcome(r)} disabled={!!sending || sentIds.has(r.id)}
-                            className="p-1.5 rounded-lg transition-colors"
-                            style={{ color: sentIds.has(r.id) ? '#16a34a' : '#9ca3af' }}
-                            title={sentIds.has(r.id) ? 'Enviado' : 'Enviar boas-vindas'}>
+                          <button
+                            onClick={() => sendWelcome(r)}
+                            disabled={!!sending || sentIds.has(r.id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold transition-all"
+                            style={{
+                              background: sentIds.has(r.id) ? '#f0fdf4'
+                                        : confirmId === r.id ? '#fef2f2'
+                                        : 'transparent',
+                              color: sentIds.has(r.id) ? '#16a34a'
+                                   : confirmId === r.id ? '#dc2626'
+                                   : '#9ca3af',
+                            }}
+                            title={sentIds.has(r.id) ? 'Enviado' : confirmId === r.id ? 'Clique novamente para confirmar' : 'Enviar boas-vindas'}
+                          >
                             {sending === r.id
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               : sentIds.has(r.id)
                               ? <CheckCircle2 className="w-3.5 h-3.5" />
                               : <Mail className="w-3.5 h-3.5" />
                             }
+                            {confirmId === r.id && <span>Confirmar?</span>}
                           </button>
                         </div>
                       </td>
@@ -335,6 +358,7 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
           restaurant={selected}
           sending={sending === selected.id}
           sent={sentIds.has(selected.id)}
+          confirming={confirmId === selected.id}
           onSendWelcome={() => sendWelcome(selected)}
           onClose={() => setSelected(null)}
           onContactAdded={(c) => {
@@ -354,11 +378,12 @@ export function AdmMasterClient({ restaurants, totals }: { restaurants: Restaura
 // ── Painel lateral de gestão ──────────────────────────────────────────────────
 
 function RestaurantPanel({
-  restaurant, sending, sent, onSendWelcome, onClose, onContactAdded,
+  restaurant, sending, sent, confirming, onSendWelcome, onClose, onContactAdded,
 }: {
   restaurant: Restaurant
   sending: boolean
   sent: boolean
+  confirming: boolean
   onSendWelcome: () => void
   onClose: () => void
   onContactAdded: (c: Contact) => void
@@ -467,9 +492,12 @@ function RestaurantPanel({
         <div className="px-5 py-3 border-b border-gray-100 flex gap-2 flex-wrap">
           <button onClick={onSendWelcome} disabled={sending || sent}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-            style={{ background: sent ? '#f0fdf4' : '#fff7ed', color: sent ? '#16a34a' : '#ea580c' }}>
+            style={{
+              background: sent ? '#f0fdf4' : confirming ? '#fef2f2' : '#fff7ed',
+              color:      sent ? '#16a34a' : confirming ? '#dc2626'  : '#ea580c',
+            }}>
             {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : sent ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Mail className="w-3.5 h-3.5" />}
-            {sent ? 'Boas-vindas enviado' : 'Enviar boas-vindas'}
+            {sent ? 'Boas-vindas enviado' : confirming ? 'Confirmar envio?' : 'Enviar boas-vindas'}
           </button>
           <Link href={`/${restaurant.slug}`} target="_blank"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">
