@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       const msg = stripeErr instanceof Error ? stripeErr.message : String(stripeErr)
       console.error('[checkout] Stripe error:', msg)
       return NextResponse.json(
-        { error: `Erro no pagamento: ${msg}` },
+        { error: 'Erro ao processar pagamento. Tente novamente.' },
         { status: 500 }
       )
     }
@@ -96,6 +96,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[checkout] Unexpected error:', msg)
-    return NextResponse.json({ error: `Erro inesperado: ${msg}` }, { status: 500 })
+    return NextResponse.json({ error: 'Erro inesperado. Tente novamente.' }, { status: 500 })
   }
 }

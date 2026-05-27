@@ -36,6 +36,7 @@ next-env.d.ts
 
 # dropbox temp files
 *.tmp.*
+.env.vercel.tmp
 
 # claude code worktrees e settings locais
 .claude/worktrees/

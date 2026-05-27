@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // O header X-Internal-Secret é enviado pela rota de status de pedidos
     const internalSecret = request.headers.get('x-internal-secret')
     const expectedSecret = process.env.INTERNAL_API_SECRET
-    if (expectedSecret && internalSecret !== expectedSecret) {
+    if (!expectedSecret || internalSecret !== expectedSecret) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 

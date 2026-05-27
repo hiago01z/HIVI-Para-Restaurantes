@@ -80,6 +80,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[downgrade]', msg)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao processar downgrade. Tente novamente.' }, { status: 500 })
   }
 }

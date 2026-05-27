@@ -52,7 +52,7 @@ export async function POST(
   const authUser = usersData?.users?.find((u) => u.email === parsed.data.email)
 
   if (!authUser) {
-    return NextResponse.json({ error: 'E-mail não encontrado' }, { status: 401 })
+    return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
   }
 
   // 3. Busca o vínculo na equipe do restaurante
@@ -64,7 +64,7 @@ export async function POST(
     .single()
 
   if (!member) {
-    return NextResponse.json({ error: 'Você não é membro desta equipe' }, { status: 403 })
+    return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
   }
 
   // 4. Determina qual hash verificar
@@ -86,7 +86,7 @@ export async function POST(
 
   const valid = await verifyAdmPassword(parsed.data.password, passwordHash)
   if (!valid) {
-    return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 })
+    return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
   }
 
   // 5. Monta nome de exibição para o token

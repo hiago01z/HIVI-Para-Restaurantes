@@ -77,6 +77,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[subscribe] error:', msg)
-    return NextResponse.json({ error: `Erro: ${msg}` }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao processar assinatura. Tente novamente.' }, { status: 500 })
   }
 }

@@ -102,6 +102,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[upgrade]', msg)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao processar upgrade. Tente novamente.' }, { status: 500 })
   }
 }

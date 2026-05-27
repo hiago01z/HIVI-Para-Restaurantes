@@ -52,13 +52,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { restaurantId, items, total, ...rest } = parsed.data
+    const { restaurantId, items, total: _clientTotal, ...rest } = parsed.data
 
     const supabase = await createClient()
 
+    // ── Validação server-side de preços ──────────────────────────────────
+    // Nunca confiar no total enviado pelo cliente — recalcular a partir dos
+    // preços reais do banco para evitar manipulação de pedidos.
+    const productIds = [...new Set(items.map((i) => i.product_id))]
+    const { data: dbProducts, error: priceError } = await supabase
+      .from('products')
+      .select('id, price')
+      .in('id', productIds)
+      .eq('restaurant_id', restaurantId)
+
+    if (priceError || !dbProducts || dbProducts.length !== productIds.length) {
+      return NextResponse.json({ error: 'Produto inválido' }, { status: 400 })
+    }
+
+    const priceMap = new Map(dbProducts.map((p) => [p.id, p.price as number]))
+    const serverTotal = items.reduce((sum, item) => {
+      const base = priceMap.get(item.product_id) ?? 0
+      const opts = (item.selected_options ?? []).reduce((s, o) => s + o.price_addition, 0)
+      return Math.round((sum + (base + opts) * item.quantity) * 100) / 100
+    }, 0)
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({ restaurant_id: restaurantId, total, ...rest })
+      .insert({ restaurant_id: restaurantId, total: serverTotal, ...rest })
       .select('id, order_number, type, customer_name, total')
       .single()
 

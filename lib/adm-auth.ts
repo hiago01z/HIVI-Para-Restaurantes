@@ -4,7 +4,7 @@
 // Sem dependências externas
 // ============================================================
 
-const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'hivi-adm-fallback'
+const SECRET = process.env.ADM_TOKEN_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 const COOKIE_MAX_AGE = 60 * 60 * 8 // 8 horas
 
 // ── Utilitários ──────────────────────────────────────────────

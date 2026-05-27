@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
-const OWNER_EMAIL = 'hiagoalmeida852@gmail.com'
+const OWNER_EMAIL = process.env.MASTER_ADMIN_EMAIL ?? ''
 
 function service() {
   return createServiceClient(
