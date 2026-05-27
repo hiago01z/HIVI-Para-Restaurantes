@@ -52,6 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
     }
 
+    // total do cliente é ignorado — serverTotal é calculado abaixo a partir do banco
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { restaurantId, items, total: _clientTotal, ...rest } = parsed.data
 
     const supabase = await createClient()
