@@ -1,7 +1,12 @@
 import { SaasFooter } from '@/components/saas/saas-footer'
 import Link from 'next/link'
 
-export default function CriarContaPage() {
+export default async function CriarContaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
@@ -26,6 +31,13 @@ export default function CriarContaPage() {
               Comece grátis. Sem cartão de crédito para testar.
             </p>
           </div>
+
+          {/* Erro de autenticação */}
+          {(error === 'auth' || error === 'oauth') && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 text-center">
+              Não foi possível fazer login com o Google. Tente novamente.
+            </div>
+          )}
 
           {/* Botão Google */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

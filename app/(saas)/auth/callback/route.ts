@@ -14,6 +14,9 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }
+    console.error('[auth/callback] exchangeCodeForSession error:', error.message)
+  } else {
+    console.error('[auth/callback] sem code na URL — params:', Object.fromEntries(new URL(request.url).searchParams))
   }
 
   return NextResponse.redirect(`${origin}/entrar?error=auth`)
