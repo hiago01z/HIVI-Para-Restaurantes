@@ -7,11 +7,14 @@ export async function GET(request: Request) {
   const nextParam = searchParams.get('next') ?? ''
   const next = (nextParam.startsWith('/') && !nextParam.startsWith('//')) ? nextParam : '/conta'
 
+  // Usa NEXT_PUBLIC_APP_URL para evitar que o origin resolva para 0.0.0.0 em alguns ambientes
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? origin).replace(/\/$/, '')
+
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?next=${next}`,
+      redirectTo: `${appUrl}/auth/callback?next=${next}`,
     },
   })
 
